@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Subscriptions Management</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Active recurring billing contracts, trial monitors, and plan assignments.</p>
+  </div>
+  <a href="{% url 'plan_list' %}" class="btn btn-bl-outline btn-sm">
+    <i class="bi bi-tag me-1"></i> Manage Plans
+  </a>
+</div>
+
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search subscription ID, customer, or plan...">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="trialing" {% if selected_status == 'trialing' %}selected{% endif %}>Trialing</option>
+        <option value="past_due" {% if selected_status == 'past_due' %}selected{% endif %}>Past Due</option>
+        <option value="canceled" {% if selected_status == 'canceled' %}selected{% endif %}>Canceled</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Sub ID & Customer</th>
+          <th>Plan & Product</th>
+          <th>Cycle</th>
+          <th>Recurring Amount</th>
+          <th>Status</th>
+          <th>Next Billing</th>
+          <th>Auto Renew</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in subscriptions %}
+          <tr>
+            <td>
+              <span class="code-tag">{{ sub.subscription_id }}</span>
+              <div class="fw-bold text-dark mt-1">{{ sub.customer.full_name }}</div>
+              <small class="text-muted">{{ sub.customer.email }}</small>
+            </td>
+            <td>
+              <span class="fw-semibold text-primary">{{ sub.plan.name }}</span>
+              <small class="text-muted d-block">{{ sub.plan.product.name }}</small>
+            </td>
+            <td>{{ sub.billing_cycle|title }}</td>
+            <td><strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ sub.current_amount }}</strong></td>
+            <td><span class="badge-saas badge-{{ sub.status_badge_class }}">{{ sub.get_status_display }}</span></td>
+            <td><span class="text-muted small">{{ sub.next_billing_date }}</span></td>
+            <td>
+              {% if sub.auto_renew %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i> Yes</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border">Manual</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center py-4 text-muted">No subscriptions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

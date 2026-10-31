@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<!-- Executive Dashboard Header with Search & Date Filters -->
+<div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="fw-bold mb-0 text-slate-900" style="letter-spacing: -0.02em;">Executive Admin Dashboard</h2>
+      <span class="badge bg-dark text-white px-2 py-1" style="font-size: 0.72rem;">Live DB Telemetry</span>
+    </div>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.865rem;">
+      Live subscription metrics, cash inflow, overdue balances, and operational telemetry for <strong>{{ system_settings.company_name|default:"Brightloop Software" }}</strong>.
+    </p>
+  </div>
+
+  <!-- Search & Date Range Filter Bar -->
+  <form method="get" class="d-flex flex-wrap align-items-center gap-2 bg-white p-2 rounded border shadow-sm">
+    <div class="input-group input-group-sm" style="width: 220px;">
+      <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+      <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search customer, email...">
+    </div>
+
+    <div class="d-flex align-items-center gap-1">
+      <input type="date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm" title="Start Date">
+      <span class="text-muted small">to</span>
+      <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm" title="End Date">
+    </div>
+
+    <button type="submit" class="btn btn-sm btn-bl-primary">
+      <i class="bi bi-funnel me-1"></i> Filter
+    </button>
+    {% if search_query or start_date or end_date %}
+      <a href="{% url 'dashboard' %}" class="btn btn-sm btn-light border" title="Reset">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- ==========================================================================
+     THE 6 EXACT DASHBOARD CARDS (LIVE DATABASE VALUES)
+     ========================================================================== -->
+<div class="row g-3 mb-4">
+  <!-- Card 1: Total Customers -->
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card stat-navy h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <p class="stat-label">Total Customers</p>
+        <div class="stat-icon-wrapper bg-light text-primary">
+          <i class="bi bi-people-fill"></i>
+        </div>
+      </div>
+      <div class="stat-val">{{ metrics.total_customers|intcomma }}</div>
+      <div class="text-muted" style="font-size: 0.75rem;">
+        <i class="bi bi-person-check text-success me-1"></i>Real DB profiles
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 2: Total Products -->
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card stat-blue h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <p class="stat-label">Total Products</p>
+        <div class="stat-icon-wrapper bg-light text-primary">
+          <i class="bi bi-box-seam-fill"></i>
+        </div>
+      </div>
+      <div class="stat-val">{{ metrics.total_products }}</div>
+      <div class="text-muted" style="font-size: 0.75rem;">
+        <span>{{ metrics.active_products }} active offerings</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 3: Active Subscriptions -->
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card stat-emerald h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <p class="stat-label">Active Subscriptions</p>
+        <div class="stat-icon-wrapper bg-light text-success">
+          <i class="bi bi-repeat"></i>
+        </div>
+      </div>
+      <div class="stat-val text-success">{{ metrics.active_subscriptions }}</div>
+      <div class="text-muted" style="font-size: 0.75rem;">
+        <span>+{{ metrics.trialing_subscriptions }} in free trial</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 4: Total Revenue -->
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card stat-cyan h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <p class="stat-label">Total Revenue</p>
+        <div class="stat-icon-wrapper bg-light text-info">
+          <i class="bi bi-currency-dollar"></i>
+        </div>
+      </div>
+      <div class="stat-val">{{ system_settings.currency_symbol|default:"$" }}{{ metrics.total_revenue|floatformat:2|intcomma }}</div>
+      <div class="text-muted" style="font-size: 0.75rem;">
+        <i class="bi bi-check-circle text-success me-1"></i>Settled payments
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 5: Pending Payments -->
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card stat-amber h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <p class="stat-label">Pending Payments</p>
+        <div class="stat-icon-wrapper bg-light text-warning">
+          <i class="bi bi-clock-history"></i>
+        </div>
+      </div>
+      <div class="stat-val text-warning">{{ metrics.pending_payments_count }}</div>
+      <div class="text-muted" style="font-size: 0.75rem;">
+        <span>{{ system_settings.currency_symbol|default:"$" }}{{ metrics.pending_payments_amount|floatformat:2|intcomma }} pending</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card 6: Overdue Invoices -->
+  <div class="col-sm-6 col-xl-2">
+    <div class="stat-card stat-rose h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <p class="stat-label">Overdue Invoices</p>
+        <div class="stat-icon-wrapper bg-light text-danger">
+          <i class="bi bi-exclamation-octagon-fill"></i>
+        </div>
+      </div>
+      <div class="stat-val text-danger">{{ metrics.overdue_invoices_count }}</div>
+      <div class="text-muted" style="font-size: 0.75rem;">
+        <span>{{ system_settings.currency_symbol|default:"$" }}{{ metrics.overdue_invoices_amount|floatformat:2|intcomma }} at risk</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     REVENUE CHART (CHART.JS) & LIFECYCLE BREAKDOWN
+     ========================================================================== -->
+<div class="row g-3 mb-4">
+  <!-- Revenue Inflow Chart (Col 8) -->
+  <div class="col-xl-8">
+    <div class="card-saas p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold mb-1 text-slate-900">Revenue Inflow & Billing Growth</h5>
+          <p class="text-muted mb-0" style="font-size: 0.8rem;">Historical recurring and settled payments across active subscriptions</p>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'reports' %}" class="btn btn-sm btn-bl-outline" style="font-size: 0.75rem;">
+            <i class="bi bi-calendar3 me-1"></i> Date Reports
+          </a>
+        </div>
+      </div>
+      <div style="position: relative; height: 280px; width: 100%;">
+        <canvas id="revenueTrendsChart" data-chart-data='{{ chart_revenue_json|safe }}'></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subscription Status Distribution (Col 4) -->
+  <div class="col-xl-4">
+    <div class="card-saas p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold mb-1 text-slate-900">Subscription Status</h5>
+          <p class="text-muted mb-0" style="font-size: 0.8rem;">Customer subscription lifecycle</p>
+        </div>
+      </div>
+      <div style="position: relative; height: 210px; width: 100%;">
+        <canvas id="subscriptionStatusChart" data-chart-data='{{ chart_status_json|safe }}'></canvas>
+      </div>
+      <div class="mt-3 pt-3 border-top d-flex justify-content-around text-center" style="font-size: 0.785rem;">
+        <div>
+          <span class="text-success fw-bold d-block fs-6">{{ metrics.active_subscriptions }}</span>
+          <span class="text-muted">Active</span>
+        </div>
+        <div>
+          <span class="text-info fw-bold d-block fs-6">{{ metrics.trialing_subscriptions }}</span>
+          <span class="text-muted">Trialing</span>
+        </div>
+        <div>
+          <span class="text-warning fw-bold d-block fs-6">{{ metrics.pending_payments_count }}</span>
+          <span class="text-muted">Past Due</span>
+        </div>
+        <div>
+          <span class="text-danger fw-bold d-block fs-6">{{ metrics.overdue_invoices_count }}</span>
+          <span class="text-muted">Overdue</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     TRANSACTIONAL DATA FEEDS: RECENT SUBSCRIPTIONS, RECENT PAYMENTS, OVERDUE INVOICES
+     ========================================================================== -->
+<div class="row g-3">
+  <!-- Recent Subscriptions List (Col 6) -->
+  <div class="col-xl-6">
+    <div class="card-saas h-100 overflow-hidden">
+      <div class="p-3 px-4 border-bottom bg-white d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-repeat text-primary me-1"></i> Recent Subscriptions</h6>
+          <span class="text-muted" style="font-size: 0.75rem;">Latest customer plan activations</span>
+        </div>
+        <a href="{% url 'subscription_list' %}" class="btn btn-sm btn-light border" style="font-size: 0.75rem;">
+          View All Subscriptions &rarr;
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Plan</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Renewal Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in recent_subscriptions %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ sub.customer.full_name }}</div>
+                  <div class="text-muted" style="font-size: 0.72rem;">{{ sub.customer.company_name|default:sub.customer.email }}</div>
+                </td>
+                <td>
+                  <span class="fw-semibold text-dark">{{ sub.plan.name }}</span>
+                </td>
+                <td>
+                  <strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ sub.current_amount }}</strong>
+                </td>
+                <td>
+                  <span class="badge-saas badge-{{ sub.status_badge_class }}">
+                    {{ sub.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  <span class="text-muted" style="font-size: 0.785rem;">{{ sub.next_billing_date }}</span>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center py-3 text-muted">No subscriptions found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Payments List (Col 6) -->
+  <div class="col-xl-6">
+    <div class="card-saas h-100 overflow-hidden">
+      <div class="p-3 px-4 border-bottom bg-white d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-credit-card-2-front-fill text-success me-1"></i> Recent Payments</h6>
+          <span class="text-muted" style="font-size: 0.75rem;">Realtime payment processing feed</span>
+        </div>
+        <a href="{% url 'payment_list' %}" class="btn btn-sm btn-light border" style="font-size: 0.75rem;">
+          View All Payments &rarr;
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Payment ID</th>
+              <th>Customer</th>
+              <th>Amount</th>
+              <th>Method</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pay in recent_payments %}
+              <tr>
+                <td><span class="code-tag">{{ pay.payment_id }}</span></td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ pay.customer.full_name }}</div>
+                </td>
+                <td>
+                  <strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ pay.amount }}</strong>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">{{ pay.get_payment_method_display }}</span>
+                </td>
+                <td>
+                  {% if pay.status == 'completed' %}
+                    <span class="badge-saas badge-success"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                  {% elif pay.status == 'pending' %}
+                    <span class="badge-saas badge-warning"><i class="bi bi-clock-fill"></i> Pending</span>
+                  {% else %}
+                    <span class="badge-saas badge-danger">{{ pay.get_status_display }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center py-3 text-muted">No payments logged yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overdue Invoices List (Full Width Table) -->
+  <div class="col-12 mt-4">
+    <div class="card-saas overflow-hidden border-danger-subtle">
+      <div class="p-3 px-4 border-bottom bg-white d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="fw-bold mb-0 text-danger d-flex align-items-center gap-1">
+            <i class="bi bi-exclamation-triangle-fill"></i> Overdue Invoices Requiring Follow-Up
+          </h6>
+          <span class="text-muted" style="font-size: 0.75rem;">Unpaid accounts that have breached invoice terms</span>
+        </div>
+        <a href="{% url 'invoice_list' %}?status=overdue" class="btn btn-sm btn-outline-danger" style="font-size: 0.75rem;">
+          Manage All Invoices &rarr;
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Invoice Number</th>
+              <th>Customer Account</th>
+              <th>Invoice Amount</th>
+              <th>Due Date</th>
+              <th>Days Overdue</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in overdue_invoice_list %}
+              <tr>
+                <td><span class="code-tag text-danger">{{ item.invoice.invoice_number }}</span></td>
+                <td>
+                  <div class="fw-bold text-dark">{{ item.invoice.customer.full_name }}</div>
+                  <div class="text-muted small">{{ item.invoice.customer.email }} • {{ item.invoice.customer.phone }}</div>
+                </td>
+                <td>
+                  <strong class="text-danger fs-6">{{ system_settings.currency_symbol|default:"$" }}{{ item.invoice.total_amount }}</strong>
+                </td>
+                <td>
+                  <span class="text-muted">{{ item.invoice.due_date }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-danger text-white px-2 py-1">
+                    <i class="bi bi-clock me-1"></i>{{ item.days_overdue }} days past due
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="mailto:{{ item.invoice.customer.email }}?subject=Overdue%20Invoice%20{{ item.invoice.invoice_number }}" class="btn btn-sm btn-light border text-danger" title="Send Reminder">
+                    <i class="bi bi-envelope-exclamation-fill me-1"></i> Send Notice
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-4 text-success">
+                  <i class="bi bi-check-circle-fill me-1"></i> All accounts current. No overdue invoices at this time!
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Discounts & Coupons</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Promotional campaigns, percentage coupons, and fixed subscription credits.</p>
+  </div>
+</div>
+
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-9">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search discount code or description...">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Promo Code</th>
+          <th>Description</th>
+          <th>Discount Type</th>
+          <th>Value</th>
+          <th>Redemptions</th>
+          <th>Valid Until</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for disc in discounts %}
+          <tr>
+            <td><strong class="code-tag fs-6 text-primary">{{ disc.code }}</strong></td>
+            <td><span class="text-dark">{{ disc.description }}</span></td>
+            <td><span class="badge bg-light text-dark border">{{ disc.get_discount_type_display }}</span></td>
+            <td>
+              <strong class="text-success fs-6">
+                {% if disc.discount_type == 'percentage' %}{{ disc.value }}% OFF{% else %}{{ system_settings.currency_symbol|default:"$" }}{{ disc.value }} Credit{% endif %}
+              </strong>
+            </td>
+            <td><span class="text-muted">{{ disc.times_used }} used</span></td>
+            <td><span class="text-muted small">{{ disc.valid_until }}</span></td>
+            <td>
+              {% if disc.is_active %}
+                <span class="badge-saas badge-success">Active</span>
+              {% else %}
+                <span class="badge-saas badge-secondary">Expired</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center py-4 text-muted">No discount codes created yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

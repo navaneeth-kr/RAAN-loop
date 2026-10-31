@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Invoice {{ invoice.invoice_number }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; color: #374151; background:#fff; }
+    .header { background: #2563EB; color: #fff; padding: 24px 32px; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 24px 32px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1E40AF; color: #fff; padding: 8px 12px; text-align: left; }
+    td { padding: 8px 12px; border-bottom: 1px solid #E5E7EB; }
+    .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #2563EB; }
+    .footer { text-align: center; padding: 16px; color: #9CA3AF; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>{{ company_name }}</h1>
+    <p>{{ company_address }} | {{ company_phone }} | {{ company_email }}</p>
+  </div>
+  <div class="content">
+    <h2>Invoice #{{ invoice.invoice_number }}</h2>
+    <p>Status: <strong>{{ invoice.status|upper }}</strong></p>
+    <p>Invoice Date: {{ invoice.invoice_date.strftime('%d %B %Y') }}<br/>
+       Due Date: <strong>{{ invoice.due_date.strftime('%d %B %Y') }}</strong></p>
+    <hr/>
+    <h3>Bill To:</h3>
+    <p><strong>{{ customer.name }}</strong><br/>
+       {{ customer.email }}<br/>
+       {{ customer.phone or '' }}<br/>
+       {{ customer.address or '' }}{% if customer.city %}, {{ customer.city }}{% endif %}{% if customer.country %}, {{ customer.country }}{% endif %}</p>
+    <hr/>
+    <table>
+      <thead>
+        <tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>{{ invoice.product_name }}</td>
+          <td>{{ invoice.quantity }}</td>
+          <td>${{ "%.2f"|format(invoice.unit_price|float) }}</td>
+          <td>${{ "%.2f"|format(invoice.unit_price|float * invoice.quantity) }}</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td colspan="3" style="text-align:right;color:#6B7280">Subtotal</td><td>${{ "%.2f"|format(invoice.subtotal|float) }}</td></tr>
+        {% if invoice.discount_percent|float > 0 %}
+        <tr><td colspan="3" style="text-align:right;color:#6B7280">Discount ({{ invoice.discount_percent }}%)</td><td>-${{ "%.2f"|format(invoice.discount_amount|float) }}</td></tr>
+        {% endif %}
+        {% if invoice.tax_rate|float > 0 %}
+        <tr><td colspan="3" style="text-align:right;color:#6B7280">{{ invoice.tax_name }} ({{ invoice.tax_rate }}%)</td><td>${{ "%.2f"|format(invoice.tax_amount|float) }}</td></tr>
+        {% endif %}
+        <tr class="total-row"><td colspan="3" style="text-align:right">TOTAL DUE</td><td style="color:#2563EB">${{ "%.2f"|format(invoice.total_amount|float) }}</td></tr>
+      </tfoot>
+    </table>
+    {% if invoice.notes %}<p><strong>Notes:</strong> {{ invoice.notes }}</p>{% endif %}
+  </div>
+  <div class="footer">Thank you for your business! | {{ company_email }}</div>
+</body>
+</html>
+

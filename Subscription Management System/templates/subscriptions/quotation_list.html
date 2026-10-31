@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Quotations Management</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Custom sales quotes, enterprise proposals, and pricing estimates.</p>
+  </div>
+</div>
+
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-9">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search quotation number or customer...">
+      </div>
+    </div>
+    <div class="col-md-3">
+      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Quote Number</th>
+          <th>Customer Account</th>
+          <th>Target Plan</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Valid Until</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for quote in quotations %}
+          <tr>
+            <td><span class="code-tag">{{ quote.quotation_number }}</span></td>
+            <td>
+              <div class="fw-bold text-dark">{{ quote.customer.full_name }}</div>
+              <small class="text-muted">{{ quote.customer.email }}</small>
+            </td>
+            <td><span class="fw-semibold text-primary">{{ quote.plan.name }}</span></td>
+            <td><strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ quote.total_amount|intcomma }}</strong></td>
+            <td>
+              {% if quote.status == 'accepted' %}
+                <span class="badge-saas badge-success">Accepted</span>
+              {% elif quote.status == 'sent' %}
+                <span class="badge-saas badge-info">Sent</span>
+              {% else %}
+                <span class="badge-saas badge-secondary">{{ quote.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td><span class="text-muted small">{{ quote.valid_until }}</span></td>
+            <td><small class="text-muted">{{ quote.notes|default:"—" }}</small></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center py-4 text-muted">No quotations found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

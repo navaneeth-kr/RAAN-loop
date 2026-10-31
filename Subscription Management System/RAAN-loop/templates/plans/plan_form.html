@@ -1,0 +1,337 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
+      <li class="breadcrumb-item"><a href="{% url 'plan_list' %}" class="text-decoration-none">Subscription Plans</a></li>
+      <li class="breadcrumb-item active">{{ page_title }}</li>
+    </ol>
+  </nav>
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <h2 class="fw-bold mb-0 text-slate-900">{{ page_title }}</h2>
+      <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+        Configure recurring plan terms, billing frequency, quantity constraints, lifecycle policies, and date rules.
+      </p>
+    </div>
+    <a href="{% url 'plan_list' %}" class="btn btn-bl-outline btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Plans
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-saas p-4 bg-white shadow-sm">
+      <form method="post" novalidate id="planForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger small mb-3">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <!-- 1. PRODUCT & BASIC IDENTIFIERS -->
+        <h6 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-box-seam text-primary me-1"></i> 1. Product & Identification
+        </h6>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Target Product <span class="text-danger">*</span>
+            </label>
+            {{ form.product }}
+            {% if form.product.errors %}<div class="text-danger small mt-1">{{ form.product.errors|striptags }}</div>{% endif %}
+            <small class="text-muted" style="font-size: 0.75rem;">Core product this plan belongs to</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Plan Name <span class="text-danger">*</span>
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors|striptags }}</div>{% endif %}
+            <small class="text-muted" style="font-size: 0.75rem;">e.g. <code>Software Package (Standard)</code></small>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Plan SKU / Code <span class="text-danger">*</span>
+            </label>
+            {{ form.code }}
+            {% if form.code.errors %}<div class="text-danger small mt-1">{{ form.code.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Linked Product Variant
+            </label>
+            {{ form.variant }}
+            <small class="text-muted" style="font-size: 0.75rem;">Optional tier variant</small>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Tier Classification
+            </label>
+            {{ form.tier }}
+          </div>
+        </div>
+
+        <!-- 2. PRICING & QUANTITY RULES -->
+        <h6 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-cash-stack text-success me-1"></i> 2. Pricing & Quantity Configuration
+        </h6>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Unit Price ({{ system_settings.currency_symbol|default:"₹" }}) <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted fw-bold">{{ system_settings.currency_symbol|default:"₹" }}</span>
+              {{ form.price }}
+            </div>
+            {% if form.price.errors %}<div class="text-danger small mt-1">{{ form.price.errors|striptags }}</div>{% endif %}
+            <small class="text-muted" style="font-size: 0.75rem;">Recurring charge per unit/seat</small>
+          </div>
+
+          <!-- Billing Frequency: Daily, Weekly, Monthly, Yearly -->
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Billing Frequency <span class="text-danger">*</span>
+            </label>
+            {{ form.billing_cycle }}
+            <small class="text-muted" style="font-size: 0.75rem;">Daily, Weekly, Monthly, or Yearly</small>
+          </div>
+
+          <!-- Minimum Quantity -->
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Minimum Quantity <span class="text-danger">*</span>
+            </label>
+            {{ form.min_quantity }}
+            {% if form.min_quantity.errors %}<div class="text-danger small mt-1">{{ form.min_quantity.errors|striptags }}</div>{% endif %}
+            <small class="text-muted" style="font-size: 0.75rem;">Minimum seats/units required to subscribe</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">Free Trial Period (Days)</label>
+            {{ form.trial_days }}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">One-Time Setup Fee ({{ system_settings.currency_symbol|default:"₹" }})</label>
+            {{ form.setup_fee }}
+          </div>
+        </div>
+
+        <!-- 3. INTERACTIVE QUANTITY-BASED PRICE CALCULATOR PREVIEW -->
+        <div class="p-3 bg-light rounded-3 border mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold text-slate-900 small">
+              <i class="bi bi-calculator text-primary me-1"></i> Interactive Quantity Price Calculator Preview
+            </span>
+            <span class="badge bg-primary-subtle text-primary border" style="font-size: 0.7rem;">Live Formula</span>
+          </div>
+
+          <div class="row align-items-center g-2">
+            <div class="col-md-5">
+              <label class="small text-muted mb-1">Test Subscriber Quantity:</label>
+              <div class="input-group input-group-sm">
+                <input type="number" id="testQuantityInput" class="form-control" value="5" min="1" step="1">
+                <span class="input-group-text">units</span>
+              </div>
+            </div>
+
+            <div class="col-md-7">
+              <div class="p-2 bg-white rounded border d-flex justify-content-between align-items-center">
+                <div>
+                  <small class="text-muted d-block" style="font-size: 0.72rem;">TOTAL CHARGE</small>
+                  <span class="fs-5 fw-bold text-success" id="calcQuantityTotal">{{ system_settings.currency_symbol|default:"₹" }}0.00</span>
+                </div>
+                <div class="text-end">
+                  <small class="text-muted d-block" style="font-size: 0.72rem;">BREAKDOWN</small>
+                  <small class="text-secondary" id="calcQuantityFormula">0 units &times; ₹0.00</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. DATE AVAILABILITY & VALIDATION -->
+        <h6 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-calendar-range text-warning me-1"></i> 3. Date Availability & Schedule
+        </h6>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              Start Date <span class="text-danger">*</span>
+            </label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors|striptags }}</div>{% endif %}
+            <small class="text-muted" style="font-size: 0.75rem;">Date when this plan becomes active for purchase</small>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">
+              End Date (Optional)
+            </label>
+            {{ form.end_date }}
+            {% if form.end_date.errors %}<div class="text-danger small mt-1">{{ form.end_date.errors|striptags }}</div>{% endif %}
+            <small class="text-muted" style="font-size: 0.75rem;">Expiration date (must be on or after Start Date)</small>
+          </div>
+
+          <div class="col-12">
+            <div class="form-check form-switch p-2 bg-light rounded border ps-5">
+              {{ form.auto_close }}
+              <label class="form-check-label fw-semibold text-slate-800 small" for="{{ form.auto_close.id_for_label }}">
+                Configure Automatic Closure
+              </label>
+              <div class="text-muted small">
+                Automatically retire and close the plan upon reaching the End Date. Requires an End Date.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. POLICY RULES -->
+        <h6 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-shield-check text-info me-1"></i> 4. Subscription Lifecycle Policies
+        </h6>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded border h-100">
+              <div class="form-check form-switch ps-5">
+                {{ form.allow_early_cancellation }}
+                <label class="form-check-label fw-semibold text-slate-800 small" for="{{ form.allow_early_cancellation.id_for_label }}">
+                  Early Cancellation
+                </label>
+              </div>
+              <small class="text-muted d-block mt-1">Allow customers to cancel before current term ends</small>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded border h-100">
+              <div class="form-check form-switch ps-5">
+                {{ form.allow_pausing }}
+                <label class="form-check-label fw-semibold text-slate-800 small" for="{{ form.allow_pausing.id_for_label }}">
+                  Subscription Pausing
+                </label>
+              </div>
+              <small class="text-muted d-block mt-1">Allow customer to temporarily freeze recurring billing</small>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded border h-100">
+              <div class="form-check form-switch ps-5">
+                {{ form.allow_renewal }}
+                <label class="form-check-label fw-semibold text-slate-800 small" for="{{ form.allow_renewal.id_for_label }}">
+                  Subscription Renewal
+                </label>
+              </div>
+              <small class="text-muted d-block mt-1">Allow auto or manual renewal at end of billing cycle</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. DESCRIPTION & METADATA -->
+        <h6 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-file-text text-secondary me-1"></i> 5. Description & Presentation
+        </h6>
+
+        <div class="row g-3 mb-3">
+          <div class="col-12">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">Plan Description & Marketing Scope</label>
+            {{ form.description }}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">Status</label>
+            {{ form.status }}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-slate-800" style="font-size: 0.85rem;">Sort Order</label>
+            {{ form.sort_order }}
+          </div>
+
+          <div class="col-md-4 d-flex align-items-center mt-4">
+            <div class="form-check form-switch ps-5">
+              {{ form.is_featured }}
+              <label class="form-check-label fw-semibold text-slate-800 small" for="{{ form.is_featured.id_for_label }}">
+                Featured / Popular Tier
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+          <a href="{% url 'plan_list' %}" class="btn btn-bl-outline btn-sm">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-bl-primary btn-sm px-4 shadow-sm">
+            <i class="bi bi-check2-circle me-1"></i> Save Subscription Plan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Helpful Guide Sidebar -->
+  <div class="col-lg-4">
+    <div class="card-saas p-4 bg-white mb-3 shadow-sm border-start border-4 border-primary">
+      <h6 class="fw-bold mb-2 text-slate-900"><i class="bi bi-info-circle text-primary me-1"></i> Plan Rules & Guidelines</h6>
+      <ul class="text-muted small ps-3 mb-0" style="line-height: 1.7;">
+        <li><strong>Billing Frequencies:</strong> Select Daily, Weekly, Monthly, or Yearly to match billing cadence.</li>
+        <li><strong>Quantity Pricing:</strong> Total charge is calculated as <code>Unit Price &times; Quantity</code> (with Minimum Quantity enforced).</li>
+        <li><strong>Date Validation:</strong> End Date cannot be earlier than Start Date.</li>
+        <li><strong>Automatic Closure:</strong> When enabled, plan auto-retires on End Date.</li>
+        <li><strong>Safe Deletion:</strong> Plans with active subscriptions cannot be deleted; they must be deactivated instead.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Price & Date Preview Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const priceInput = document.getElementById('plan_unit_price') || document.querySelector('input[name="price"]');
+  const minQtyInput = document.getElementById('plan_min_quantity') || document.querySelector('input[name="min_quantity"]');
+  const testQtyInput = document.getElementById('testQuantityInput');
+  const calcTotal = document.getElementById('calcQuantityTotal');
+  const calcFormula = document.getElementById('calcQuantityFormula');
+  const currencySymbol = '{{ system_settings.currency_symbol|default:"₹" }}';
+
+  function recalculateQuantity() {
+    const unitPrice = parseFloat(priceInput ? priceInput.value : 0) || 0;
+    const minQty = parseInt(minQtyInput ? minQtyInput.value : 1) || 1;
+    let qty = parseInt(testQtyInput ? testQtyInput.value : 1) || 1;
+
+    if (qty < minQty) {
+      qty = minQty;
+      if (testQtyInput) testQtyInput.value = minQty;
+    }
+
+    const total = (unitPrice * qty).toFixed(2);
+
+    if (calcTotal) calcTotal.textContent = currencySymbol + total;
+    if (calcFormula) calcFormula.textContent = qty + ' units × ' + currencySymbol + unitPrice.toFixed(2);
+  }
+
+  if (priceInput) priceInput.addEventListener('input', recalculateQuantity);
+  if (minQtyInput) minQtyInput.addEventListener('input', recalculateQuantity);
+  if (testQtyInput) testQtyInput.addEventListener('input', recalculateQuantity);
+
+  recalculateQuantity();
+});
+</script>
+{% endblock %}

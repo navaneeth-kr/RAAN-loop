@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Product Variants Matrix</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Manage feature editions, user seat packages, and recurring billing cycles for each product.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'product_list' %}" class="btn btn-bl-outline btn-sm">
+      <i class="bi bi-box-seam me-1"></i> Products Catalog
+    </a>
+    <a href="{% url 'variant_create' %}" class="btn btn-bl-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i> Add Product Variant
+    </a>
+  </div>
+</div>
+
+<!-- SEARCH & FILTER TOOLBAR (MODULE 5) -->
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-12 col-md-4">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search variant name, SKU, or product...">
+      </div>
+    </div>
+
+    <!-- Product Filter -->
+    <div class="col-6 col-md-3">
+      <select name="product" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Products</option>
+        {% for prod in products %}
+          <option value="{{ prod.id }}" {% if selected_product == prod.id|stringformat:"s" %}selected{% endif %}>{{ prod.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Tier Filter -->
+    <div class="col-6 col-md-2">
+      <select name="tier" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Tiers</option>
+        <option value="standard" {% if selected_tier == 'standard' %}selected{% endif %}>Standard</option>
+        <option value="pro" {% if selected_tier == 'pro' %}selected{% endif %}>Professional</option>
+        <option value="enterprise" {% if selected_tier == 'enterprise' %}selected{% endif %}>Enterprise</option>
+        <option value="custom" {% if selected_tier == 'custom' %}selected{% endif %}>Custom</option>
+      </select>
+    </div>
+
+    <!-- Billing Cycle -->
+    <div class="col-6 col-md-2">
+      <select name="billing_cycle" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Billing Cycles</option>
+        <option value="monthly" {% if selected_cycle == 'monthly' %}selected{% endif %}>Monthly</option>
+        <option value="quarterly" {% if selected_cycle == 'quarterly' %}selected{% endif %}>Quarterly</option>
+        <option value="annual" {% if selected_cycle == 'annual' %}selected{% endif %}>Annual</option>
+      </select>
+    </div>
+
+    <div class="col-6 col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-primary w-100" title="Apply Filter">
+        <i class="bi bi-funnel"></i>
+      </button>
+      {% if search_query or selected_product or selected_tier or selected_cycle %}
+        <a href="{% url 'variant_list' %}" class="btn btn-sm btn-light border" title="Reset Filters">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- VARIANTS TABLE -->
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Variant & Product</th>
+          <th>SKU Code</th>
+          <th>Tier</th>
+          <th>Billing Cycle</th>
+          <th>Base Price</th>
+          <th>Additional Charge</th>
+          <th>Final Price</th>
+          <th>Quotas & Specs</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for variant in variants %}
+          <tr>
+            <td>
+              <div class="fw-bold text-dark">{{ variant.name }}</div>
+              <a href="{% url 'product_detail' pk=variant.product.pk %}" class="text-muted text-decoration-none" style="font-size: 0.785rem;">
+                <i class="bi bi-box-seam me-1"></i>{{ variant.product.name }}
+              </a>
+            </td>
+            <td><span class="code-tag">{{ variant.sku }}</span></td>
+            <td><span class="badge bg-light text-dark border">{{ variant.get_tier_display }}</span></td>
+            <td>{{ variant.get_billing_cycle_display }}</td>
+            <td>
+              <span class="text-muted">{{ system_settings.currency_symbol|default:"₹" }}{{ variant.base_price|floatformat:2 }}</span>
+            </td>
+            <td>
+              <span class="fw-semibold text-warning">+{{ system_settings.currency_symbol|default:"₹" }}{{ variant.additional_charge|floatformat:2 }}</span>
+            </td>
+            <td>
+              <strong class="badge bg-success-subtle text-success border border-success-subtle fs-6">
+                {{ system_settings.currency_symbol|default:"₹" }}{{ variant.final_price|floatformat:2 }}
+              </strong>
+            </td>
+            <td>
+              <div style="font-size: 0.785rem;">
+                <span class="badge bg-light text-muted border me-1">{{ variant.max_users }} Seats</span>
+                <span class="badge bg-light text-muted border me-1">{{ variant.storage_gb }} GB</span>
+                <span class="badge bg-light text-muted border">{{ variant.sla_support_level }}</span>
+              </div>
+            </td>
+            <td>
+              {% if variant.is_active %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border">Inactive</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'variant_update' pk=variant.pk %}" class="btn btn-sm btn-light border" title="Edit Variant">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form action="{% url 'variant_delete' pk=variant.pk %}" method="post" class="d-inline" onsubmit="return confirm('Delete this variant?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete Variant">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="bi bi-layers display-6 text-muted mb-2 d-block"></i>
+              No variants match your filter criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}
