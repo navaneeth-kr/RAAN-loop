@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Customer Accounts | Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Customer Accounts</h1>
+        <p class="page-subtitle">Manage customer organizations, contact profiles, and user access roles.</p>
+    </div>
+    <button class="btn btn-primary" type="button">
+        <i class="bi bi-person-plus-fill me-1"></i> Add Account
+    </button>
+</div>
+
+<div class="saas-card">
+    <div class="saas-card-header">
+        <h5 class="saas-card-title">Registered Customer Organizations</h5>
+        <span class="badge bg-secondary-subtle text-secondary">{{ accounts|length }} Organizations</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table saas-table align-middle">
+            <thead>
+                <tr>
+                    <th>Organization</th>
+                    <th>Billing Contact</th>
+                    <th>Active Subscriptions</th>
+                    <th>Joined Date</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for acc in accounts %}
+                <tr>
+                    <td class="fw-bold text-dark">{{ acc.name }}</td>
+                    <td>{{ acc.email }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ acc.subs }} Active</span></td>
+                    <td class="text-secondary">{{ acc.joined }}</td>
+                    <td>
+                        {% if acc.status == 'Active' %}
+                            <span class="badge-status badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                        {% elif acc.status == 'Warning' %}
+                            <span class="badge-status badge-pending"><i class="bi bi-exclamation-triangle-fill"></i> Warning</span>
+                        {% else %}
+                            <span class="badge-status badge-danger"><i class="bi bi-x-circle-fill"></i> Overdue</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary">View Details</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

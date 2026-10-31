@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Financial & Operational Reports</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Date-filtered telemetry, revenue realizations, and subscription growth metrics.</p>
+  </div>
+  <a href="{% url 'export_center' %}" class="btn btn-bl-primary btn-sm">
+    <i class="bi bi-cloud-arrow-down me-1"></i> Export Data
+  </a>
+</div>
+
+<!-- Date-based Presets & Custom Filter -->
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-5 d-flex gap-2">
+      <a href="?preset=7d" class="btn btn-sm {% if range_preset == '7d' %}btn-primary{% else %}btn-light border{% endif %}">Last 7 Days</a>
+      <a href="?preset=30d" class="btn btn-sm {% if range_preset == '30d' %}btn-primary{% else %}btn-light border{% endif %}">Last 30 Days</a>
+      <a href="?preset=90d" class="btn btn-sm {% if range_preset == '90d' %}btn-primary{% else %}btn-light border{% endif %}">Last 90 Days</a>
+      <a href="?preset=1y" class="btn btn-sm {% if range_preset == '1y' %}btn-primary{% else %}btn-light border{% endif %}">This Year</a>
+    </div>
+
+    <div class="col-md-5 d-flex align-items-center gap-2">
+      <span class="text-muted small">Custom:</span>
+      <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="form-control form-control-sm">
+      <span class="text-muted small">to</span>
+      <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="form-control form-control-sm">
+    </div>
+
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary w-100">
+        <i class="bi bi-funnel me-1"></i> Run Report
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Report Summary Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="stat-card stat-cyan">
+      <p class="stat-label">Realized Revenue in Period</p>
+      <div class="stat-val text-primary">{{ system_settings.currency_symbol|default:"$" }}{{ period_revenue|floatformat:2|intcomma }}</div>
+      <small class="text-muted">{{ start_date }} to {{ end_date }}</small>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="stat-card stat-emerald">
+      <p class="stat-label">Subscriptions Activated</p>
+      <div class="stat-val text-success">{{ new_subscriptions_count }}</div>
+      <small class="text-muted">New accounts enrolled</small>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="stat-card stat-navy">
+      <p class="stat-label">Invoices Generated</p>
+      <div class="stat-val text-dark">{{ invoices_issued }}</div>
+      <small class="text-muted">Total billing cycles billed</small>
+    </div>
+  </div>
+</div>
+
+<!-- Period Payments Breakdown -->
+<div class="card-saas bg-white overflow-hidden">
+  <div class="p-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+    <h6 class="fw-bold mb-0 text-slate-900">Period Payments Breakdown</h6>
+    <span class="badge bg-light text-muted border">{{ payments_in_period.count }} transactions</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Customer</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Reference</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments_in_period %}
+          <tr>
+            <td><span class="code-tag">{{ pay.payment_id }}</span></td>
+            <td><span class="fw-semibold text-dark">{{ pay.customer.full_name }}</span></td>
+            <td><strong>{{ system_settings.currency_symbol|default:"$" }}{{ pay.amount }}</strong></td>
+            <td><span class="badge bg-light text-dark border">{{ pay.get_payment_method_display }}</span></td>
+            <td><small class="text-muted font-monospace">{{ pay.transaction_reference }}</small></td>
+            <td><span class="text-muted small">{{ pay.payment_date|date:"Y-m-d H:i" }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center py-4 text-muted">No transactions recorded for the selected period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

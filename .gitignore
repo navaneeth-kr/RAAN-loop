@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -28,11 +29,31 @@ instance/
 .idea/
 *.swp
 *.swo
+=======
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+>>>>>>> a68f587962c95873aa83cce70783dd32e74042d8
 
 # OS
 .DS_Store
 Thumbs.db
+<<<<<<< HEAD
 
 # Logs
 *.log
 
+=======
+>>>>>>> a68f587962c95873aa83cce70783dd32e74042d8

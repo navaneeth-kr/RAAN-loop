@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Payments & Gateway Logs | Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Payments & Gateway Transactions</h1>
+        <p class="page-subtitle">Inspect payment gateway settlements, webhooks, transaction statuses, and chargebacks.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <span class="badge bg-light text-dark border d-flex align-items-center px-3 py-2">
+            <i class="bi bi-stripe me-2 text-primary"></i> Stripe: Connected
+        </span>
+        <span class="badge bg-light text-dark border d-flex align-items-center px-3 py-2">
+            <i class="bi bi-paypal me-2 text-info"></i> PayPal: Connected
+        </span>
+    </div>
+</div>
+
+<div class="saas-card">
+    <div class="saas-card-header">
+        <h5 class="saas-card-title">Recent Payment Events</h5>
+        <span class="badge bg-secondary-subtle text-secondary">Realtime Gateway Feed</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table saas-table align-middle">
+            <thead>
+                <tr>
+                    <th>Transaction Reference</th>
+                    <th>Gateway Provider</th>
+                    <th>Customer</th>
+                    <th>Processed Amount</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td><span class="font-monospace text-primary fw-semibold">{{ txn.txn_id }}</span></td>
+                    <td><span class="badge bg-light text-secondary border">{{ txn.gateway }}</span></td>
+                    <td class="fw-bold text-dark">{{ txn.customer }}</td>
+                    <td class="fw-bold">{{ txn.amount }}</td>
+                    <td>
+                        {% if 'Succeeded' in txn.status %}
+                            <span class="badge-status badge-active"><i class="bi bi-check-circle-fill"></i> Success</span>
+                        {% else %}
+                            <span class="badge-status badge-danger"><i class="bi bi-x-circle-fill"></i> Failed</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-secondary small">{{ txn.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

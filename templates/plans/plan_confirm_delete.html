@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-7 col-lg-6">
+    <div class="card-saas p-4 bg-white text-center shadow-sm">
+      
+      {% if not can_delete %}
+        <!-- DELETION PREVENTED STATE (SAFETY RULE ENFORCED) -->
+        <div class="rounded-circle bg-danger-subtle text-danger p-3 d-inline-flex align-items-center justify-content-center mb-3" style="width: 68px; height: 68px;">
+          <i class="bi bi-shield-x fs-1"></i>
+        </div>
+        <h4 class="fw-bold text-slate-900 mb-2">Deletion Prevented: Plan in Active Use</h4>
+        <p class="text-muted" style="font-size: 0.885rem;">
+          Plan <strong>"{{ plan.name }}"</strong> (<span class="code-tag">{{ plan.code }}</span>) cannot be deleted because it is currently attached to <strong>{{ active_subscribers }} active subscription(s)</strong>.
+        </p>
+
+        <div class="alert alert-warning text-start small mb-4">
+          <i class="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
+          <strong>Integrity Protection Rule:</strong> Deleting plans in active use disrupts customer billing and automated recurring invoices. You can safely <strong>Deactivate</strong> this plan so no new customers can subscribe while preserving existing active contracts.
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
+          <a href="{% url 'plan_detail' pk=plan.pk %}" class="btn btn-bl-outline btn-sm px-4">
+            <i class="bi bi-arrow-left me-1"></i> Return to Plan
+          </a>
+          <form action="{% url 'plan_toggle_status' pk=plan.pk %}" method="post" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-warning btn-sm px-4 fw-semibold">
+              <i class="bi bi-pause-circle me-1"></i> Deactivate Plan Instead
+            </button>
+          </form>
+        </div>
+
+      {% else %}
+        <!-- SAFE DELETION CONFIRMATION STATE -->
+        <div class="rounded-circle bg-danger-subtle text-danger p-3 d-inline-flex align-items-center justify-content-center mb-3" style="width: 68px; height: 68px;">
+          <i class="bi bi-trash fs-1"></i>
+        </div>
+        <h4 class="fw-bold text-slate-900 mb-2">Confirm Plan Removal</h4>
+        <p class="text-muted" style="font-size: 0.885rem;">
+          Are you sure you want to permanently delete plan <strong>"{{ plan.name }}"</strong> (<span class="code-tag">{{ plan.code }}</span>)?
+        </p>
+
+        <div class="alert alert-success text-start small mb-4">
+          <i class="bi bi-check-circle-fill me-1 text-success"></i>
+          <strong>Safe Deletion Check Passed:</strong> This plan has <strong>0 active subscriptions</strong>. It is safe to remove without impacting existing customers.
+        </div>
+
+        <form method="post" class="d-flex justify-content-center gap-2">
+          {% csrf_token %}
+          <a href="{% url 'plan_detail' pk=plan.pk %}" class="btn btn-bl-outline btn-sm px-4">Cancel</a>
+          <button type="submit" class="btn btn-danger btn-sm px-4">
+            <i class="bi bi-trash me-1"></i> Yes, Permanently Delete
+          </button>
+        </form>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

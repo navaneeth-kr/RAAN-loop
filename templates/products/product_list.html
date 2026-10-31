@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<!-- PAGE HEADER -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Product Management</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+      Manage software packages, pricing tiers, cost structures, and product variants with automatic price calculation.
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'variant_list' %}" class="btn btn-bl-outline btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-layers"></i>
+      <span>All Variants</span>
+    </a>
+    <a href="{% url 'product_create' %}" class="btn btn-bl-primary btn-sm d-flex align-items-center gap-1 shadow-sm">
+      <i class="bi bi-plus-lg"></i>
+      <span>Add New Product</span>
+    </a>
+  </div>
+</div>
+
+<!-- METRICS KPI STRIP -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100 border-start border-4 border-primary">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Products</span>
+          <h3 class="fw-bold text-slate-900 mb-0 mt-1">{{ total_count|default:"0" }}</h3>
+        </div>
+        <div class="rounded-3 bg-primary-subtle text-primary p-2 px-3">
+          <i class="bi bi-box-seam fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100 border-start border-4 border-success">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Software Packages</span>
+          <h3 class="fw-bold text-slate-900 mb-0 mt-1">
+            {{ products|length }}
+          </h3>
+        </div>
+        <div class="rounded-3 bg-success-subtle text-success p-2 px-3">
+          <i class="bi bi-laptop fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100 border-start border-4 border-info">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Active Variants</span>
+          <h3 class="fw-bold text-slate-900 mb-0 mt-1">Multi-Tier</h3>
+        </div>
+        <div class="rounded-3 bg-info-subtle text-info p-2 px-3">
+          <i class="bi bi-diagram-3 fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100 border-start border-4 border-warning">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px;">Price Calculation</span>
+          <h3 class="fw-bold text-success mb-0 mt-1" style="font-size: 1.25rem;">Automatic</h3>
+        </div>
+        <div class="rounded-3 bg-warning-subtle text-warning p-2 px-3">
+          <i class="bi bi-calculator fs-4"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH & FILTER TOOLBAR (ADMIN FEATURES 5 & 6) -->
+<div class="card-saas p-3 mb-4 bg-white shadow-sm">
+  <form method="get" class="row g-2 align-items-center">
+    <!-- Search Bar -->
+    <div class="col-12 col-md-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search name, SKU, notes...">
+      </div>
+    </div>
+
+    <!-- Product Type Filter -->
+    <div class="col-6 col-md-2">
+      <select name="product_type" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Product Types</option>
+        {% for code, label in product_types %}
+          <option value="{{ code }}" {% if selected_type == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="col-6 col-md-2">
+      <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="col-6 col-md-2">
+      <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>Draft</option>
+        <option value="archived" {% if selected_status == 'archived' %}selected{% endif %}>Archived</option>
+      </select>
+    </div>
+
+    <!-- Sort Selector -->
+    <div class="col-6 col-md-2">
+      <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="-created_at" {% if selected_sort == '-created_at' %}selected{% endif %}>Newest First</option>
+        <option value="date_asc" {% if selected_sort == 'date_asc' %}selected{% endif %}>Oldest First</option>
+        <option value="name_asc" {% if selected_sort == 'name_asc' %}selected{% endif %}>Name (A-Z)</option>
+        <option value="name_desc" {% if selected_sort == 'name_desc' %}selected{% endif %}>Name (Z-A)</option>
+        <option value="selling_asc" {% if selected_sort == 'selling_asc' %}selected{% endif %}>Selling Price: Low to High</option>
+        <option value="selling_desc" {% if selected_sort == 'selling_desc' %}selected{% endif %}>Selling Price: High to Low</option>
+        <option value="cost_asc" {% if selected_sort == 'cost_asc' %}selected{% endif %}>Cost Price: Low to High</option>
+      </select>
+    </div>
+
+    <!-- Submit & Reset Buttons -->
+    <div class="col-12 col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-primary w-100" title="Apply Filter">
+        <i class="bi bi-funnel"></i>
+      </button>
+      {% if search_query or selected_type or selected_category or selected_status or selected_sort != '-created_at' %}
+        <a href="{% url 'product_list' %}" class="btn btn-sm btn-light border" title="Reset Filters">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- PROFESSIONAL PRODUCT MANAGEMENT TABLE (ADMIN FEATURE 2) -->
+<div class="card-saas bg-white shadow-sm overflow-hidden mb-4">
+  <div class="p-3 px-4 border-bottom bg-light d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <h6 class="fw-bold mb-0 text-slate-900">
+        <i class="bi bi-table text-primary me-1"></i> Products Catalog Matrix
+      </h6>
+      <span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.72rem;">
+        Showing {{ products|length }} of {{ total_count|default:"0" }} products
+      </span>
+    </div>
+    <div class="text-muted small">
+      <i class="bi bi-shield-check text-success me-1"></i> Admin Authorized
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" id="productManagementTable">
+      <thead class="table-light text-slate-700" style="font-size: 0.8rem; letter-spacing: 0.3px;">
+        <tr>
+          <th style="width: 250px;">PRODUCT NAME & SKU</th>
+          <th>PRODUCT TYPE</th>
+          <th class="text-end">SELLING PRICE</th>
+          <th class="text-end">COST PRICE</th>
+          <th class="text-end">PROFIT MARGIN</th>
+          <th class="text-center">VARIANTS</th>
+          <th>STATUS</th>
+          <th>CREATED DATE</th>
+          <th class="text-end" style="min-width: 170px;">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+          <tr>
+            <!-- 1. Product Name & SKU -->
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded-2 bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                  <i class="bi {% if product.category.icon %}{{ product.category.icon }}{% else %}bi-box-seam{% endif %} fs-5"></i>
+                </div>
+                <div>
+                  <a href="{% url 'product_detail' pk=product.pk %}" class="fw-bold text-slate-900 text-decoration-none d-block hover-primary">
+                    {{ product.name }}
+                  </a>
+                  <div class="d-flex align-items-center gap-1 mt-1">
+                    <span class="code-tag">{{ product.sku }}</span>
+                    {% if product.is_featured %}
+                      <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-1" style="font-size: 0.65rem;">
+                        <i class="bi bi-star-fill"></i>
+                      </span>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- 2. Product Type -->
+            <td>
+              <span class="badge bg-light text-dark border fw-medium px-2 py-1" style="font-size: 0.78rem;">
+                <i class="bi bi-tag me-1 text-primary"></i>{{ product.get_product_type_display }}
+              </span>
+            </td>
+
+            <!-- 3. Selling Price -->
+            <td class="text-end">
+              <span class="fw-bold text-dark fs-6">
+                {{ system_settings.currency_symbol|default:"₹" }}{{ product.selling_price|floatformat:2 }}
+              </span>
+            </td>
+
+            <!-- 4. Cost Price -->
+            <td class="text-end">
+              <span class="text-secondary fw-medium">
+                {{ system_settings.currency_symbol|default:"₹" }}{{ product.cost_price|floatformat:2 }}
+              </span>
+            </td>
+
+            <!-- 5. Gross Profit & Margin % -->
+            <td class="text-end">
+              <div class="fw-semibold text-success">
+                +{{ system_settings.currency_symbol|default:"₹" }}{{ product.gross_profit|floatformat:2 }}
+              </div>
+              <small class="badge bg-success-subtle text-success border border-success-subtle px-1" style="font-size: 0.7rem;">
+                {{ product.profit_margin_percent }}% margin
+              </small>
+            </td>
+
+            <!-- 6. Variants Count -->
+            <td class="text-center">
+              <a href="{% url 'product_detail' pk=product.pk %}#variants-section" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none px-2 py-1" title="View product variants">
+                <i class="bi bi-layers me-1"></i>{{ product.variant_count }} Variants
+              </a>
+            </td>
+
+            <!-- 7. Status -->
+            <td>
+              <span class="badge-saas badge-{{ product.badge_class }}">
+                <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i> {{ product.get_status_display }}
+              </span>
+            </td>
+
+            <!-- 8. Created Date -->
+            <td>
+              <span class="text-muted" style="font-size: 0.825rem;">
+                {{ product.created_at|date:"M d, Y" }}
+              </span>
+            </td>
+
+            <!-- 9. Admin Actions (View, Edit, Delete) -->
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <!-- View Button -->
+                <a href="{% url 'product_detail' pk=product.pk %}" class="btn btn-sm btn-light border text-primary" title="View Product Details">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <!-- Edit Button (Admin Feature 3) -->
+                <a href="{% url 'product_update' pk=product.pk %}" class="btn btn-sm btn-light border text-dark" title="Edit Product">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <!-- Delete Button (Admin Feature 4) -->
+                <a href="{% url 'product_delete' pk=product.pk %}" class="btn btn-sm btn-light border text-danger" title="Delete Product">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center py-5 text-muted">
+              <div class="py-4">
+                <i class="bi bi-box-seam display-4 text-muted mb-3 d-block"></i>
+                <h5 class="fw-bold text-dark">No Products Found</h5>
+                <p class="text-muted small mb-3">No products match your search or filter criteria. Create your first product offering now.</p>
+                <a href="{% url 'product_create' %}" class="btn btn-bl-primary btn-sm px-3">
+                  <i class="bi bi-plus-lg me-1"></i> Add New Product
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- REUSABLE PAGINATION -->
+{% include 'components/pagination.html' %}
+{% endblock %}

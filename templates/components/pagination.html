@@ -1,0 +1,51 @@
+{% if page_obj.has_other_pages %}
+<nav aria-label="Table pagination" class="d-flex justify-content-between align-items-center mt-4">
+  <div class="text-muted" style="font-size: 0.825rem;">
+    Showing <strong>{{ page_obj.start_index }}</strong> to <strong>{{ page_obj.end_index }}</strong> of <strong>{{ page_obj.paginator.count }}</strong> entries
+  </div>
+
+  <ul class="pagination pagination-sm mb-0">
+    {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}{% if selected_cycle %}&billing_cycle={{ selected_cycle }}{% endif %}{% if selected_product %}&product={{ selected_product }}{% endif %}" aria-label="First">
+          <i class="bi bi-chevron-double-left"></i>
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}{% if selected_cycle %}&billing_cycle={{ selected_cycle }}{% endif %}{% if selected_product %}&product={{ selected_product }}{% endif %}">
+          Previous
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Previous</span></li>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}{% if selected_cycle %}&billing_cycle={{ selected_cycle }}{% endif %}{% if selected_product %}&product={{ selected_product }}{% endif %}">
+            {{ num }}
+          </a>
+        </li>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}{% if selected_cycle %}&billing_cycle={{ selected_cycle }}{% endif %}{% if selected_product %}&product={{ selected_product }}{% endif %}">
+          Next
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}{% if selected_cycle %}&billing_cycle={{ selected_cycle }}{% endif %}{% if selected_product %}&product={{ selected_product }}{% endif %}" aria-label="Last">
+          <i class="bi bi-chevron-double-right"></i>
+        </a>
+      </li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">Next</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
