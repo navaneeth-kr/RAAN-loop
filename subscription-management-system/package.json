@@ -1,0 +1,19 @@
+{
+  "name": "subscription-management-system",
+  "version": "1.0.0",
+  "description": "Enterprise Subscription Management System with complete lifecycle, pricing calculation, RBAC, and automated expiration handling",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/test_subscriptions.js"
+  },
+  "keywords": [
+    "subscription-management",
+    "saas",
+    "billing",
+    "rbac",
+    "lifecycle"
+  ],
+  "author": "Antigravity Development Team",
+  "license": "ISC"
+}
