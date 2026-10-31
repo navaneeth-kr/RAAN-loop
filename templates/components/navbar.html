@@ -1,0 +1,49 @@
+<header class="top-navbar">
+  <div class="d-flex align-items-center gap-3">
+    <!-- Mobile Hamburger Toggle -->
+    <button class="btn btn-bl-outline d-lg-none p-1 px-2" id="sidebarToggleBtn" aria-label="Toggle Navigation">
+      <i class="bi bi-list fs-5"></i>
+    </button>
+
+    <!-- Global Quick Search -->
+    <form action="{% url 'product_list' %}" method="get" class="d-none d-md-flex align-items-center position-relative" style="width: 320px;">
+      <i class="bi bi-search position-absolute text-muted" style="left: 12px;"></i>
+      <input 
+        type="search" 
+        name="q" 
+        class="form-control ps-5 py-1 rounded-pill bg-light border-0" 
+        placeholder="Quick search products, plans..." 
+        style="font-size: 0.85rem;"
+      >
+    </form>
+  </div>
+
+  <!-- Right Actions -->
+  <div class="d-flex align-items-center gap-3">
+    <!-- Currency & Tax Badge -->
+    <span class="badge bg-light text-dark border d-none d-sm-inline-flex align-items-center gap-1 py-2 px-3">
+      <i class="bi bi-currency-exchange text-primary"></i>
+      <span>{{ system_settings.currency_code|default:"USD" }} ({{ system_settings.currency_symbol|default:"$" }})</span>
+      <span class="text-muted ms-1">• Tax: {{ system_settings.tax_rate|default:"18.00" }}%</span>
+    </span>
+
+    <!-- Quick Action: Export Center -->
+    <a href="{% url 'export_center' %}" class="btn btn-sm btn-bl-outline d-none d-sm-inline-flex align-items-center gap-1" title="Data Export Interface">
+      <i class="bi bi-download"></i>
+      <span>Export</span>
+    </a>
+
+    <!-- Settings Shortcut -->
+    <a href="{% url 'admin_settings' %}" class="btn btn-sm btn-bl-outline p-2" title="System Settings">
+      <i class="bi bi-gear-fill"></i>
+    </a>
+
+    <!-- Notification Indicator -->
+    <div class="position-relative">
+      <button class="btn btn-sm btn-light border rounded-circle p-2" title="System Notifications">
+        <i class="bi bi-bell-fill text-muted"></i>
+        <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span>
+      </button>
+    </div>
+  </div>
+</header>

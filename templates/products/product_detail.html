@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<!-- Breadcrumb Header -->
+<div class="mb-4">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-1" style="font-size: 0.8rem;">
+      <li class="breadcrumb-item"><a href="{% url 'product_list' %}" class="text-decoration-none">Products</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+    </ol>
+  </nav>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2 class="fw-bold mb-0 text-slate-900">{{ product.name }}</h2>
+        <span class="badge-saas badge-{{ product.badge_class }}">{{ product.get_status_display }}</span>
+        {% if product.is_featured %}
+          <span class="badge bg-warning-subtle text-warning border px-2 py-1" style="font-size: 0.72rem;">
+            <i class="bi bi-star-fill me-1"></i> Featured
+          </span>
+        {% endif %}
+      </div>
+      <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">SKU: <span class="code-tag">{{ product.sku }}</span> • Category: <strong>{{ product.category.name|default:"Unassigned" }}</strong></p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <a href="{% url 'variant_create' %}?product={{ product.pk }}" class="btn btn-bl-outline btn-sm">
+        <i class="bi bi-layers me-1"></i> Add Variant
+      </a>
+      <a href="{% url 'plan_create' %}?product={{ product.pk }}" class="btn btn-bl-outline btn-sm">
+        <i class="bi bi-tag me-1"></i> Create Plan
+      </a>
+      <a href="{% url 'product_update' pk=product.pk %}" class="btn btn-bl-primary btn-sm">
+        <i class="bi bi-pencil me-1"></i> Edit Product
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left Column: Product Overview & Specs -->
+  <div class="col-lg-4">
+    <div class="card-saas p-4 bg-white mb-4">
+      <h6 class="fw-bold mb-3 text-slate-900">Product Specifications</h6>
+      
+      <div class="mb-3">
+        <label class="text-muted d-block" style="font-size: 0.75rem;">BASE MONTHLY PRICE</label>
+        <div class="fs-4 fw-bold text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ product.base_price }}</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="text-muted d-block" style="font-size: 0.75rem;">MARKETING TAGLINE</label>
+        <div class="text-dark fst-italic" style="font-size: 0.885rem;">"{{ product.tagline|default:"No tagline provided." }}"</div>
+      </div>
+
+      <div class="mb-3">
+        <label class="text-muted d-block" style="font-size: 0.75rem;">DETAILED DESCRIPTION</label>
+        <div class="text-secondary" style="font-size: 0.85rem; line-height: 1.6;">
+          {{ product.description|linebreaks }}
+        </div>
+      </div>
+
+      <div class="pt-3 border-top d-flex justify-content-between text-muted" style="font-size: 0.785rem;">
+        <span>Created: {{ product.created_at|date:"M d, Y" }}</span>
+        <span>Updated: {{ product.updated_at|date:"M d, Y" }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Associated Variants & Plans -->
+  <div class="col-lg-8">
+    <!-- 1. PRODUCT VARIANTS SECTION (MODULE 3) -->
+    <div class="card-saas mb-4 bg-white overflow-hidden">
+      <div class="p-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="fw-bold mb-0 text-slate-900">Configured Product Variants</h6>
+          <span class="text-muted" style="font-size: 0.75rem;">Editions, billing variants, or user-tier quota packages</span>
+        </div>
+        <a href="{% url 'variant_create' %}?product={{ product.pk }}" class="btn btn-sm btn-light border text-primary fw-semibold" style="font-size: 0.785rem;">
+          <i class="bi bi-plus-lg me-1"></i> Add Variant
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Variant Name & SKU</th>
+              <th>Tier</th>
+              <th>Billing</th>
+              <th>Price</th>
+              <th>Quotas</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for variant in variants %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ variant.name }}</div>
+                  <span class="code-tag">{{ variant.sku }}</span>
+                </td>
+                <td>
+                  <span class="badge bg-light text-dark border">{{ variant.get_tier_display }}</span>
+                </td>
+                <td>{{ variant.get_billing_cycle_display }}</td>
+                <td>
+                  <strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ variant.price }}</strong>
+                </td>
+                <td>
+                  <small class="text-muted d-block">{{ variant.max_users }} Seats • {{ variant.storage_gb }}GB</small>
+                </td>
+                <td>
+                  {% if variant.is_active %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary border">Inactive</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'variant_update' pk=variant.pk %}" class="btn btn-sm btn-light border" title="Edit Variant">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <form action="{% url 'variant_delete' pk=variant.pk %}" method="post" class="d-inline" onsubmit="return confirm('Delete this variant?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete Variant">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted" style="font-size: 0.85rem;">
+                  No variants configured for this product yet. Click "+ Add Variant" to create tier configurations.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. ASSOCIATED SUBSCRIPTION PLANS SECTION (MODULE 4) -->
+    <div class="card-saas bg-white overflow-hidden">
+      <div class="p-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="fw-bold mb-0 text-slate-900">Subscription Plans for {{ product.name }}</h6>
+          <span class="text-muted" style="font-size: 0.75rem;">Pricing packages customers can subscribe to</span>
+        </div>
+        <a href="{% url 'plan_create' %}?product={{ product.pk }}" class="btn btn-sm btn-light border text-primary fw-semibold" style="font-size: 0.785rem;">
+          <i class="bi bi-plus-lg me-1"></i> New Plan
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Plan Name & Code</th>
+              <th>Tier</th>
+              <th>Cycle</th>
+              <th>Recurring Price</th>
+              <th>Trial</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for plan in plans %}
+              <tr>
+                <td>
+                  <a href="{% url 'plan_detail' pk=plan.pk %}" class="fw-bold text-primary text-decoration-none">{{ plan.name }}</a>
+                  <span class="code-tag d-block mt-1">{{ plan.code }}</span>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ plan.get_tier_display }}</span></td>
+                <td>{{ plan.get_billing_cycle_display }}</td>
+                <td>
+                  <strong class="text-dark fs-6">{{ system_settings.currency_symbol|default:"$" }}{{ plan.price }}</strong>
+                </td>
+                <td>{{ plan.trial_days }} days</td>
+                <td>
+                  <span class="badge-saas badge-{{ plan.badge_class }}">{{ plan.get_status_display }}</span>
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'plan_detail' pk=plan.pk %}" class="btn btn-sm btn-light border" title="View Plan">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'plan_update' pk=plan.pk %}" class="btn btn-sm btn-light border" title="Edit Plan">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted" style="font-size: 0.85rem;">
+                  No subscription plans created for this product yet.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

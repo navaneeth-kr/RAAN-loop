@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Subscription Plans</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Manage subscription pricing models, trial intervals, billing cycles, and feature allowances.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'plan_comparison' %}" class="btn btn-bl-outline btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-columns-gap"></i>
+      <span>Comparison Matrix</span>
+    </a>
+    <a href="{% url 'plan_create' %}" class="btn btn-bl-primary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-plus-lg"></i>
+      <span>New Subscription Plan</span>
+    </a>
+  </div>
+</div>
+
+<!-- SEARCH & FILTER TOOLBAR (MODULE 5) -->
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-12 col-md-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search plan name, code...">
+      </div>
+    </div>
+
+    <!-- Product Filter -->
+    <div class="col-6 col-md-3">
+      <select name="product" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Products</option>
+        {% for prod in products %}
+          <option value="{{ prod.id }}" {% if selected_product == prod.id|stringformat:"s" %}selected{% endif %}>{{ prod.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Tier Filter -->
+    <div class="col-6 col-md-2">
+      <select name="tier" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Tiers</option>
+        <option value="starter" {% if selected_tier == 'starter' %}selected{% endif %}>Starter</option>
+        <option value="growth" {% if selected_tier == 'growth' %}selected{% endif %}>Growth / Pro</option>
+        <option value="enterprise" {% if selected_tier == 'enterprise' %}selected{% endif %}>Enterprise</option>
+      </select>
+    </div>
+
+    <!-- Cycle Filter -->
+    <div class="col-6 col-md-2">
+      <select name="billing_cycle" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Frequencies</option>
+        <option value="monthly" {% if selected_cycle == 'monthly' %}selected{% endif %}>Monthly</option>
+        <option value="annual" {% if selected_cycle == 'annual' %}selected{% endif %}>Annual</option>
+      </select>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="col-6 col-md-1">
+      <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">Status</option>
+        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+      </select>
+    </div>
+
+    <div class="col-12 col-md-1 d-flex gap-1">
+      <button type="submit" class="btn btn-sm btn-primary w-100" title="Apply Filter">
+        <i class="bi bi-funnel"></i>
+      </button>
+      {% if search_query or selected_product or selected_tier or selected_cycle or selected_status %}
+        <a href="{% url 'plan_list' %}" class="btn btn-sm btn-light border" title="Reset Filters">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- PLANS TABLE -->
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Plan & Product</th>
+          <th>Code / SKU</th>
+          <th>Tier</th>
+          <th>Price & Interval</th>
+          <th>Free Trial</th>
+          <th>Status</th>
+          <th>Popular</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in plans %}
+          <tr>
+            <td>
+              <a href="{% url 'plan_detail' pk=plan.pk %}" class="fw-bold text-dark text-decoration-none d-block">
+                {{ plan.name }}
+              </a>
+              <span class="text-muted" style="font-size: 0.785rem;">
+                <i class="bi bi-box-seam me-1"></i>{{ plan.product.name }}
+              </span>
+            </td>
+            <td><span class="code-tag">{{ plan.code }}</span></td>
+            <td><span class="badge bg-light text-dark border">{{ plan.get_tier_display }}</span></td>
+            <td>
+              <strong class="text-dark fs-6">{{ system_settings.currency_symbol|default:"$" }}{{ plan.price }}</strong>
+              <span class="text-muted" style="font-size: 0.75rem;">/ {{ plan.billing_cycle }}</span>
+            </td>
+            <td>
+              <span class="badge bg-info-subtle text-info border border-info-subtle">
+                {{ plan.trial_days }} Days
+              </span>
+            </td>
+            <td>
+              <span class="badge-saas badge-{{ plan.badge_class }}">
+                {{ plan.get_status_display }}
+              </span>
+            </td>
+            <td>
+              {% if plan.is_featured %}
+                <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="bi bi-star-fill me-1"></i> Featured</span>
+              {% else %}
+                <span class="text-muted" style="font-size: 0.785rem;">—</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <!-- Toggle Status Button -->
+                <form action="{% url 'plan_toggle_status' pk=plan.pk %}" method="post" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-light border" title="{% if plan.status == 'active' %}Deactivate Plan{% else %}Activate Plan{% endif %}">
+                    {% if plan.status == 'active' %}
+                      <i class="bi bi-pause-fill text-warning"></i>
+                    {% else %}
+                      <i class="bi bi-play-fill text-success"></i>
+                    {% endif %}
+                  </button>
+                </form>
+
+                <a href="{% url 'plan_detail' pk=plan.pk %}" class="btn btn-sm btn-light border" title="View Plan Features">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'plan_update' pk=plan.pk %}" class="btn btn-sm btn-light border" title="Edit Plan">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form action="{% url 'plan_delete' pk=plan.pk %}" method="post" class="d-inline" onsubmit="return confirm('Delete plan {{ plan.name }}?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete Plan">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="bi bi-tag display-6 text-muted mb-2 d-block"></i>
+              No subscription plans found. Click "+ New Subscription Plan" to create one.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

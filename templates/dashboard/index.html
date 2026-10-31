@@ -1,0 +1,358 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<!-- Executive Dashboard Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="fw-bold mb-0 text-slate-900" style="letter-spacing: -0.02em;">Executive Admin Dashboard</h2>
+      <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size: 0.75rem;">Realtime SaaS Data</span>
+    </div>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+      High-level telemetry, revenue metrics, catalog overview, and subscription lifecycle for <strong>{{ system_settings.company_name|default:"Brightloop Software" }}</strong>.
+    </p>
+  </div>
+
+  <!-- Action Quick Links -->
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'product_create' %}" class="btn btn-bl-outline btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-plus-circle"></i>
+      <span>Add Product</span>
+    </a>
+    <a href="{% url 'plan_create' %}" class="btn btn-bl-outline btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-tag"></i>
+      <span>Create Plan</span>
+    </a>
+    <a href="{% url 'export_center' %}" class="btn btn-bl-primary btn-sm d-flex align-items-center gap-1">
+      <i class="bi bi-cloud-arrow-down"></i>
+      <span>Export Data</span>
+    </a>
+  </div>
+</div>
+
+<!-- TOP KPI METRICS (4 PRIMARY CARDS) -->
+<div class="row g-3 mb-4">
+  <!-- MRR Card -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas stat-card stat-primary h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-label">Monthly Recurring Revenue</p>
+          <div class="stat-val">{{ system_settings.currency_symbol|default:"$" }}{{ metrics.mrr|intcomma }}</div>
+          <div class="d-flex align-items-center gap-1 text-success" style="font-size: 0.785rem; font-weight: 600;">
+            <i class="bi bi-arrow-up-right"></i>
+            <span>+12.8% vs last month</span>
+          </div>
+        </div>
+        <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARR Card -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas stat-card stat-success h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-label">Annual Run Rate (ARR)</p>
+          <div class="stat-val">{{ system_settings.currency_symbol|default:"$" }}{{ metrics.arr|intcomma }}</div>
+          <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.785rem;">
+            <span>Projected annualized run</span>
+          </div>
+        </div>
+        <div class="stat-icon-wrapper bg-success-subtle text-success">
+          <i class="bi bi-graph-up-arrow"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Subscriptions -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas stat-card stat-info h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-label">Active Subscriptions</p>
+          <div class="stat-val">{{ metrics.active_subs_count }}</div>
+          <div class="d-flex align-items-center gap-1 text-info" style="font-size: 0.785rem; font-weight: 600;">
+            <i class="bi bi-people-fill"></i>
+            <span>{{ metrics.trialing_subs_count }} in trial period</span>
+          </div>
+        </div>
+        <div class="stat-icon-wrapper bg-info-subtle text-info">
+          <i class="bi bi-card-checklist"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Churn Rate -->
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas stat-card stat-warning h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <p class="stat-label">SaaS Churn Rate</p>
+          <div class="stat-val">{{ metrics.churn_rate }}%</div>
+          <div class="d-flex align-items-center gap-1 text-success" style="font-size: 0.785rem; font-weight: 600;">
+            <i class="bi bi-shield-check"></i>
+            <span>Benchmark target &lt; 5%</span>
+          </div>
+        </div>
+        <div class="stat-icon-wrapper bg-warning-subtle text-warning">
+          <i class="bi bi-arrow-repeat"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECONDARY CATALOG OVERVIEW PILLS -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="p-3 bg-white rounded border d-flex align-items-center gap-3">
+      <div class="rounded-3 bg-light p-2 text-primary fs-4">
+        <i class="bi bi-box-seam"></i>
+      </div>
+      <div>
+        <div class="fw-bold fs-5 text-dark">{{ metrics.total_products }}</div>
+        <div class="text-muted" style="font-size: 0.75rem;">Products ({{ metrics.active_products }} Active)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="p-3 bg-white rounded border d-flex align-items-center gap-3">
+      <div class="rounded-3 bg-light p-2 text-purple fs-4">
+        <i class="bi bi-layers-fill"></i>
+      </div>
+      <div>
+        <div class="fw-bold fs-5 text-dark">{{ metrics.total_variants }}</div>
+        <div class="text-muted" style="font-size: 0.75rem;">Product Variants Configured</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="p-3 bg-white rounded border d-flex align-items-center gap-3">
+      <div class="rounded-3 bg-light p-2 text-success fs-4">
+        <i class="bi bi-tag-fill"></i>
+      </div>
+      <div>
+        <div class="fw-bold fs-5 text-dark">{{ metrics.total_plans }}</div>
+        <div class="text-muted" style="font-size: 0.75rem;">Subscription Plans ({{ metrics.active_plans }} Active)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="p-3 bg-white rounded border d-flex align-items-center gap-3">
+      <div class="rounded-3 bg-light p-2 text-info fs-4">
+        <i class="bi bi-person-check-fill"></i>
+      </div>
+      <div>
+        <div class="fw-bold fs-5 text-dark">{{ metrics.total_customers }}</div>
+        <div class="text-muted" style="font-size: 0.75rem;">Total Registered Customers</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INTERACTIVE CHARTS ROW (CHART.JS) -->
+<div class="row g-3 mb-4">
+  <!-- Chart 1: Revenue Trends -->
+  <div class="col-xl-8">
+    <div class="card-saas p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold mb-1 text-slate-900">Revenue Trajectory & Inflow</h5>
+          <p class="text-muted mb-0" style="font-size: 0.8rem;">Historical monthly revenue performance across active billing cycles</p>
+        </div>
+        <span class="badge bg-light text-muted border px-2 py-1">Last 6 Months</span>
+      </div>
+      <div style="position: relative; height: 280px; width: 100%;">
+        <canvas id="revenueTrendsChart" data-chart-data='{{ chart_revenue_json|safe }}'></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart 2: Subscription Distribution -->
+  <div class="col-xl-4">
+    <div class="card-saas p-4 h-100">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h5 class="fw-bold mb-1 text-slate-900">Subscription Status</h5>
+          <p class="text-muted mb-0" style="font-size: 0.8rem;">Distribution of customer lifecycles</p>
+        </div>
+      </div>
+      <div style="position: relative; height: 230px; width: 100%;">
+        <canvas id="subscriptionStatusChart" data-chart-data='{{ chart_status_json|safe }}'></canvas>
+      </div>
+      <div class="mt-3 pt-2 border-top d-flex justify-content-around text-center" style="font-size: 0.785rem;">
+        <div>
+          <span class="text-success fw-bold d-block fs-6">{{ metrics.active_subs_count }}</span>
+          <span class="text-muted">Active</span>
+        </div>
+        <div>
+          <span class="text-info fw-bold d-block fs-6">{{ metrics.trialing_subs_count }}</span>
+          <span class="text-muted">Trialing</span>
+        </div>
+        <div>
+          <span class="text-warning fw-bold d-block fs-6">{{ metrics.past_due_subs_count }}</span>
+          <span class="text-muted">Past Due</span>
+        </div>
+        <div>
+          <span class="text-secondary fw-bold d-block fs-6">{{ metrics.canceled_subs_count }}</span>
+          <span class="text-muted">Canceled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DATA OVERVIEW & RECENT ACTIVITY TABLES -->
+<div class="row g-3">
+  <!-- Recent Subscriptions Table (Col 8) -->
+  <div class="col-xl-8">
+    <div class="card-saas overflow-hidden">
+      <div class="p-3 px-4 border-bottom bg-white d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="fw-bold mb-0 text-slate-900">Recent Customer Subscriptions</h6>
+          <span class="text-muted" style="font-size: 0.75rem;">Live subscription records tied to your catalog plans</span>
+        </div>
+        <a href="{% url 'export_center' %}?entity=subscriptions" class="btn btn-sm btn-light border text-primary fw-semibold" style="font-size: 0.785rem;">
+          <i class="bi bi-download me-1"></i> Export Subscriptions
+        </a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>ID & Customer</th>
+              <th>Plan & Frequency</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Renewal Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in recent_subscriptions %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ sub.customer.full_name }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ sub.subscription_id }} • {{ sub.customer.email }}</div>
+                </td>
+                <td>
+                  <span class="fw-semibold">{{ sub.plan.name }}</span>
+                  <span class="text-muted d-block" style="font-size: 0.72rem;">{{ sub.plan.product.name }} ({{ sub.billing_cycle|title }})</span>
+                </td>
+                <td>
+                  <span class="fw-bold">{{ system_settings.currency_symbol|default:"$" }}{{ sub.current_amount }}</span>
+                </td>
+                <td>
+                  <span class="badge-saas badge-{{ sub.status_badge_class }}">
+                    {{ sub.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  <div class="text-muted" style="font-size: 0.8rem;">
+                    <i class="bi bi-calendar3 me-1"></i>{{ sub.next_billing_date }}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">
+                  <i class="bi bi-info-circle me-1"></i> No active subscriptions yet. Database is ready for customer subscriptions.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Log & Quick Catalog Highlights (Col 4) -->
+  <div class="col-xl-4">
+    <!-- Quick Actions Card -->
+    <div class="card-saas p-3 mb-3">
+      <h6 class="fw-bold mb-3 text-slate-900" style="font-size: 0.85rem;">Quick Person 2 Tasks</h6>
+      <div class="d-grid gap-2">
+        <a href="{% url 'product_create' %}" class="btn btn-light border text-start d-flex align-items-center justify-content-between p-2 px-3">
+          <span class="d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+            <i class="bi bi-box-seam text-primary"></i> Add SaaS Product
+          </span>
+          <i class="bi bi-chevron-right text-muted" style="font-size: 0.75rem;"></i>
+        </a>
+        <a href="{% url 'variant_create' %}" class="btn btn-light border text-start d-flex align-items-center justify-content-between p-2 px-3">
+          <span class="d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+            <i class="bi bi-layers text-purple"></i> Configure Product Variant
+          </span>
+          <i class="bi bi-chevron-right text-muted" style="font-size: 0.75rem;"></i>
+        </a>
+        <a href="{% url 'plan_create' %}" class="btn btn-light border text-start d-flex align-items-center justify-content-between p-2 px-3">
+          <span class="d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+            <i class="bi bi-tag text-success"></i> New Subscription Plan
+          </span>
+          <i class="bi bi-chevron-right text-muted" style="font-size: 0.75rem;"></i>
+        </a>
+        <a href="{% url 'admin_settings' %}" class="btn btn-light border text-start d-flex align-items-center justify-content-between p-2 px-3">
+          <span class="d-flex align-items-center gap-2" style="font-size: 0.85rem;">
+            <i class="bi bi-sliders text-secondary"></i> Update System Settings
+          </span>
+          <i class="bi bi-chevron-right text-muted" style="font-size: 0.75rem;"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Activity Feed -->
+    <div class="card-saas p-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0 text-slate-900" style="font-size: 0.85rem;">System Activity Audit</h6>
+        <span class="badge bg-light text-muted border">Live Feed</span>
+      </div>
+
+      <div class="activity-feed">
+        {% for act in recent_activities %}
+          <div class="d-flex align-items-start gap-2 mb-3 pb-2 border-bottom" style="font-size: 0.8rem;">
+            <div class="rounded-circle bg-light border p-1 text-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; min-width: 28px;">
+              {% if act.category == 'product' %}
+                <i class="bi bi-box-seam" style="font-size: 0.75rem;"></i>
+              {% elif act.category == 'variant' %}
+                <i class="bi bi-layers" style="font-size: 0.75rem;"></i>
+              {% elif act.category == 'plan' %}
+                <i class="bi bi-tag" style="font-size: 0.75rem;"></i>
+              {% elif act.category == 'export' %}
+                <i class="bi bi-download" style="font-size: 0.75rem;"></i>
+              {% elif act.category == 'setting' %}
+                <i class="bi bi-gear" style="font-size: 0.75rem;"></i>
+              {% else %}
+                <i class="bi bi-activity" style="font-size: 0.75rem;"></i>
+              {% endif %}
+            </div>
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="fw-semibold text-dark text-truncate">{{ act.action }}</div>
+              <div class="text-muted d-flex justify-content-between" style="font-size: 0.72rem;">
+                <span>{{ act.get_category_display }}</span>
+                <span>{{ act.timestamp|timesince }} ago</span>
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="text-muted text-center py-3" style="font-size: 0.8rem;">
+            No activity logged yet.
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}
