@@ -232,10 +232,10 @@ class ExportCenterView(AdminRequiredMixin, View):
 
 
 class ExportDownloadView(AdminRequiredMixin, View):
-    """Generates and serves downloadable CSV / JSON datasets."""
+    """Generates and serves downloadable CSV / JSON datasets across all entities."""
     def get(self, request):
-        entity = request.GET.get('entity', 'products')
-        file_format = request.GET.get('format', 'csv')
+        entity = request.GET.get('entity', 'products').lower()
+        file_format = request.GET.get('format', 'csv').lower()
         timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
 
         ActivityLog.objects.create(
@@ -245,23 +245,119 @@ class ExportDownloadView(AdminRequiredMixin, View):
             details=f"Entity: {entity}, Format: {file_format}"
         )
 
+        headers = []
+        rows = []
+        json_data = []
+
         if entity == 'products':
+            headers = ['ID', 'SKU', 'Name', 'Product Type', 'Category', 'Selling Price', 'Cost Price', 'Gross Profit', 'Status', 'Created At']
             qs = Product.objects.select_related('category').all()
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_products_{timestamp}.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['ID', 'SKU', 'Name', 'Category', 'Base Price', 'Status', 'Created At'])
             for p in qs:
-                writer.writerow([p.id, p.sku, p.name, p.category.name if p.category else '', p.base_price, p.status, p.created_at])
-            return response
+                row = [
+                    p.id, p.sku, p.name, p.get_product_type_display(),
+                    p.category.name if p.category else '',
+                    float(p.selling_price), float(p.cost_price), float(p.gross_profit),
+                    p.status, p.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                ]
+                rows.append(row)
+                json_data.append({
+                    'id': p.id, 'sku': p.sku, 'name': p.name, 'product_type': p.product_type,
+                    'category': p.category.name if p.category else None,
+                    'selling_price': float(p.selling_price), 'cost_price': float(p.cost_price),
+                    'gross_profit': float(p.gross_profit), 'status': p.status,
+                    'created_at': str(p.created_at)
+                })
+
+        elif entity == 'variants':
+            headers = ['ID', 'Product', 'Variant Name', 'Tier', 'Additional Charge', 'Final Price', 'Billing Cycle', 'Active']
+            qs = ProductVariant.objects.select_related('product').all()
+            for v in qs:
+                row = [
+                    v.id, v.product.name, v.name, v.get_tier_display(),
+                    float(v.additional_charge), float(v.final_price),
+                    v.billing_cycle, 'Yes' if v.is_active else 'No'
+                ]
+                rows.append(row)
+                json_data.append({
+                    'id': v.id, 'product': v.product.name, 'name': v.name, 'tier': v.tier,
+                    'additional_charge': float(v.additional_charge), 'final_price': float(v.final_price),
+                    'billing_cycle': v.billing_cycle, 'is_active': v.is_active
+                })
+
+        elif entity == 'plans':
+            headers = ['ID', 'Plan Code', 'Plan Name', 'Product', 'Variant', 'Billing Frequency', 'Price', 'Min Quantity', 'Auto Close', 'Early Cancellation', 'Pausing', 'Renewal', 'Status', 'Start Date', 'End Date']
+            qs = SubscriptionPlan.objects.select_related('product', 'variant').all()
+            for pl in qs:
+                row = [
+                    pl.id, pl.code, pl.name, pl.product.name if pl.product else '',
+                    pl.variant.name if pl.variant else '',
+                    pl.billing_frequency, float(pl.price), pl.min_quantity,
+                    'Yes' if pl.auto_close else 'No',
+                    'Yes' if pl.allow_early_cancellation else 'No',
+                    'Yes' if pl.allow_pausing else 'No',
+                    'Yes' if pl.allow_renewal else 'No',
+                    pl.status,
+                    pl.start_date.strftime('%Y-%m-%d') if pl.start_date else '',
+                    pl.end_date.strftime('%Y-%m-%d') if pl.end_date else ''
+                ]
+                rows.append(row)
+                json_data.append({
+                    'id': pl.id, 'code': pl.code, 'name': pl.name,
+                    'product': pl.product.name if pl.product else None,
+                    'variant': pl.variant.name if pl.variant else None,
+                    'billing_frequency': pl.billing_frequency,
+                    'price': float(pl.price), 'min_quantity': pl.min_quantity,
+                    'auto_close': pl.auto_close, 'allow_early_cancellation': pl.allow_early_cancellation,
+                    'allow_pausing': pl.allow_pausing, 'allow_renewal': pl.allow_renewal,
+                    'status': pl.status,
+                    'start_date': str(pl.start_date) if pl.start_date else None,
+                    'end_date': str(pl.end_date) if pl.end_date else None,
+                })
+
         elif entity == 'subscriptions':
+            headers = ['ID', 'Customer', 'Plan', 'Amount', 'Status', 'Renewal Date', 'Created At']
             qs = Subscription.objects.select_related('customer', 'plan').all()
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_subscriptions_{timestamp}.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['ID', 'Customer', 'Plan', 'Amount', 'Status', 'Renewal Date'])
             for s in qs:
-                writer.writerow([s.subscription_id, s.customer.full_name, s.plan.name, s.current_amount, s.status, s.next_billing_date])
+                row = [
+                    s.subscription_id, s.customer.full_name, s.plan.name if s.plan else '',
+                    float(s.current_amount), s.status,
+                    s.next_billing_date.strftime('%Y-%m-%d') if s.next_billing_date else '',
+                    s.created_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(s, 'created_at') and s.created_at else ''
+                ]
+                rows.append(row)
+                json_data.append({
+                    'subscription_id': s.subscription_id, 'customer': s.customer.full_name,
+                    'plan': s.plan.name if s.plan else None, 'amount': float(s.current_amount),
+                    'status': s.status, 'next_billing_date': str(s.next_billing_date) if s.next_billing_date else None
+                })
+
+        elif entity == 'customers':
+            headers = ['Customer ID', 'Full Name', 'Email', 'Company', 'Status', 'Created At']
+            qs = Customer.objects.all()
+            for c in qs:
+                row = [
+                    c.customer_id, c.full_name, c.email, c.company_name or '',
+                    c.status, c.created_at.strftime('%Y-%m-%d %H:%M:%S') if hasattr(c, 'created_at') and c.created_at else ''
+                ]
+                rows.append(row)
+                json_data.append({
+                    'customer_id': c.customer_id, 'full_name': c.full_name, 'email': c.email,
+                    'company_name': c.company_name, 'status': c.status
+                })
+
+        else:
+            messages.warning(request, f"Unknown entity '{entity}' requested for export.")
+            return redirect('export_center')
+
+        if file_format == 'json':
+            response = HttpResponse(json.dumps(json_data, indent=2, default=str), content_type='application/json')
+            response['Content-Disposition'] = f'attachment; filename="brightloop_{entity}_{timestamp}.json"'
             return response
         else:
-            return redirect('export_center')
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="brightloop_{entity}_{timestamp}.csv"'
+            writer = csv.writer(response)
+            writer.writerow(headers)
+            writer.writerows(rows)
+            return response
+

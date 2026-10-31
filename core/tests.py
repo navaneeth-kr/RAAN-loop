@@ -136,3 +136,25 @@ class CoreDashboardTests(TestCase):
         self.settings.refresh_from_db()
         self.assertEqual(self.settings.company_name, 'Brightloop Updated Inc')
         self.assertEqual(self.settings.currency_symbol, '€')
+
+    def test_export_center_view(self):
+        self.client.force_login(self.admin_user)
+        response = self.client.get(reverse('export_center'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Data Export & Reporting Center")
+
+    def test_export_download_csv_and_json(self):
+        self.client.force_login(self.admin_user)
+        
+        # Test CSV export for products
+        resp_csv = self.client.get(reverse('export_download') + '?entity=products&format=csv')
+        self.assertEqual(resp_csv.status_code, 200)
+        self.assertEqual(resp_csv['Content-Type'], 'text/csv; charset=utf-8')
+        self.assertIn('brightloop_products_', resp_csv['Content-Disposition'])
+
+        # Test JSON export for plans
+        resp_json = self.client.get(reverse('export_download') + '?entity=plans&format=json')
+        self.assertEqual(resp_json.status_code, 200)
+        self.assertEqual(resp_json['Content-Type'], 'application/json')
+        self.assertIn('Enterprise Annual', resp_json.content.decode())
+
