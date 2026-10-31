@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create / Edit Subscription | Subscription Hub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div id="appHeader"></div>
+
+  <div class="main-container">
+    <div style="margin-bottom: 1rem;">
+      <a href="/" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+        ← Back to Subscriptions Dashboard
+      </a>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <h1 class="page-title" id="formPageTitle">Create New Subscription</h1>
+        <p class="page-subtitle" id="formPageSubtitle">Configure customer, plan tier, add-on products, dates, and commercial terms</p>
+      </div>
+    </div>
+
+    <!-- Form Grid -->
+    <form id="subscriptionForm">
+      <div class="grid-2">
+        <!-- Main Form Column -->
+        <div>
+          <!-- Customer Selection Card -->
+          <div class="card">
+            <div class="card-title">1. Customer Information</div>
+            <div class="form-group">
+              <label class="form-label" for="customerSelect">Select Customer <span style="color:red">*</span></label>
+              <select id="customerSelect" class="form-control" required>
+                <option value="">-- Choose a Customer Account --</option>
+              </select>
+            </div>
+
+            <!-- Customer preview card -->
+            <div id="customerPreviewBox" style="display: none; background-color: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md); font-size: 0.85rem;">
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div><span style="color:var(--text-secondary);">Company:</span> <strong id="prevCustCompany">-</strong></div>
+                <div><span style="color:var(--text-secondary);">Email:</span> <strong id="prevCustEmail">-</strong></div>
+                <div><span style="color:var(--text-secondary);">Tax ID:</span> <strong id="prevCustTaxId">-</strong></div>
+                <div><span style="color:var(--text-secondary);">Address:</span> <strong id="prevCustAddress">-</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Plan Selection Card -->
+          <div class="card">
+            <div class="card-title">2. Subscription Plan</div>
+            <div class="form-group">
+              <label class="form-label" for="planSelect">Select Subscription Tier <span style="color:red">*</span></label>
+              <select id="planSelect" class="form-control" required>
+                <option value="">-- Choose a Plan Tier --</option>
+              </select>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="planQuantity">Quantity / Seats</label>
+                <input type="number" id="planQuantity" class="form-control" value="1" min="1" step="1" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="planUnitPrice">Unit Price ($)</label>
+                <input type="number" id="planUnitPrice" class="form-control" value="0.00" min="0" step="0.01" required>
+              </div>
+            </div>
+
+            <div id="planDescriptionBox" style="font-size: 0.85rem; color: var(--text-secondary); background: var(--primary-light); padding: 0.75rem 1rem; border-radius: var(--radius-md); display: none;">
+              <span id="planDescText"></span>
+            </div>
+          </div>
+
+          <!-- Products & Add-ons Line Items Card -->
+          <div class="card">
+            <div class="card-title">
+              <span>3. Selected Products & Add-ons</span>
+              <button type="button" id="btnAddProductRow" class="btn btn-outline btn-sm">
+                <span>+</span> Add Product
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="line-items-table" id="productRowsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 38%;">Product / Add-on</th>
+                    <th style="width: 14%; text-align: center;">Qty</th>
+                    <th style="width: 16%; text-align: right;">Unit Price</th>
+                    <th style="width: 14%; text-align: right;">Tax %</th>
+                    <th style="width: 14%; text-align: right;">Total</th>
+                    <th style="width: 4%;"></th>
+                  </tr>
+                </thead>
+                <tbody id="productRowsBody">
+                  <!-- Dynamic product rows added here -->
+                </tbody>
+              </table>
+            </div>
+
+            <p id="noProductsNotice" style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin: 1rem 0;">
+              No additional products selected yet. Click "+ Add Product" to attach storage, seats, support SLA, etc.
+            </p>
+          </div>
+
+          <!-- Schedule & Commercial Terms Card -->
+          <div class="card">
+            <div class="card-title">4. Terms, Dates & Expiration Rules</div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="startDateInput">Start Date <span style="color:red">*</span></label>
+                <input type="date" id="startDateInput" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="expiryDateInput">Expiry Date <span style="color:red">*</span></label>
+                <input type="date" id="expiryDateInput" class="form-control" required>
+              </div>
+            </div>
+
+            <!-- Quick Preset Date Buttons -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+              <span style="font-size: 0.8rem; color: var(--text-secondary); align-self: center;">Quick Preset:</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setPresetExpiry(30)">+1 Month (30d)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setPresetExpiry(90)">+1 Quarter (90d)</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="setPresetExpiry(365)">+1 Year (365d)</button>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="paymentTermsSelect">Payment Terms</label>
+                <select id="paymentTermsSelect" class="form-control">
+                  <option value="Net 15">Net 15</option>
+                  <option value="Net 30" selected>Net 30</option>
+                  <option value="Net 60">Net 60</option>
+                  <option value="Due on Receipt">Due on Receipt</option>
+                  <option value="Prepaid">Prepaid</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="initialStatusSelect">Initial Status</label>
+                <select id="initialStatusSelect" class="form-control">
+                  <option value="Draft" selected>Draft</option>
+                  <option value="Quotation">Quotation</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top: 1rem; background-color: var(--bg-muted); padding: 1rem; border-radius: var(--radius-md);">
+              <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer;">
+                <input type="checkbox" id="autoCloseCheckbox" checked style="margin-top: 0.2rem; transform: scale(1.15);">
+                <div>
+                  <strong style="font-size: 0.9rem; color: var(--text-main);">Automatically close expired subscription</strong>
+                  <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.2rem;">
+                    When enabled, the automated system scheduler will transition this subscription to "Closed" once the expiry date has elapsed.
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-top: 1.25rem;">
+              <label class="form-label" for="notesTextarea">Internal & Contractual Notes</label>
+              <textarea id="notesTextarea" class="form-control" rows="3" placeholder="Enter special terms, purchase order references, or negotiation notes..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Live Calculation Summary & Actions -->
+        <div>
+          <div class="card" style="position: sticky; top: 85px;">
+            <div class="card-title">Live Pricing Summary</div>
+
+            <div style="margin-bottom: 1.5rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.65rem; font-size: 0.92rem;">
+                <span style="color: var(--text-secondary);">Plan Base Price:</span>
+                <strong id="calcPlanSubtotal">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.65rem; font-size: 0.92rem;">
+                <span style="color: var(--text-secondary);">Products & Add-ons:</span>
+                <strong id="calcAddonsSubtotal">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.65rem; font-size: 0.92rem; padding-top: 0.5rem; border-top: 1px dashed var(--border);">
+                <span style="font-weight: 600;">Net Subtotal:</span>
+                <strong id="calcNetSubtotal">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.65rem; font-size: 0.92rem;">
+                <span style="color: var(--text-secondary);">Estimated Taxes:</span>
+                <strong id="calcTotalTax" style="color: #64748b;">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-top: 0.85rem; border-top: 2px solid var(--border); font-size: 1.3rem; color: var(--primary);">
+                <span>Total Amount:</span>
+                <strong id="calcGrandTotal">$0.00</strong>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <button type="submit" id="btnSubmitForm" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">
+                <span>💾</span> Save Subscription
+              </button>
+              <a href="/" class="btn btn-secondary" style="width: 100%;">Cancel</a>
+            </div>
+
+            <div style="margin-top: 1.25rem; font-size: 0.78rem; color: var(--text-muted); text-align: center;">
+              Amounts are automatically recalculated on every modification and verified securely by the backend server.
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/form.js"></script>
+</body>
+</html>

@@ -1,0 +1,1382 @@
+{
+  "systemSettings": {
+    "autoCloseExpiredCronEnabled": true,
+    "autoCloseCheckIntervalSeconds": 60,
+    "defaultPaymentTerms": "Net 30",
+    "defaultTaxRate": 10,
+    "currencySymbol": "$",
+    "currencyCode": "USD"
+  },
+  "users": [
+    {
+      "id": "admin-01",
+      "name": "Sarah Jenkins",
+      "email": "sarah.admin@cloudflow.io",
+      "role": "admin",
+      "avatar": "SJ",
+      "title": "System Administrator & Operations Director"
+    },
+    {
+      "id": "staff-01",
+      "name": "Alex Rivera",
+      "email": "alex.sales@cloudflow.io",
+      "role": "staff",
+      "avatar": "AR",
+      "title": "Senior Sales & Subscription Manager"
+    },
+    {
+      "id": "user-cust-01",
+      "name": "John Doe",
+      "email": "john@acme.com",
+      "role": "customer",
+      "customerId": "cust-01",
+      "avatar": "JD",
+      "title": "Chief Technology Officer, Acme Corp"
+    },
+    {
+      "id": "user-cust-02",
+      "name": "Elena Rostova",
+      "email": "elena@techflow.io",
+      "role": "customer",
+      "customerId": "cust-02",
+      "avatar": "ER",
+      "title": "VP of Operations, TechFlow Systems"
+    },
+    {
+      "id": "user-cust-03",
+      "name": "David Kim",
+      "email": "david@globalmedia.com",
+      "role": "customer",
+      "customerId": "cust-03",
+      "avatar": "DK",
+      "title": "Head of Engineering, Global Media Group"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust-01",
+      "name": "John Doe",
+      "company": "Acme Corporation",
+      "email": "john@acme.com",
+      "phone": "+1 (555) 234-5678",
+      "address": "100 Tech Blvd, Suite 400, San Francisco, CA 94107",
+      "taxId": "US-849201934",
+      "status": "active"
+    },
+    {
+      "id": "cust-02",
+      "name": "Elena Rostova",
+      "company": "TechFlow Systems Inc.",
+      "email": "elena@techflow.io",
+      "phone": "+1 (555) 345-6789",
+      "address": "22 Innovation Way, Austin, TX 78701",
+      "taxId": "US-991204855",
+      "status": "active"
+    },
+    {
+      "id": "cust-03",
+      "name": "David Kim",
+      "company": "Global Media Group LLC",
+      "email": "david@globalmedia.com",
+      "phone": "+1 (555) 456-7890",
+      "address": "742 Broadway, New York, NY 10003",
+      "taxId": "US-102938475",
+      "status": "active"
+    },
+    {
+      "id": "cust-04",
+      "name": "Marcus Vance",
+      "company": "Apex Logistics Ltd",
+      "email": "m.vance@apexlogistics.com",
+      "phone": "+1 (555) 567-8901",
+      "address": "550 Harbor Road, Seattle, WA 98104",
+      "taxId": "US-554433221",
+      "status": "active"
+    }
+  ],
+  "plans": [
+    {
+      "id": "plan-starter",
+      "name": "Starter Tier",
+      "code": "START-M",
+      "billingCycle": "Monthly",
+      "basePrice": 49,
+      "description": "Essential features for emerging teams. Includes 5 user seats and standard support.",
+      "durationDays": 30
+    },
+    {
+      "id": "plan-pro",
+      "name": "Professional Tier",
+      "code": "PRO-M",
+      "billingCycle": "Monthly",
+      "basePrice": 199,
+      "description": "Full workflow automation, advanced analytics, and priority response for up to 25 seats.",
+      "durationDays": 30
+    },
+    {
+      "id": "plan-enterprise",
+      "name": "Enterprise Cloud Suite",
+      "code": "ENT-A",
+      "billingCycle": "Annually",
+      "basePrice": 1800,
+      "description": "Complete security suite, dedicated infrastructure, 99.99% uptime SLA, and annual renewal discount.",
+      "durationDays": 365
+    },
+    {
+      "id": "plan-custom",
+      "name": "Custom Dedicated Infrastructure",
+      "code": "CUSTOM-Q",
+      "billingCycle": "Quarterly",
+      "basePrice": 950,
+      "description": "Tailored multi-region deployment, HIPAA & SOC2 vaults, and enterprise SLA.",
+      "durationDays": 90
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-seats",
+      "name": "Additional Team Seat",
+      "sku": "SKU-SEAT-01",
+      "unitPrice": 15,
+      "taxRate": 10,
+      "category": "Users",
+      "description": "Single additional authenticated team member license"
+    },
+    {
+      "id": "prod-storage-1tb",
+      "name": "1TB High-Speed NVMe Storage",
+      "sku": "SKU-STRG-1TB",
+      "unitPrice": 50,
+      "taxRate": 10,
+      "category": "Storage",
+      "description": "High-throughput redundant storage block"
+    },
+    {
+      "id": "prod-support-247",
+      "name": "24/7 Dedicated Support SLA",
+      "sku": "SKU-SUPP-247",
+      "unitPrice": 120,
+      "taxRate": 18,
+      "category": "Support",
+      "description": "15-minute response time SLA and dedicated technical account manager"
+    },
+    {
+      "id": "prod-dedicated-ip",
+      "name": "Dedicated Static IPv4 & Custom SSL",
+      "sku": "SKU-NET-IP",
+      "unitPrice": 35,
+      "taxRate": 10,
+      "category": "Networking",
+      "description": "Dedicated IP address and automated SSL management"
+    },
+    {
+      "id": "prod-audit-log",
+      "name": "SOC2 Compliance & Immutable Audit Vault",
+      "sku": "SKU-COMP-SOC2",
+      "unitPrice": 85,
+      "taxRate": 18,
+      "category": "Compliance",
+      "description": "Tamper-proof 7-year event logging and compliance exports"
+    },
+    {
+      "id": "prod-api-burst",
+      "name": "API Burst Pack (1M Requests)",
+      "sku": "SKU-API-BURST",
+      "unitPrice": 60,
+      "taxRate": 10,
+      "category": "API",
+      "description": "Extra 1 million API calls without rate throttling"
+    }
+  ],
+  "subscriptions": [
+    {
+      "id": "sub-mvw7cnud-53p8n",
+      "subscriptionNumber": "SUB-202610-00115",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Draft",
+      "startDate": "2026-10-31",
+      "expiryDate": "2026-11-30",
+      "paymentTerms": "Net 60",
+      "quantity": 3,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 14.7,
+      "products": [
+        {
+          "productId": "prod-seats",
+          "productName": "Additional Team Seat",
+          "sku": "SKU-CUSTOM",
+          "quantity": 2,
+          "unitPrice": 15,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 30,
+          "lineTax": 3,
+          "lineTotal": 33
+        }
+      ],
+      "subtotal": 177,
+      "tax": 17.7,
+      "discount": 0,
+      "totalAmount": 194.7,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Updated via customer request",
+      "createdAt": "2026-10-31T09:32:08.245Z",
+      "updatedAt": "2026-10-31T09:32:08.246Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:32:08.245Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.246Z",
+          "fromStatus": "Draft",
+          "toStatus": "Draft",
+          "action": "Updated Details",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription details and line items updated"
+        }
+      ]
+    },
+    {
+      "id": "sub-mvw7cnu6-xifm8",
+      "subscriptionNumber": "SUB-202610-00114",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-10-31",
+      "expiryDate": "2027-01-29",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Lifecycle test",
+      "createdAt": "2026-10-31T09:32:08.238Z",
+      "updatedAt": "2026-10-31T09:32:08.244Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:32:08.238Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.239Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Changed status to Quotation",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Quotation sent"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.240Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Changed status to Confirmed",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Customer accepted"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.241Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Changed status to Active",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Activated"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.242Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Maintenance pause"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.242Z",
+          "fromStatus": "Paused",
+          "toStatus": "Active",
+          "action": "Resumed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription resumed to Active status"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.243Z",
+          "fromStatus": "Active",
+          "toStatus": "Active",
+          "action": "Renewed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Renewed for 60 days. New expiry date: 2027-01-29. Renewal #1. Extended term"
+        },
+        {
+          "timestamp": "2026-10-31T09:32:08.244Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Cancelled Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Service no longer needed"
+        }
+      ],
+      "pausedAt": "2026-10-31T09:32:08.242Z",
+      "resumedAt": "2026-10-31T09:32:08.242Z",
+      "closedAt": "2026-10-31T09:32:08.244Z",
+      "closedReason": "Service no longer needed"
+    },
+    {
+      "id": "sub-mvw70iwh-bzhl1",
+      "subscriptionNumber": "SUB-202610-00113",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Draft",
+      "startDate": "2026-10-31",
+      "expiryDate": "2026-11-30",
+      "paymentTerms": "Net 60",
+      "quantity": 3,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 14.7,
+      "products": [
+        {
+          "productId": "prod-seats",
+          "productName": "Additional Team Seat",
+          "sku": "SKU-CUSTOM",
+          "quantity": 2,
+          "unitPrice": 15,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 30,
+          "lineTax": 3,
+          "lineTotal": 33
+        }
+      ],
+      "subtotal": 177,
+      "tax": 17.7,
+      "discount": 0,
+      "totalAmount": 194.7,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Updated via customer request",
+      "createdAt": "2026-10-31T09:22:41.969Z",
+      "updatedAt": "2026-10-31T09:22:41.970Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:22:41.969Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.970Z",
+          "fromStatus": "Draft",
+          "toStatus": "Draft",
+          "action": "Updated Details",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription details and line items updated"
+        }
+      ]
+    },
+    {
+      "id": "sub-mvw70iwb-nx0ff",
+      "subscriptionNumber": "SUB-202610-00112",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-10-31",
+      "expiryDate": "2027-01-29",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Lifecycle test",
+      "createdAt": "2026-10-31T09:22:41.963Z",
+      "updatedAt": "2026-10-31T09:22:41.968Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:22:41.963Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.964Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Changed status to Quotation",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Quotation sent"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.965Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Changed status to Confirmed",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Customer accepted"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.965Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Changed status to Active",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Activated"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.966Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Maintenance pause"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.966Z",
+          "fromStatus": "Paused",
+          "toStatus": "Active",
+          "action": "Resumed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription resumed to Active status"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.967Z",
+          "fromStatus": "Active",
+          "toStatus": "Active",
+          "action": "Renewed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Renewed for 60 days. New expiry date: 2027-01-29. Renewal #1. Extended term"
+        },
+        {
+          "timestamp": "2026-10-31T09:22:41.968Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Cancelled Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Service no longer needed"
+        }
+      ],
+      "pausedAt": "2026-10-31T09:22:41.966Z",
+      "resumedAt": "2026-10-31T09:22:41.966Z",
+      "closedAt": "2026-10-31T09:22:41.968Z",
+      "closedReason": "Service no longer needed"
+    },
+    {
+      "id": "sub-mvw6vkk9-aze8w",
+      "subscriptionNumber": "SUB-202610-00111",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Draft",
+      "startDate": "2026-10-31",
+      "expiryDate": "2026-11-30",
+      "paymentTerms": "Net 60",
+      "quantity": 3,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 14.7,
+      "products": [
+        {
+          "productId": "prod-seats",
+          "productName": "Additional Team Seat",
+          "sku": "SKU-CUSTOM",
+          "quantity": 2,
+          "unitPrice": 15,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 30,
+          "lineTax": 3,
+          "lineTotal": 33
+        }
+      ],
+      "subtotal": 177,
+      "tax": 17.7,
+      "discount": 0,
+      "totalAmount": 194.7,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Updated via customer request",
+      "createdAt": "2026-10-31T09:18:50.841Z",
+      "updatedAt": "2026-10-31T09:18:50.841Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:18:50.841Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.841Z",
+          "fromStatus": "Draft",
+          "toStatus": "Draft",
+          "action": "Updated Details",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription details and line items updated"
+        }
+      ]
+    },
+    {
+      "id": "sub-mvw6vkk3-pnl79",
+      "subscriptionNumber": "SUB-202610-00110",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-10-31",
+      "expiryDate": "2027-01-29",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Lifecycle test",
+      "createdAt": "2026-10-31T09:18:50.835Z",
+      "updatedAt": "2026-10-31T09:18:50.840Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:18:50.835Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.835Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Changed status to Quotation",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Quotation sent"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.836Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Changed status to Confirmed",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Customer accepted"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.837Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Changed status to Active",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Activated"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.838Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Maintenance pause"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.838Z",
+          "fromStatus": "Paused",
+          "toStatus": "Active",
+          "action": "Resumed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription resumed to Active status"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.839Z",
+          "fromStatus": "Active",
+          "toStatus": "Active",
+          "action": "Renewed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Renewed for 60 days. New expiry date: 2027-01-29. Renewal #1. Extended term"
+        },
+        {
+          "timestamp": "2026-10-31T09:18:50.840Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Cancelled Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Service no longer needed"
+        }
+      ],
+      "pausedAt": "2026-10-31T09:18:50.838Z",
+      "resumedAt": "2026-10-31T09:18:50.838Z",
+      "closedAt": "2026-10-31T09:18:50.840Z",
+      "closedReason": "Service no longer needed"
+    },
+    {
+      "id": "sub-mvw6nar0-dopy1",
+      "subscriptionNumber": "SUB-202610-00109",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-10-31",
+      "expiryDate": "2027-01-29",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Lifecycle test",
+      "createdAt": "2026-10-31T09:12:24.876Z",
+      "updatedAt": "2026-10-31T09:12:24.881Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T09:12:24.876Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.876Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Changed status to Quotation",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Quotation sent"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.877Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Changed status to Confirmed",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Customer accepted"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.878Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Changed status to Active",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Activated"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.879Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Maintenance pause"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.879Z",
+          "fromStatus": "Paused",
+          "toStatus": "Active",
+          "action": "Resumed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription resumed to Active status"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.880Z",
+          "fromStatus": "Active",
+          "toStatus": "Active",
+          "action": "Renewed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Renewed for 60 days. New expiry date: 2027-01-29. Renewal #1. Extended term"
+        },
+        {
+          "timestamp": "2026-10-31T09:12:24.881Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Cancelled Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Service no longer needed"
+        }
+      ],
+      "pausedAt": "2026-10-31T09:12:24.879Z",
+      "resumedAt": "2026-10-31T09:12:24.879Z",
+      "closedAt": "2026-10-31T09:12:24.881Z",
+      "closedReason": "Service no longer needed"
+    },
+    {
+      "id": "sub-mvvxfwqc-i2zjm",
+      "subscriptionNumber": "SUB-202610-00108",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-10-31",
+      "expiryDate": "2027-01-29",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Lifecycle test",
+      "createdAt": "2026-10-31T04:54:43.572Z",
+      "updatedAt": "2026-10-31T04:54:43.584Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T04:54:43.572Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.574Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Changed status to Quotation",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Quotation sent"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.575Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Changed status to Confirmed",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Customer accepted"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.577Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Changed status to Active",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Activated"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.580Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Maintenance pause"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.581Z",
+          "fromStatus": "Paused",
+          "toStatus": "Active",
+          "action": "Resumed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription resumed to Active status"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.582Z",
+          "fromStatus": "Active",
+          "toStatus": "Active",
+          "action": "Renewed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Renewed for 60 days. New expiry date: 2027-01-29. Renewal #1. Extended term"
+        },
+        {
+          "timestamp": "2026-10-31T04:54:43.584Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Cancelled Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Service no longer needed"
+        }
+      ],
+      "pausedAt": "2026-10-31T04:54:43.580Z",
+      "resumedAt": "2026-10-31T04:54:43.581Z",
+      "closedAt": "2026-10-31T04:54:43.584Z",
+      "closedReason": "Service no longer needed"
+    },
+    {
+      "id": "sub-mvvwdpla-q2wr3",
+      "subscriptionNumber": "SUB-202610-00107",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-10-31",
+      "expiryDate": "2027-01-29",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Lifecycle test",
+      "createdAt": "2026-10-31T04:25:01.390Z",
+      "updatedAt": "2026-10-31T04:25:01.397Z",
+      "history": [
+        {
+          "timestamp": "2026-10-31T04:25:01.390Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Initial creation"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.391Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Changed status to Quotation",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Quotation sent"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.392Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Changed status to Confirmed",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Customer accepted"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.393Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Changed status to Active",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Activated"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.394Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Maintenance pause"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.395Z",
+          "fromStatus": "Paused",
+          "toStatus": "Active",
+          "action": "Resumed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Subscription resumed to Active status"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.396Z",
+          "fromStatus": "Active",
+          "toStatus": "Active",
+          "action": "Renewed Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Renewed for 60 days. New expiry date: 2027-01-29. Renewal #1. Extended term"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.397Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Cancelled Subscription",
+          "performedBy": "Sarah Jenkins (admin)",
+          "notes": "Service no longer needed"
+        }
+      ],
+      "pausedAt": "2026-10-31T04:25:01.394Z",
+      "resumedAt": "2026-10-31T04:25:01.395Z",
+      "closedAt": "2026-10-31T04:25:01.397Z",
+      "closedReason": "Service no longer needed"
+    },
+    {
+      "id": "sub-001",
+      "subscriptionNumber": "SUB-202610-00101",
+      "customerId": "cust-01",
+      "planId": "plan-pro",
+      "status": "Active",
+      "startDate": "2026-10-01",
+      "expiryDate": "2026-11-01",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 199,
+      "planTaxRate": 10,
+      "planTax": 19.9,
+      "products": [
+        {
+          "productId": "prod-seats",
+          "productName": "Additional Team Seat",
+          "sku": "SKU-SEAT-01",
+          "quantity": 5,
+          "unitPrice": 15,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 75,
+          "lineTax": 7.5,
+          "lineTotal": 82.5
+        },
+        {
+          "productId": "prod-support-247",
+          "productName": "24/7 Dedicated Support SLA",
+          "sku": "SKU-SUPP-247",
+          "quantity": 1,
+          "unitPrice": 120,
+          "discount": 0,
+          "taxRate": 18,
+          "lineSubtotal": 120,
+          "lineTax": 21.6,
+          "lineTotal": 141.6
+        }
+      ],
+      "subtotal": 394,
+      "tax": 49,
+      "discount": 0,
+      "totalAmount": 443,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 1,
+      "notes": "Acme Corp primary monthly production subscription",
+      "createdAt": "2026-10-01T09:00:00.000Z",
+      "updatedAt": "2026-10-01T09:15:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-10-01T09:00:00.000Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Generated Quotation",
+          "performedBy": "Alex Rivera (Staff)",
+          "notes": "Initial quotation prepared for Acme Corp"
+        },
+        {
+          "timestamp": "2026-10-01T09:10:00.000Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Customer Accepted",
+          "performedBy": "John Doe (Customer)",
+          "notes": "Approved by CTO"
+        },
+        {
+          "timestamp": "2026-10-01T09:15:00.000Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Activated Subscription",
+          "performedBy": "Sarah Jenkins (Admin)",
+          "notes": "First invoice paid and provisioned"
+        }
+      ]
+    },
+    {
+      "id": "sub-002",
+      "subscriptionNumber": "SUB-202610-00102",
+      "customerId": "cust-02",
+      "planId": "plan-enterprise",
+      "status": "Active",
+      "startDate": "2026-05-15",
+      "expiryDate": "2027-05-15",
+      "paymentTerms": "Prepaid",
+      "quantity": 1,
+      "unitPrice": 1800,
+      "planTaxRate": 10,
+      "planTax": 180,
+      "products": [
+        {
+          "productId": "prod-storage-1tb",
+          "productName": "1TB High-Speed NVMe Storage",
+          "sku": "SKU-STRG-1TB",
+          "quantity": 2,
+          "unitPrice": 50,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 100,
+          "lineTax": 10,
+          "lineTotal": 110
+        },
+        {
+          "productId": "prod-audit-log",
+          "productName": "SOC2 Compliance & Immutable Audit Vault",
+          "sku": "SKU-COMP-SOC2",
+          "quantity": 1,
+          "unitPrice": 85,
+          "discount": 0,
+          "taxRate": 18,
+          "lineSubtotal": 85,
+          "lineTax": 15.3,
+          "lineTotal": 100.3
+        }
+      ],
+      "subtotal": 1985,
+      "tax": 205.3,
+      "discount": 0,
+      "totalAmount": 2190.3,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Annual enterprise license with compliance audit package",
+      "createdAt": "2026-05-15T11:00:00.000Z",
+      "updatedAt": "2026-05-15T11:30:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-05-15T11:00:00.000Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Generated Quotation",
+          "performedBy": "Alex Rivera (Staff)",
+          "notes": "Annual package quote"
+        },
+        {
+          "timestamp": "2026-05-15T11:15:00.000Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Confirmed",
+          "performedBy": "Elena Rostova (Customer)",
+          "notes": "Enterprise agreement signed"
+        },
+        {
+          "timestamp": "2026-05-15T11:30:00.000Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Activated Subscription",
+          "performedBy": "Sarah Jenkins (Admin)",
+          "notes": "Prepaid wire received"
+        }
+      ]
+    },
+    {
+      "id": "sub-003",
+      "subscriptionNumber": "SUB-202610-00103",
+      "customerId": "cust-03",
+      "planId": "plan-custom",
+      "status": "Quotation",
+      "startDate": "2026-11-01",
+      "expiryDate": "2027-02-01",
+      "paymentTerms": "Net 15",
+      "quantity": 1,
+      "unitPrice": 950,
+      "planTaxRate": 10,
+      "planTax": 95,
+      "products": [
+        {
+          "productId": "prod-api-burst",
+          "productName": "API Burst Pack (1M Requests)",
+          "sku": "SKU-API-BURST",
+          "quantity": 3,
+          "unitPrice": 60,
+          "discount": 10,
+          "taxRate": 10,
+          "lineSubtotal": 162,
+          "lineTax": 16.2,
+          "lineTotal": 178.2
+        },
+        {
+          "productId": "prod-dedicated-ip",
+          "productName": "Dedicated Static IPv4 & Custom SSL",
+          "sku": "SKU-NET-IP",
+          "quantity": 2,
+          "unitPrice": 35,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 70,
+          "lineTax": 7,
+          "lineTotal": 77
+        }
+      ],
+      "subtotal": 1182,
+      "tax": 118.2,
+      "discount": 0,
+      "totalAmount": 1300.2,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Pending quotation review by Global Media legal team",
+      "createdAt": "2026-10-28T14:20:00.000Z",
+      "updatedAt": "2026-10-28T14:20:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-10-28T14:00:00.000Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Sent Quotation",
+          "performedBy": "Alex Rivera (Staff)",
+          "notes": "Sent customized multi-region proposal"
+        }
+      ]
+    },
+    {
+      "id": "sub-004",
+      "subscriptionNumber": "SUB-202610-00104",
+      "customerId": "cust-04",
+      "planId": "plan-starter",
+      "status": "Draft",
+      "startDate": "2026-11-05",
+      "expiryDate": "2026-12-05",
+      "paymentTerms": "Due on Receipt",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [
+        {
+          "productId": "prod-seats",
+          "productName": "Additional Team Seat",
+          "sku": "SKU-SEAT-01",
+          "quantity": 2,
+          "unitPrice": 15,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 30,
+          "lineTax": 3,
+          "lineTotal": 33
+        }
+      ],
+      "subtotal": 79,
+      "tax": 7.9,
+      "discount": 0,
+      "totalAmount": 86.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": false,
+      "renewalCount": 0,
+      "notes": "Draft setup for Apex Logistics logistics coordinator onboarding",
+      "createdAt": "2026-10-30T16:00:00.000Z",
+      "updatedAt": "2026-10-30T16:00:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-10-30T16:00:00.000Z",
+          "fromStatus": "None",
+          "toStatus": "Draft",
+          "action": "Created Draft",
+          "performedBy": "Sarah Jenkins (Admin)",
+          "notes": "Initiated subscription record"
+        }
+      ]
+    },
+    {
+      "id": "sub-005",
+      "subscriptionNumber": "SUB-202610-00105",
+      "customerId": "cust-01",
+      "planId": "plan-starter",
+      "status": "Paused",
+      "startDate": "2026-08-01",
+      "expiryDate": "2026-12-01",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "pauseReason": "Customer requested temporary pause during Q3 internal ERP migration",
+      "pausedAt": "2026-10-15T10:00:00.000Z",
+      "notes": "Acme test environment sandbox subscription",
+      "createdAt": "2026-08-01T08:00:00.000Z",
+      "updatedAt": "2026-10-15T10:00:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-08-01T08:00:00.000Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Activated",
+          "performedBy": "Sarah Jenkins (Admin)",
+          "notes": "Activated for sandbox"
+        },
+        {
+          "timestamp": "2026-10-15T10:00:00.000Z",
+          "fromStatus": "Active",
+          "toStatus": "Paused",
+          "action": "Paused Subscription",
+          "performedBy": "Alex Rivera (Staff)",
+          "notes": "Customer requested pause for ERP migration"
+        }
+      ]
+    },
+    {
+      "id": "sub-006",
+      "subscriptionNumber": "SUB-202610-00106",
+      "customerId": "cust-03",
+      "planId": "plan-pro",
+      "status": "Confirmed",
+      "startDate": "2026-11-01",
+      "expiryDate": "2026-12-01",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 199,
+      "planTaxRate": 10,
+      "planTax": 19.9,
+      "products": [
+        {
+          "productId": "prod-storage-1tb",
+          "productName": "1TB High-Speed NVMe Storage",
+          "sku": "SKU-STRG-1TB",
+          "quantity": 1,
+          "unitPrice": 50,
+          "discount": 0,
+          "taxRate": 10,
+          "lineSubtotal": 50,
+          "lineTax": 5,
+          "lineTotal": 55
+        }
+      ],
+      "subtotal": 249,
+      "tax": 24.9,
+      "discount": 0,
+      "totalAmount": 273.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Order confirmed, pending first invoice payment processing",
+      "createdAt": "2026-10-25T11:00:00.000Z",
+      "updatedAt": "2026-10-26T14:30:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-10-25T11:00:00.000Z",
+          "fromStatus": "Draft",
+          "toStatus": "Quotation",
+          "action": "Generated Quotation",
+          "performedBy": "Alex Rivera (Staff)",
+          "notes": "Standard proposal sent"
+        },
+        {
+          "timestamp": "2026-10-26T14:30:00.000Z",
+          "fromStatus": "Quotation",
+          "toStatus": "Confirmed",
+          "action": "Confirmed Order",
+          "performedBy": "David Kim (Customer)",
+          "notes": "Confirmed and PO attached"
+        }
+      ]
+    },
+    {
+      "id": "sub-007",
+      "subscriptionNumber": "SUB-202609-00088",
+      "customerId": "cust-02",
+      "planId": "plan-starter",
+      "status": "Closed",
+      "startDate": "2026-08-01",
+      "expiryDate": "2026-09-01",
+      "paymentTerms": "Due on Receipt",
+      "quantity": 1,
+      "unitPrice": 49,
+      "planTaxRate": 10,
+      "planTax": 4.9,
+      "products": [],
+      "subtotal": 49,
+      "tax": 4.9,
+      "discount": 0,
+      "totalAmount": 53.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "closedReason": "Expired term ended; customer upgraded to Enterprise Plan",
+      "closedAt": "2026-09-02T00:01:00.000Z",
+      "notes": "Replaced by SUB-202610-00102 Enterprise tier",
+      "createdAt": "2026-08-01T09:00:00.000Z",
+      "updatedAt": "2026-09-02T00:01:00.000Z",
+      "history": [
+        {
+          "timestamp": "2026-08-01T09:00:00.000Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Activated",
+          "performedBy": "Sarah Jenkins (Admin)",
+          "notes": "Initial term active"
+        },
+        {
+          "timestamp": "2026-09-02T00:01:00.000Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Auto-Closed on Expiry",
+          "performedBy": "System Scheduler",
+          "notes": "Term elapsed without renewal"
+        }
+      ]
+    },
+    {
+      "id": "sub-008",
+      "subscriptionNumber": "SUB-202609-00095",
+      "customerId": "cust-04",
+      "planId": "plan-pro",
+      "status": "Closed",
+      "startDate": "2026-09-15",
+      "expiryDate": "2026-10-25",
+      "paymentTerms": "Net 30",
+      "quantity": 1,
+      "unitPrice": 199,
+      "planTaxRate": 10,
+      "planTax": 19.9,
+      "products": [],
+      "subtotal": 199,
+      "tax": 19.9,
+      "discount": 0,
+      "totalAmount": 218.9,
+      "currency": "USD",
+      "autoCloseOnExpiry": true,
+      "renewalCount": 0,
+      "notes": "Past expiry date (2026-10-25) - Eligible for auto-closing demonstration",
+      "createdAt": "2026-09-15T10:00:00.000Z",
+      "updatedAt": "2026-10-31T04:25:01.388Z",
+      "history": [
+        {
+          "timestamp": "2026-09-15T10:00:00.000Z",
+          "fromStatus": "Confirmed",
+          "toStatus": "Active",
+          "action": "Activated",
+          "performedBy": "Alex Rivera (Staff)",
+          "notes": "Activated for 30-day pilot"
+        },
+        {
+          "timestamp": "2026-10-31T04:25:01.388Z",
+          "fromStatus": "Active",
+          "toStatus": "Closed",
+          "action": "Auto-Closed on Expiry",
+          "performedBy": "Sarah Jenkins (admin) [Auto-Close Trigger]",
+          "notes": "Subscription expired on 2026-10-25. Automatically closed per configuration policy."
+        }
+      ],
+      "closedAt": "2026-10-31T04:25:01.388Z",
+      "closedReason": "Expired on 2026-10-25 (Automated System Closure)"
+    }
+  ]
+}

@@ -137,3 +137,12 @@ git checkout -b person-3 origin/main
 git checkout -b person-4 origin/main
 ```
 All feature branches merge directly into `main` after passing `python manage.py test`.
+
+---
+
+## 🔒 Security & Best Practices
+
+- Django password hashing using PBKDF2 with SHA256.
+- Role-based authorization mixins enforcing strict customer isolation.
+- Automatic activity audit trails and CSRF protection.
+- Environment variables configured via `.env` (template in `.env.example`).

@@ -1,0 +1,779 @@
+{
+  "systemSettings": {
+    "autoCloseExpiredIntervalMinutes": 60,
+    "lastAutoCloseRun": "2026-10-31T10:12:44.503Z",
+    "companyName": "Brightloop Software",
+    "currency": "USD",
+    "currencySymbol": "$",
+    "taxRateDefault": 10
+  },
+  "customers": [
+    {
+      "id": "cust-1",
+      "name": "Acme Corporation",
+      "company": "Acme Corp Ltd.",
+      "contactName": "John Davis",
+      "email": "billing@acmecorp.com",
+      "phone": "+1 (555) 019-2834",
+      "address": "100 Tech Blvd, Suite 400, San Francisco, CA 94105",
+      "taxId": "US-EIN-9482910"
+    },
+    {
+      "id": "cust-2",
+      "name": "Nimbus Cloud Solutions",
+      "company": "Nimbus Cloud Inc.",
+      "contactName": "Emma Watson",
+      "email": "ops@nimbuscloud.io",
+      "phone": "+1 (555) 028-4912",
+      "address": "450 Innovation Way, Austin, TX 78701",
+      "taxId": "US-EIN-8392019"
+    },
+    {
+      "id": "cust-3",
+      "name": "Apex Retail Group",
+      "company": "Apex Retail Holdings",
+      "contactName": "Robert Chen",
+      "email": "finance@apexretail.com",
+      "phone": "+1 (555) 037-1823",
+      "address": "880 Commerce St, Chicago, IL 60601",
+      "taxId": "US-EIN-7482911"
+    },
+    {
+      "id": "cust-4",
+      "name": "BlueWave Logistics",
+      "company": "BlueWave Global",
+      "contactName": "Carlos Mendez",
+      "email": "billing@bluewave.com",
+      "phone": "+1 (555) 045-9281",
+      "address": "210 Harbor Dr, Seattle, WA 98101",
+      "taxId": "US-EIN-6182904"
+    }
+  ],
+  "plans": [
+    {
+      "id": "plan-startup-monthly",
+      "name": "Startup Plan (Monthly)",
+      "billingFrequency": "monthly",
+      "intervalDays": 30,
+      "basePrice": 49,
+      "minQuantity": 1,
+      "autoClose": false,
+      "canPause": true,
+      "canRenew": true,
+      "description": "Ideal for small shops and early-stage startups needing core cloud services.",
+      "availableFrom": "2026-01-01",
+      "availableTo": "2027-12-31"
+    },
+    {
+      "id": "plan-business-monthly",
+      "name": "Business Pro (Monthly)",
+      "billingFrequency": "monthly",
+      "intervalDays": 30,
+      "basePrice": 199,
+      "minQuantity": 3,
+      "autoClose": false,
+      "canPause": true,
+      "canRenew": true,
+      "description": "Designed for mid-market businesses requiring scalable seats and priority SLA.",
+      "availableFrom": "2026-01-01",
+      "availableTo": "2027-12-31"
+    },
+    {
+      "id": "plan-enterprise-yearly",
+      "name": "Enterprise Suite (Yearly)",
+      "billingFrequency": "yearly",
+      "intervalDays": 365,
+      "basePrice": 1800,
+      "minQuantity": 5,
+      "autoClose": false,
+      "canPause": true,
+      "canRenew": true,
+      "description": "Complete enterprise digital backbone with dedicated support and custom branding.",
+      "availableFrom": "2026-01-01",
+      "availableTo": "2027-12-31"
+    },
+    {
+      "id": "plan-sprint-weekly",
+      "name": "Sprint Agile (Weekly)",
+      "billingFrequency": "weekly",
+      "intervalDays": 7,
+      "basePrice": 75,
+      "minQuantity": 1,
+      "autoClose": false,
+      "canPause": true,
+      "canRenew": true,
+      "description": "Flexible weekly billing for short contract cycles and project sprints.",
+      "availableFrom": "2026-01-01",
+      "availableTo": "2027-12-31"
+    },
+    {
+      "id": "plan-trial-daily",
+      "name": "Trial Pilot (Daily - Auto Close)",
+      "billingFrequency": "daily",
+      "intervalDays": 1,
+      "basePrice": 10,
+      "minQuantity": 1,
+      "autoClose": true,
+      "canPause": false,
+      "canRenew": false,
+      "description": "Short-term pilot plan configured to automatically close upon expiry date.",
+      "availableFrom": "2026-01-01",
+      "availableTo": "2027-12-31"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-1",
+      "name": "Cloud ERP Core",
+      "type": "Service",
+      "salesPrice": 150,
+      "costPrice": 45,
+      "taxRate": 10,
+      "notes": "Core ERP backbone for subscription and business inventory",
+      "variants": [
+        {
+          "name": "Standard Edition",
+          "priceDelta": 0
+        },
+        {
+          "name": "Enterprise High-Performance",
+          "priceDelta": 120
+        },
+        {
+          "name": "Odoo Brand Edition",
+          "priceDelta": 560
+        }
+      ]
+    },
+    {
+      "id": "prod-2",
+      "name": "CRM Pro & Sales Pipeline",
+      "type": "Service",
+      "salesPrice": 65,
+      "costPrice": 18,
+      "taxRate": 10,
+      "notes": "Lead capture, pipeline tracking, and customer contact management",
+      "variants": [
+        {
+          "name": "Standard Cloud",
+          "priceDelta": 0
+        },
+        {
+          "name": "Odoo Brand Edition",
+          "priceDelta": 560
+        }
+      ]
+    },
+    {
+      "id": "prod-3",
+      "name": "Automated Billing & Invoicing Engine",
+      "type": "Service",
+      "salesPrice": 45,
+      "costPrice": 12,
+      "taxRate": 10,
+      "notes": "Auto invoice generator with tax calculation and payment matching",
+      "variants": [
+        {
+          "name": "Single Currency",
+          "priceDelta": 0
+        },
+        {
+          "name": "Multi-Currency & Global VAT",
+          "priceDelta": 40
+        }
+      ]
+    },
+    {
+      "id": "prod-4",
+      "name": "Dedicated Cloud Storage 500GB",
+      "type": "Consumable",
+      "salesPrice": 30,
+      "costPrice": 8,
+      "taxRate": 10,
+      "notes": "High-durability object storage for backups and attachments",
+      "variants": [
+        {
+          "name": "Standard Multi-AZ",
+          "priceDelta": 0
+        },
+        {
+          "name": "HIPAA/SOC2 Compliant Encryption",
+          "priceDelta": 25
+        }
+      ]
+    },
+    {
+      "id": "prod-5",
+      "name": "24/7 Dedicated Support SLA",
+      "type": "Service",
+      "salesPrice": 120,
+      "costPrice": 50,
+      "taxRate": 10,
+      "notes": "15-minute response time SLA and dedicated solution architect",
+      "variants": [
+        {
+          "name": "Standard 8x5",
+          "priceDelta": 0
+        },
+        {
+          "name": "24/7/365 Dedicated SLA",
+          "priceDelta": 80
+        }
+      ]
+    }
+  ],
+  "quotationTemplates": [
+    {
+      "id": "qt-1",
+      "name": "Standard Business Bundle",
+      "planId": "plan-business-monthly",
+      "validityDays": 30,
+      "paymentTerms": "30 Days",
+      "items": [
+        {
+          "productId": "prod-1",
+          "variant": "Standard Edition",
+          "quantity": 3,
+          "unitPrice": 150,
+          "taxRate": 10
+        },
+        {
+          "productId": "prod-2",
+          "variant": "Standard Cloud",
+          "quantity": 3,
+          "unitPrice": 65,
+          "taxRate": 10
+        }
+      ]
+    },
+    {
+      "id": "qt-2",
+      "name": "Enterprise Brand Suite (Odoo Brand)",
+      "planId": "plan-enterprise-yearly",
+      "validityDays": 45,
+      "paymentTerms": "Immediate Payment",
+      "items": [
+        {
+          "productId": "prod-1",
+          "variant": "Odoo Brand Edition",
+          "quantity": 5,
+          "unitPrice": 710,
+          "taxRate": 10
+        },
+        {
+          "productId": "prod-2",
+          "variant": "Odoo Brand Edition",
+          "quantity": 5,
+          "unitPrice": 625,
+          "taxRate": 10
+        },
+        {
+          "productId": "prod-5",
+          "variant": "24/7/365 Dedicated SLA",
+          "quantity": 1,
+          "unitPrice": 200,
+          "taxRate": 10
+        }
+      ]
+    },
+    {
+      "id": "qt-3",
+      "name": "Trial Pilot Onboarding",
+      "planId": "plan-trial-daily",
+      "validityDays": 7,
+      "paymentTerms": "Immediate Payment",
+      "items": [
+        {
+          "productId": "prod-2",
+          "variant": "Standard Cloud",
+          "quantity": 1,
+          "unitPrice": 65,
+          "taxRate": 10
+        }
+      ]
+    }
+  ],
+  "paymentTermsOptions": [
+    "Immediate Payment",
+    "15 Days",
+    "30 Days",
+    "Net 60"
+  ],
+  "subscriptions": [
+    {
+      "id": "sub-1",
+      "subscriptionNumber": "SUB-2026-0001",
+      "customerId": "cust-1",
+      "planId": "plan-business-monthly",
+      "status": "Active",
+      "startDate": "2026-10-01",
+      "expiryDate": "2026-11-30",
+      "paymentTerms": "30 Days",
+      "autoClose": false,
+      "items": [
+        {
+          "id": "line-1",
+          "productId": "prod-1",
+          "productName": "Cloud ERP Core",
+          "variant": "Standard Edition",
+          "quantity": 3,
+          "unitPrice": 150,
+          "taxRate": 10,
+          "taxAmount": 45,
+          "lineTotal": 495
+        },
+        {
+          "id": "line-2",
+          "productId": "prod-2",
+          "productName": "CRM Pro & Sales Pipeline",
+          "variant": "Standard Cloud",
+          "quantity": 3,
+          "unitPrice": 65,
+          "taxRate": 10,
+          "taxAmount": 19.5,
+          "lineTotal": 214.5
+        }
+      ],
+      "subtotal": 645,
+      "taxTotal": 64.5,
+      "totalAmount": 709.5,
+      "notes": "Quarterly enterprise contract with Acme Corp. Auto-billed monthly.",
+      "createdAt": "2026-09-28T09:30:00.000Z",
+      "updatedAt": "2026-10-01T10:00:00.000Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-09-28T09:30:00.000Z",
+          "user": "Alex Miller",
+          "note": "Subscription drafted from template"
+        },
+        {
+          "status": "Quotation",
+          "date": "2026-09-29T11:15:00.000Z",
+          "user": "Alex Miller",
+          "note": "Quotation sent to billing@acmecorp.com"
+        },
+        {
+          "status": "Confirmed",
+          "date": "2026-09-30T14:20:00.000Z",
+          "user": "John Davis (Customer)",
+          "note": "Quotation accepted by client"
+        },
+        {
+          "status": "Active",
+          "date": "2026-10-01T10:00:00.000Z",
+          "user": "Sarah Jenkins (Admin)",
+          "note": "Subscription confirmed and activated"
+        }
+      ]
+    },
+    {
+      "id": "sub-2",
+      "subscriptionNumber": "SUB-2026-0002",
+      "customerId": "cust-2",
+      "planId": "plan-enterprise-yearly",
+      "status": "Quotation",
+      "startDate": "2026-11-01",
+      "expiryDate": "2027-11-01",
+      "paymentTerms": "Immediate Payment",
+      "autoClose": false,
+      "items": [
+        {
+          "id": "line-3",
+          "productId": "prod-1",
+          "productName": "Cloud ERP Core",
+          "variant": "Odoo Brand Edition",
+          "quantity": 5,
+          "unitPrice": 710,
+          "taxRate": 10,
+          "taxAmount": 355,
+          "lineTotal": 3905
+        },
+        {
+          "id": "line-4",
+          "productId": "prod-5",
+          "productName": "24/7 Dedicated Support SLA",
+          "variant": "24/7/365 Dedicated SLA",
+          "quantity": 1,
+          "unitPrice": 200,
+          "taxRate": 10,
+          "taxAmount": 20,
+          "lineTotal": 220
+        }
+      ],
+      "subtotal": 3750,
+      "taxTotal": 375,
+      "totalAmount": 4125,
+      "notes": "Custom quote with Odoo branding variant (base $150 + $560 brand fee per seat).",
+      "createdAt": "2026-10-25T14:00:00.000Z",
+      "updatedAt": "2026-10-26T10:00:00.000Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-10-25T14:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Drafted initial enterprise proposal"
+        },
+        {
+          "status": "Quotation",
+          "date": "2026-10-26T10:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Quotation published for customer review"
+        }
+      ]
+    },
+    {
+      "id": "sub-3",
+      "subscriptionNumber": "SUB-2026-0003",
+      "customerId": "cust-3",
+      "planId": "plan-business-monthly",
+      "status": "Confirmed",
+      "startDate": "2026-11-05",
+      "expiryDate": "2026-12-05",
+      "paymentTerms": "15 Days",
+      "autoClose": false,
+      "items": [
+        {
+          "id": "line-5",
+          "productId": "prod-1",
+          "productName": "Cloud ERP Core",
+          "variant": "Standard Edition",
+          "quantity": 3,
+          "unitPrice": 150,
+          "taxRate": 10,
+          "taxAmount": 45,
+          "lineTotal": 495
+        },
+        {
+          "id": "line-6",
+          "productId": "prod-3",
+          "productName": "Automated Billing & Invoicing Engine",
+          "variant": "Single Currency",
+          "quantity": 1,
+          "unitPrice": 45,
+          "taxRate": 10,
+          "taxAmount": 4.5,
+          "lineTotal": 49.5
+        }
+      ],
+      "subtotal": 495,
+      "taxTotal": 49.5,
+      "totalAmount": 544.5,
+      "notes": "Confirmed offer. Awaiting deployment cycle on Nov 5th.",
+      "createdAt": "2026-10-27T08:15:00.000Z",
+      "updatedAt": "2026-10-29T16:00:00.000Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-10-27T08:15:00.000Z",
+          "user": "Alex Miller",
+          "note": "Draft created"
+        },
+        {
+          "status": "Quotation",
+          "date": "2026-10-28T09:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Quote transmitted"
+        },
+        {
+          "status": "Confirmed",
+          "date": "2026-10-29T16:00:00.000Z",
+          "user": "Robert Chen (Customer)",
+          "note": "Approved by client procurement"
+        }
+      ]
+    },
+    {
+      "id": "sub-4",
+      "subscriptionNumber": "SUB-2026-0004",
+      "customerId": "cust-4",
+      "planId": "plan-startup-monthly",
+      "status": "Draft",
+      "startDate": "2026-11-10",
+      "expiryDate": "2026-12-10",
+      "paymentTerms": "30 Days",
+      "autoClose": false,
+      "items": [
+        {
+          "id": "line-7",
+          "productId": "prod-2",
+          "productName": "CRM Pro & Sales Pipeline",
+          "variant": "Standard Cloud",
+          "quantity": 1,
+          "unitPrice": 65,
+          "taxRate": 10,
+          "taxAmount": 6.5,
+          "lineTotal": 71.5
+        },
+        {
+          "id": "line-8",
+          "productId": "prod-4",
+          "productName": "Dedicated Cloud Storage 500GB",
+          "variant": "Standard Multi-AZ",
+          "quantity": 1,
+          "unitPrice": 30,
+          "taxRate": 10,
+          "taxAmount": 3,
+          "lineTotal": 33
+        }
+      ],
+      "subtotal": 95,
+      "taxTotal": 9.5,
+      "totalAmount": 104.5,
+      "notes": "Draft under internal sales review for BlueWave Logistics.",
+      "createdAt": "2026-10-30T11:00:00.000Z",
+      "updatedAt": "2026-10-30T11:00:00.000Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-10-30T11:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Initial draft compiled"
+        }
+      ]
+    },
+    {
+      "id": "sub-5",
+      "subscriptionNumber": "SUB-2026-0005",
+      "customerId": "cust-1",
+      "planId": "plan-sprint-weekly",
+      "status": "Paused",
+      "startDate": "2026-09-01",
+      "expiryDate": "2026-11-15",
+      "paymentTerms": "Immediate Payment",
+      "autoClose": false,
+      "items": [
+        {
+          "id": "line-9",
+          "productId": "prod-4",
+          "productName": "Dedicated Cloud Storage 500GB",
+          "variant": "HIPAA/SOC2 Compliant Encryption",
+          "quantity": 2,
+          "unitPrice": 55,
+          "taxRate": 10,
+          "taxAmount": 11,
+          "lineTotal": 121
+        }
+      ],
+      "subtotal": 110,
+      "taxTotal": 11,
+      "totalAmount": 121,
+      "notes": "Subscription temporarily paused per customer maintenance window request.",
+      "createdAt": "2026-09-01T08:00:00.000Z",
+      "updatedAt": "2026-10-25T15:30:00.000Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-08-30T10:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Draft created"
+        },
+        {
+          "status": "Quotation",
+          "date": "2026-08-31T09:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Quote published"
+        },
+        {
+          "status": "Confirmed",
+          "date": "2026-08-31T16:00:00.000Z",
+          "user": "John Davis (Customer)",
+          "note": "Quote accepted"
+        },
+        {
+          "status": "Active",
+          "date": "2026-09-01T08:00:00.000Z",
+          "user": "Sarah Jenkins (Admin)",
+          "note": "Subscription live"
+        },
+        {
+          "status": "Paused",
+          "date": "2026-10-25T15:30:00.000Z",
+          "user": "Sarah Jenkins (Admin)",
+          "note": "Subscription paused on request until maintenance is complete"
+        }
+      ]
+    },
+    {
+      "id": "sub-6",
+      "subscriptionNumber": "SUB-2026-0006",
+      "customerId": "cust-2",
+      "planId": "plan-startup-monthly",
+      "status": "Closed",
+      "startDate": "2026-07-01",
+      "expiryDate": "2026-09-30",
+      "paymentTerms": "30 Days",
+      "autoClose": false,
+      "items": [
+        {
+          "id": "line-10",
+          "productId": "prod-1",
+          "productName": "Cloud ERP Core",
+          "variant": "Standard Edition",
+          "quantity": 1,
+          "unitPrice": 150,
+          "taxRate": 10,
+          "taxAmount": 15,
+          "lineTotal": 165
+        }
+      ],
+      "subtotal": 150,
+      "taxTotal": 15,
+      "totalAmount": 165,
+      "notes": "Closed upon contract conclusion. Customer migrated to larger Enterprise tier.",
+      "createdAt": "2026-07-01T08:00:00.000Z",
+      "updatedAt": "2026-09-30T18:00:00.000Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-06-25T10:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Draft created"
+        },
+        {
+          "status": "Confirmed",
+          "date": "2026-06-28T14:00:00.000Z",
+          "user": "Emma Watson",
+          "note": "Confirmed"
+        },
+        {
+          "status": "Active",
+          "date": "2026-07-01T08:00:00.000Z",
+          "user": "Sarah Jenkins (Admin)",
+          "note": "Activated"
+        },
+        {
+          "status": "Closed",
+          "date": "2026-09-30T18:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Contract period concluded. Closed cleanly."
+        }
+      ]
+    },
+    {
+      "id": "sub-7",
+      "subscriptionNumber": "SUB-2026-0007",
+      "customerId": "cust-3",
+      "planId": "plan-trial-daily",
+      "status": "Active",
+      "startDate": "2026-10-20",
+      "expiryDate": "2026-10-25",
+      "paymentTerms": "Immediate Payment",
+      "autoClose": true,
+      "items": [
+        {
+          "id": "line-11",
+          "productId": "prod-2",
+          "productName": "CRM Pro & Sales Pipeline",
+          "variant": "Standard Cloud",
+          "quantity": 1,
+          "unitPrice": 65,
+          "taxRate": 10,
+          "taxAmount": 6.5,
+          "lineTotal": 71.5
+        }
+      ],
+      "subtotal": 65,
+      "taxTotal": 6.5,
+      "totalAmount": 71.5,
+      "notes": "Past-due trial pilot with autoClose enabled. Ready for auto-close expiration check test.",
+      "createdAt": "2026-10-20T09:00:00.000Z",
+      "updatedAt": "2026-10-31T10:11:48.282Z",
+      "timeline": [
+        {
+          "status": "Draft",
+          "date": "2026-10-20T08:00:00.000Z",
+          "user": "Alex Miller",
+          "note": "Trial created"
+        },
+        {
+          "status": "Active",
+          "date": "2026-10-20T09:00:00.000Z",
+          "user": "Sarah Jenkins (Admin)",
+          "note": "Trial activated"
+        },
+        {
+          "status": "Closed",
+          "date": "2026-10-31T10:11:48.282Z",
+          "user": "System (Auto-Close Service)",
+          "note": "Automatically closed expired subscription. Expired on 2026-10-25 (Configured auto-close enabled on plan/subscription). Was Active."
+        }
+      ]
+    }
+  ],
+  "invoices": [
+    {
+      "id": "inv-1",
+      "invoiceNumber": "INV-2026-0001",
+      "subscriptionId": "sub-1",
+      "customerId": "cust-1",
+      "customerName": "Acme Corporation",
+      "issueDate": "2026-10-01",
+      "dueDate": "2026-10-31",
+      "status": "Paid",
+      "paymentTerms": "30 Days",
+      "subtotal": 645,
+      "taxTotal": 64.5,
+      "totalAmount": 709.5,
+      "items": [
+        {
+          "description": "Cloud ERP Core (Standard Edition) x3",
+          "quantity": 3,
+          "unitPrice": 150,
+          "amount": 450,
+          "taxRate": 10
+        },
+        {
+          "description": "CRM Pro & Sales Pipeline (Standard Cloud) x3",
+          "quantity": 3,
+          "unitPrice": 65,
+          "amount": 195,
+          "taxRate": 10
+        }
+      ],
+      "payments": [
+        {
+          "paymentId": "pay-1",
+          "amount": 709.5,
+          "method": "Bank Transfer",
+          "date": "2026-10-15",
+          "reference": "WIRE-ACM-84920",
+          "notes": "Full settlement received via Wire Transfer"
+        }
+      ]
+    },
+    {
+      "id": "inv-2",
+      "invoiceNumber": "INV-2026-0002",
+      "subscriptionId": "sub-5",
+      "customerId": "cust-1",
+      "customerName": "Acme Corporation",
+      "issueDate": "2026-09-01",
+      "dueDate": "2026-09-15",
+      "status": "Paid",
+      "paymentTerms": "Immediate Payment",
+      "subtotal": 110,
+      "taxTotal": 11,
+      "totalAmount": 121,
+      "items": [
+        {
+          "description": "Dedicated Cloud Storage 500GB (HIPAA/SOC2 Compliant Encryption) x2",
+          "quantity": 2,
+          "unitPrice": 55,
+          "amount": 110,
+          "taxRate": 10
+        }
+      ],
+      "payments": [
+        {
+          "paymentId": "pay-2",
+          "amount": 121,
+          "method": "Credit Card",
+          "date": "2026-09-01",
+          "reference": "STRIPE-CH-91823",
+          "notes": "Instant credit card checkout"
+        }
+      ]
+    }
+  ]
+}

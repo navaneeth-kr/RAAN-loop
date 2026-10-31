@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription Management System</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/print.css">
+</head>
+<body>
+  <div id="appHeader"></div>
+
+  <div class="main-container">
+    <!-- Role & Status Banner -->
+    <div id="roleAlertBanner"></div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Subscription Management</h1>
+        <p class="page-subtitle">Track, bill, renew, and manage customer subscriptions across their full lifecycle</p>
+      </div>
+      <div class="header-actions" id="headerActionButtons">
+        <button id="btnAutoCloseTrigger" class="btn btn-secondary" title="Scan and automatically close subscriptions past expiry date">
+          <span>⚡</span> Run Auto-Close Check
+        </button>
+        <a href="/subscription-form.html" id="btnNewSubscription" class="btn btn-primary">
+          <span>+</span> Create Subscription
+        </a>
+      </div>
+    </div>
+
+    <!-- KPI Metric Cards -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Subscriptions</div>
+        <div class="kpi-value" id="kpiTotal">0</div>
+        <div class="kpi-subtext">Across all accounts</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid var(--status-active);">
+        <div class="kpi-label">Active Subscriptions</div>
+        <div class="kpi-value" style="color: var(--status-active);" id="kpiActive">0</div>
+        <div class="kpi-subtext">Currently generating revenue</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid var(--status-quotation);">
+        <div class="kpi-label">Pipeline (Draft & Quotes)</div>
+        <div class="kpi-value" style="color: var(--status-quotation);" id="kpiPipeline">0</div>
+        <div class="kpi-subtext">In negotiation or review</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid var(--primary);">
+        <div class="kpi-label">Monthly Run-Rate (MRR)</div>
+        <div class="kpi-value" style="color: var(--primary);" id="kpiMrr">$0.00</div>
+        <div class="kpi-subtext">Normalized active MRR</div>
+      </div>
+      <div class="kpi-card" style="border-left: 4px solid #f59e0b;">
+        <div class="kpi-label">Expiring & Overdue</div>
+        <div class="kpi-value" style="color: #f59e0b;" id="kpiExpiring">0</div>
+        <div class="kpi-subtext" id="kpiExpiringSub">Next 30 days & expired</div>
+      </div>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="filter-card">
+      <div class="filter-row">
+        <div class="search-input-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search by subscription #, customer, plan, or product...">
+        </div>
+
+        <select id="planFilter" class="filter-select">
+          <option value="all">All Plans</option>
+        </select>
+
+        <select id="customerFilter" class="filter-select">
+          <option value="all">All Customers</option>
+        </select>
+
+        <select id="paymentTermsFilter" class="filter-select">
+          <option value="all">All Payment Terms</option>
+          <option value="Net 15">Net 15</option>
+          <option value="Net 30">Net 30</option>
+          <option value="Net 60">Net 60</option>
+          <option value="Due on Receipt">Due on Receipt</option>
+          <option value="Prepaid">Prepaid</option>
+        </select>
+
+        <select id="expiryFilter" class="filter-select">
+          <option value="all">All Expiry Dates</option>
+          <option value="expiring_soon">Expiring in 30 Days</option>
+          <option value="expired">Expired Subscriptions</option>
+          <option value="active_unexpired">Active Unexpired</option>
+        </select>
+
+        <button id="btnResetFilters" class="btn btn-secondary btn-sm" title="Clear all filters">Reset</button>
+      </div>
+
+      <!-- Status Tabs -->
+      <div class="status-tabs" id="statusTabs">
+        <button class="status-tab active" data-status="all">All (<span id="countAll">0</span>)</button>
+        <button class="status-tab" data-status="Draft">Draft (<span id="countDraft">0</span>)</button>
+        <button class="status-tab" data-status="Quotation">Quotation (<span id="countQuotation">0</span>)</button>
+        <button class="status-tab" data-status="Confirmed">Confirmed (<span id="countConfirmed">0</span>)</button>
+        <button class="status-tab" data-status="Active">Active (<span id="countActive">0</span>)</button>
+        <button class="status-tab" data-status="Paused">Paused (<span id="countPaused">0</span>)</button>
+        <button class="status-tab" data-status="Closed">Closed (<span id="countClosed">0</span>)</button>
+      </div>
+    </div>
+
+    <!-- Subscriptions Table -->
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="data-table" id="subscriptionsTable">
+          <thead>
+            <tr>
+              <th>Subscription #</th>
+              <th>Customer</th>
+              <th>Plan & Items</th>
+              <th>Start Date</th>
+              <th>Expiry Date</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="subscriptionsTableBody">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 2rem;">Loading subscriptions...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Modal -->
+  <div class="modal-overlay" id="pauseModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Pause Subscription</h3>
+        <button class="modal-close" onclick="closeModal('pauseModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          Pausing will temporarily suspend services for <strong id="pauseSubNumber"></strong>.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Pause Reason <span style="color:red">*</span></label>
+          <textarea id="pauseReasonInput" class="form-control" rows="3" placeholder="Enter reason (e.g. Customer ERP upgrade, seasonal hold)..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('pauseModal')">Cancel</button>
+        <button id="btnConfirmPause" class="btn btn-warning">Confirm Pause</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renew Modal -->
+  <div class="modal-overlay" id="renewModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Renew Subscription</h3>
+        <button class="modal-close" onclick="closeModal('renewModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          Renewing <strong id="renewSubNumber"></strong> will extend its validity period and keep or restore its status to <strong>Active</strong>.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Renewal Extension Period</label>
+          <select id="renewDurationSelect" class="form-control">
+            <option value="30">1 Month (+30 Days)</option>
+            <option value="90">1 Quarter (+90 Days)</option>
+            <option value="180">6 Months (+180 Days)</option>
+            <option value="365">1 Full Year (+365 Days)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Renewal Notes (Optional)</label>
+          <input type="text" id="renewNotesInput" class="form-control" placeholder="e.g. Renewed via PO #99104, standard renewal discount applied">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('renewModal')">Cancel</button>
+        <button id="btnConfirmRenew" class="btn btn-success">Confirm Renewal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Modal -->
+  <div class="modal-overlay" id="cancelModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Cancel Subscription</h3>
+        <button class="modal-close" onclick="closeModal('cancelModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 1rem; color: #dc2626; font-weight: 600;">
+          Are you sure you want to cancel subscription <span id="cancelSubNumber"></span>?
+        </p>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.88rem;">
+          This will immediately transition the subscription status to <strong>Closed</strong> and stop recurring billing.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Cancellation Reason <span style="color:red">*</span></label>
+          <textarea id="cancelReasonInput" class="form-control" rows="3" placeholder="Provide cancellation reason (e.g. Customer switching vendors, company downsized)..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('cancelModal')">Keep Subscription</button>
+        <button id="btnConfirmCancel" class="btn btn-danger">Confirm Cancellation</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
