@@ -2,10 +2,33 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Customer & Subscription Existing Routes
+    # Customer Management (Person 1 - Section 4)
     path('customers/', views.CustomerListView.as_view(), name='customer_list'),
+    path('customers/create/', views.CustomerCreateView.as_view(), name='customer_create'),
+    path('customers/<int:pk>/', views.CustomerDetailView.as_view(), name='customer_detail'),
+    path('customers/<int:pk>/edit/', views.CustomerUpdateView.as_view(), name='customer_update'),
+    path('customers/<int:pk>/delete/', views.CustomerDeleteView.as_view(), name='customer_delete'),
+
+    # Subscription Lifecycle Management (Person 3 - Sections 8 & 18)
     path('subscriptions/', views.SubscriptionListView.as_view(), name='subscription_list'),
+    path('subscriptions/create/', views.SubscriptionCreateView.as_view(), name='subscription_create'),
+    path('subscriptions/<int:pk>/', views.SubscriptionDetailView.as_view(), name='subscription_detail'),
+    path('subscriptions/<int:pk>/edit/', views.SubscriptionUpdateView.as_view(), name='subscription_update'),
+    path('subscriptions/<int:pk>/confirm/', views.SubscriptionConfirmView.as_view(), name='subscription_confirm'),
+    path('subscriptions/<int:pk>/activate/', views.SubscriptionActivateView.as_view(), name='subscription_activate'),
+    path('subscriptions/<int:pk>/pause/', views.SubscriptionPauseView.as_view(), name='subscription_pause'),
+    path('subscriptions/<int:pk>/resume/', views.SubscriptionResumeView.as_view(), name='subscription_resume'),
+    path('subscriptions/<int:pk>/cancel/', views.SubscriptionCancelView.as_view(), name='subscription_cancel'),
+    path('subscriptions/<int:pk>/renew/', views.SubscriptionRenewView.as_view(), name='subscription_renew'),
+    path('subscriptions/<int:pk>/delete/', views.SubscriptionDeleteView.as_view(), name='subscription_delete'),
+
+    # Quotation Management (Person 3 - Section 7)
     path('quotations/', views.QuotationListView.as_view(), name='quotation_list'),
+    path('quotations/create/', views.QuotationCreateView.as_view(), name='quotation_create'),
+    path('quotations/<int:pk>/', views.QuotationDetailView.as_view(), name='quotation_detail'),
+    path('quotations/<int:pk>/edit/', views.QuotationUpdateView.as_view(), name='quotation_update'),
+    path('quotations/<int:pk>/convert/', views.QuotationConvertToSubscriptionView.as_view(), name='quotation_convert'),
+    path('quotations/<int:pk>/delete/', views.QuotationDeleteView.as_view(), name='quotation_delete'),
 
     # Person 4: Invoice Management
     path('invoices/', views.InvoiceListView.as_view(), name='invoice_list'),

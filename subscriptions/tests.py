@@ -389,3 +389,251 @@ class Person4IntegrationTests(TestCase):
         self.assertEqual(data['taxable_amount'], 900.0)
         self.assertEqual(data['tax_amount'], 162.0)
         self.assertEqual(data['total_amount'], 1062.0)
+
+
+from io import StringIO
+from django.core.management import call_command
+from core.pdf_utils import generate_invoice_pdf, generate_quotation_pdf, generate_payment_receipt_pdf
+from subscriptions.models import Quotation, Notification
+
+class CustomerAndSubscriptionLifecycleTests(TestCase):
+    """Tests for Person 1 (Customer Management) & Person 3 (Subscription Lifecycle)."""
+
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_superuser(username="admin_p3", email="p3@b.io", password="p")
+        self.customer_user = User.objects.create_user(username="cust1", email="cust1@client.com", password="password123")
+        self.customer = Customer.objects.create(
+            user=self.customer_user,
+            full_name="Delta Enterprise",
+            email="cust1@client.com",
+            phone="+1234567890",
+            address="100 Tech Park",
+            city="Bangalore",
+            country="India"
+        )
+        self.product = Product.objects.create(name="ERP Suite", sku="SKU-ERP-01", selling_price=Decimal("500.00"))
+        self.plan = SubscriptionPlan.objects.create(
+            code="PLAN-ERP-01",
+            name="ERP Professional",
+            product=self.product,
+            price=Decimal("500.00"),
+            billing_cycle="monthly",
+            allow_pausing=True,
+            allow_renewal=True,
+            allow_early_cancellation=True
+        )
+
+    def test_customer_crud_and_detail(self):
+        """Verifies customer creation, update, and 360-degree profile view."""
+        self.client.force_login(self.admin)
+        # Create
+        res = self.client.post(reverse('customer_create'), {
+            'full_name': 'New Customer Corp',
+            'email': 'new@corp.com',
+            'phone': '9876543210',
+            'status': 'active'
+        })
+        self.assertEqual(res.status_code, 302)
+        new_cust = Customer.objects.get(email='new@corp.com')
+        self.assertEqual(new_cust.full_name, 'New Customer Corp')
+
+        # Detail View
+        res_detail = self.client.get(reverse('customer_detail', args=[new_cust.pk]))
+        self.assertEqual(res_detail.status_code, 200)
+        self.assertContains(res_detail, 'New Customer Corp')
+
+        # Update
+        res_up = self.client.post(reverse('customer_update', args=[new_cust.pk]), {
+            'full_name': 'New Customer Corp Updated',
+            'email': 'new@corp.com',
+            'phone': '9876543210',
+            'status': 'active'
+        })
+        self.assertEqual(res_up.status_code, 302)
+        new_cust.refresh_from_db()
+        self.assertEqual(new_cust.full_name, 'New Customer Corp Updated')
+
+    def test_subscription_full_lifecycle(self):
+        """Tests complete subscription transitions: create -> confirm -> activate -> pause -> resume -> cancel -> renew."""
+        self.client.force_login(self.admin)
+        today = timezone.now().date()
+
+        # 1. Provision subscription (Draft)
+        res_create = self.client.post(reverse('subscription_create'), {
+            'customer': self.customer.pk,
+            'plan': self.plan.pk,
+            'quantity': 2,
+            'billing_cycle': 'monthly',
+            'current_amount': '1000.00',
+            'payment_terms': 'Net 15',
+            'start_date': today.strftime('%Y-%m-%d'),
+            'next_billing_date': (today + timedelta(days=30)).strftime('%Y-%m-%d'),
+            'auto_renew': True,
+            'status': 'draft'
+        })
+        self.assertEqual(res_create.status_code, 302)
+        sub = Subscription.objects.get(customer=self.customer)
+        self.assertEqual(sub.status, 'draft')
+
+        # 2. Confirm
+        self.client.post(reverse('subscription_confirm', args=[sub.pk]))
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'confirmed')
+
+        # 3. Activate
+        self.client.post(reverse('subscription_activate', args=[sub.pk]))
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'active')
+
+        # 4. Pause
+        self.client.post(reverse('subscription_pause', args=[sub.pk]), {'reason': 'Client vacation pause'})
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'paused')
+        self.assertEqual(sub.cancellation_reason, 'Client vacation pause')
+
+        # 5. Resume
+        self.client.post(reverse('subscription_resume', args=[sub.pk]))
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'active')
+
+        # 6. Manual Renew
+        res_renew = self.client.post(reverse('subscription_renew', args=[sub.pk]))
+        self.assertEqual(res_renew.status_code, 302)
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'active')
+        self.assertTrue(Invoice.objects.filter(subscription=sub).exists())
+
+        # 7. Cancel
+        self.client.post(reverse('subscription_cancel', args=[sub.pk]), {'action': 'cancel', 'reason': 'Budget cuts'})
+        sub.refresh_from_db()
+        self.assertEqual(sub.status, 'canceled')
+
+    def test_quotation_creation_and_conversion(self):
+        """Tests quotation creation and 1-click conversion into an active subscription and invoice."""
+        self.client.force_login(self.admin)
+        today = timezone.now().date()
+
+        # Create Quote
+        res = self.client.post(reverse('quotation_create'), {
+            'customer': self.customer.pk,
+            'plan': self.plan.pk,
+            'quantity': 3,
+            'unit_price': '500.00',
+            'subtotal': '1500.00',
+            'total_amount': '1500.00',
+            'validity_days': 30,
+            'status': 'sent',
+            'notes': 'Enterprise discount included.'
+        })
+        self.assertEqual(res.status_code, 302)
+        quote = Quotation.objects.get(customer=self.customer)
+        self.assertEqual(quote.status, 'sent')
+        self.assertEqual(quote.total_amount, Decimal('1500.00'))
+
+        # 1-Click Convert to Subscription
+        res_convert = self.client.post(reverse('quotation_convert', args=[quote.pk]))
+        self.assertEqual(res_convert.status_code, 302)
+        quote.refresh_from_db()
+        self.assertEqual(quote.status, 'converted')
+        self.assertIsNotNone(quote.converted_subscription)
+
+        # Verify created subscription & invoice
+        sub = quote.converted_subscription
+        self.assertEqual(sub.customer, self.customer)
+        self.assertEqual(sub.plan, self.plan)
+        self.assertEqual(sub.status, 'active')
+        self.assertTrue(Invoice.objects.filter(subscription=sub).exists())
+
+    def test_recurring_billing_command(self):
+        """Verifies the automated recurring billing management command."""
+        today = timezone.now().date()
+        sub = Subscription.objects.create(
+            subscription_id="SUB-DUE-01",
+            customer=self.customer,
+            plan=self.plan,
+            current_amount=Decimal("500.00"),
+            status='active',
+            next_billing_date=today,
+            auto_renew=True
+        )
+
+        out = StringIO()
+        call_command('run_recurring_billing', stdout=out)
+        output = out.getvalue()
+
+        self.assertIn("1 invoices generated", output)
+        sub.refresh_from_db()
+        self.assertGreater(sub.next_billing_date, today)
+        self.assertTrue(Invoice.objects.filter(subscription=sub).exists())
+
+    def test_pdf_generation_utilities(self):
+        """Verifies reportlab PDF generation for invoices, quotes, and payment receipts."""
+        today = timezone.now().date()
+        sub = Subscription.objects.create(
+            subscription_id="SUB-PDF-01",
+            customer=self.customer,
+            plan=self.plan,
+            current_amount=Decimal("500.00"),
+            status='active',
+            next_billing_date=today
+        )
+        invoice = Invoice.objects.create(
+            invoice_number="INV-PDF-001",
+            customer=self.customer,
+            subscription=sub,
+            amount=Decimal("500.00"),
+            total_amount=Decimal("500.00"),
+            status='pending',
+            issued_date=today,
+            due_date=today + timedelta(days=15)
+        )
+        quote = Quotation.objects.create(
+            quotation_number="QT-PDF-001",
+            customer=self.customer,
+            plan=self.plan,
+            quantity=1,
+            unit_price=Decimal("500.00"),
+            total_amount=Decimal("500.00"),
+            valid_until=today + timedelta(days=30),
+            status='sent'
+        )
+        payment = Payment.objects.create(
+            payment_id="PAY-PDF-001",
+            customer=self.customer,
+            invoice=invoice,
+            amount=Decimal("500.00"),
+            payment_method="stripe",
+            status="completed"
+        )
+
+        inv_pdf = generate_invoice_pdf(invoice)
+        self.assertTrue(inv_pdf.startswith(b'%PDF'))
+
+        qt_pdf = generate_quotation_pdf(quote)
+        self.assertTrue(qt_pdf.startswith(b'%PDF'))
+
+        rec_pdf = generate_payment_receipt_pdf(payment)
+        self.assertTrue(rec_pdf.startswith(b'%PDF'))
+
+    def test_customer_portal_isolation(self):
+        """Verifies customer portal renders and enforces strict customer data isolation."""
+        self.client.force_login(self.customer_user)
+        res_portal = self.client.get(reverse('customer_portal'))
+        self.assertEqual(res_portal.status_code, 200)
+        self.assertContains(res_portal, 'Delta Enterprise')
+
+        # Another customer's data should NOT be accessible
+        other_user = User.objects.create_user(username="other", email="other@client.com", password="pwd")
+        other_customer = Customer.objects.create(user=other_user, full_name="Secret Corp", email="other@client.com")
+        other_sub = Subscription.objects.create(
+            subscription_id="SUB-SECRET-99",
+            customer=other_customer,
+            plan=self.plan,
+            current_amount=Decimal("999.00"),
+            next_billing_date=timezone.now().date()
+        )
+
+        # Attempting to access another customer's subscription returns 404
+        res_iso = self.client.get(reverse('portal_subscription_detail', args=[other_sub.pk]))
+        self.assertEqual(res_iso.status_code, 404)

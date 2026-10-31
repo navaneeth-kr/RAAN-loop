@@ -94,6 +94,18 @@
       <span>Data Exports</span>
     </a>
 
+    <!-- Audit Logs (Section 21) -->
+    <a href="{% url 'activity_logs' %}" class="sidebar-link {% if 'audit-logs' in request.path %}active{% endif %}">
+      <i class="bi bi-clock-history"></i>
+      <span>Audit Logs</span>
+    </a>
+
+    <!-- Notifications Center (Section 20) -->
+    <a href="{% url 'notification_list' %}" class="sidebar-link {% if 'notifications' in request.path %}active{% endif %}">
+      <i class="bi bi-bell-fill"></i>
+      <span>Notifications</span>
+    </a>
+
     <!-- 12. Settings -->
     <a href="{% url 'admin_settings' %}" class="sidebar-link {% if 'settings' in request.path %}active{% endif %}">
       <i class="bi bi-sliders"></i>

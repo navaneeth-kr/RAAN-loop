@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">System Audit Logs</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Comprehensive administrative audit trail documenting security events, billing actions, and data mutations.</p>
+  </div>
+</div>
+
+<!-- Search & Category Filters -->
+<div class="card-saas bg-white p-3 mb-4">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <div class="input-group">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" class="form-control border-start-0" placeholder="Search by action, user, or details..." value="{{ search_query }}">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="category" class="form-select" onchange="this.form.submit()">
+        <option value="">All Activity Categories</option>
+        {% for cat_val, cat_label in categories %}
+          <option value="{{ cat_val }}" {% if selected_category == cat_val %}selected{% endif %}>{{ cat_label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-bl-primary flex-grow-1">Filter Logs</button>
+      {% if search_query or selected_category %}
+        <a href="{% url 'activity_logs' %}" class="btn btn-outline-secondary" title="Reset filter"><i class="bi bi-x-circle"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Logs Table -->
+<div class="card-saas bg-white overflow-hidden mb-4">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Actor</th>
+          <th>Category</th>
+          <th>Action Summary</th>
+          <th>Metadata Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+          <tr>
+            <td class="text-nowrap" style="font-size: 0.825rem;">
+              <div class="fw-bold text-dark">{{ log.timestamp|date:"M d, Y" }}</div>
+              <div class="text-muted">{{ log.timestamp|date:"H:i:s" }} UTC</div>
+            </td>
+            <td>
+              {% if log.user %}
+                <div class="d-flex align-items-center gap-2">
+                  <div class="rounded-circle bg-light border text-dark fw-bold d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                    {{ log.user.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold text-dark" style="font-size: 0.85rem;">{{ log.user.get_full_name|default:log.user.username }}</div>
+                    <small class="text-muted" style="font-size: 0.75rem;">@{{ log.user.username }}</small>
+                  </div>
+                </div>
+              {% else %}
+                <span class="badge bg-secondary-subtle text-secondary border">System Daemon</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border">
+                {{ log.get_category_display|default:log.category }}
+              </span>
+            </td>
+            <td class="fw-semibold text-dark" style="font-size: 0.875rem;">{{ log.action }}</td>
+            <td class="text-muted small">
+              {% if log.details %}
+                <code>{{ log.details }}</code>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-5 text-muted">
+              <i class="bi bi-clock-history fs-3 d-block mb-2 text-muted"></i>
+              No audit log entries found matching criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

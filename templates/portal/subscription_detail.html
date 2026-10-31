@@ -1,0 +1,96 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'customer_portal' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Customer Portal
+  </a>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2 class="fw-bold mb-0 text-slate-900">{{ subscription.subscription_id }}</h2>
+        <span class="badge bg-{{ subscription.status_badge_class }}-subtle text-{{ subscription.status_badge_class }} border border-{{ subscription.status_badge_class }}-subtle fs-6">
+          {{ subscription.get_status_display }}
+        </span>
+      </div>
+      <p class="text-muted mb-0 mt-1 small">Plan: {{ subscription.plan.name }} • {{ subscription.billing_cycle|title }} recurring cycle</p>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card-saas bg-white p-4 h-100">
+      <h6 class="fw-bold mb-3 text-slate-900"><i class="bi bi-box-seam me-2 text-primary"></i>Subscription Plan Overview</h6>
+      <table class="table table-sm table-borderless mb-0 small text-secondary">
+        <tbody>
+          <tr><td class="text-muted" style="width: 140px;">Plan:</td><td class="fw-bold text-dark">{{ subscription.plan.name }}</td></tr>
+          <tr><td class="text-muted">Seats / Licenses:</td><td>{{ subscription.quantity }}</td></tr>
+          <tr><td class="text-muted">Recurring Amount:</td><td class="fw-bold text-dark">${{ subscription.current_amount }}</td></tr>
+          <tr><td class="text-muted">Billing Cycle:</td><td>{{ subscription.billing_cycle|title }}</td></tr>
+          <tr><td class="text-muted">Payment Terms:</td><td>{{ subscription.payment_terms }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card-saas bg-white p-4 h-100">
+      <h6 class="fw-bold mb-3 text-slate-900"><i class="bi bi-calendar-check me-2 text-primary"></i>Billing Schedule</h6>
+      <table class="table table-sm table-borderless mb-0 small text-secondary">
+        <tbody>
+          <tr><td class="text-muted" style="width: 140px;">Contract Start:</td><td>{{ subscription.start_date|date:"M d, Y" }}</td></tr>
+          <tr><td class="text-muted">Next Renewal:</td><td class="fw-bold text-primary">{{ subscription.next_billing_date|date:"M d, Y"|default:"None" }}</td></tr>
+          <tr><td class="text-muted">Auto-Renew:</td><td>{% if subscription.auto_renew %}Active{% else %}Manual{% endif %}</td></tr>
+          <tr><td class="text-muted">Contract Expiry:</td><td>{{ subscription.expiry_date|date:"M d, Y"|default:"Ongoing" }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card-saas bg-white overflow-hidden mb-4">
+  <div class="p-3 border-bottom">
+    <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-receipt me-2 text-primary"></i>Invoices for this Subscription</h6>
+  </div>
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Issue Date</th>
+          <th>Due Date</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invoices %}
+          <tr>
+            <td><span class="code-tag">{{ inv.invoice_number }}</span></td>
+            <td>{{ inv.issued_date|date:"M d, Y" }}</td>
+            <td>{{ inv.due_date|date:"M d, Y" }}</td>
+            <td><strong class="text-dark">${{ inv.total_amount }}</strong></td>
+            <td>
+              <span class="badge bg-{{ inv.status_badge_class }}-subtle text-{{ inv.status_badge_class }} border border-{{ inv.status_badge_class }}-subtle">
+                {{ inv.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'invoice_pdf_download' inv.pk %}" class="btn btn-sm btn-bl-outline" title="Download PDF">
+                <i class="bi bi-download"></i> PDF
+              </a>
+              <a href="{% url 'portal_invoice_detail' inv.pk %}" class="btn btn-sm btn-bl-outline">
+                <i class="bi bi-eye"></i> View
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center py-4 text-muted">No invoices generated yet for this subscription.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

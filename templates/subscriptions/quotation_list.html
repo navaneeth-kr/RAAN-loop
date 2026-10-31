@@ -7,17 +7,29 @@
     <h2 class="fw-bold mb-0 text-slate-900">Quotations Management</h2>
     <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Custom sales quotes, enterprise proposals, and pricing estimates.</p>
   </div>
+  <a href="{% url 'quotation_create' %}" class="btn btn-bl-primary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-file-earmark-plus-fill"></i>
+    <span>Create Quotation</span>
+  </a>
 </div>
 
 <div class="card-saas p-3 mb-4 bg-white">
   <form method="get" class="row g-2 align-items-center">
-    <div class="col-md-9">
+    <div class="col-md-6">
       <div class="input-group input-group-sm">
         <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search quotation number or customer...">
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search quotation number, customer, or company...">
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
+      <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Quotation Statuses</option>
+        {% for st_val, st_lbl in statuses %}
+          <option value="{{ st_val }}" {% if selected_status == st_val %}selected{% endif %}>{{ st_lbl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
       <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
     </div>
   </form>
@@ -34,33 +46,61 @@
           <th>Total Amount</th>
           <th>Status</th>
           <th>Valid Until</th>
-          <th>Notes</th>
+          <th class="text-end">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for quote in quotations %}
           <tr>
-            <td><span class="code-tag">{{ quote.quotation_number }}</span></td>
             <td>
-              <div class="fw-bold text-dark">{{ quote.customer.full_name }}</div>
-              <small class="text-muted">{{ quote.customer.email }}</small>
+              <a href="{% url 'quotation_detail' quote.pk %}" class="text-decoration-none code-tag fw-bold">
+                {{ quote.quotation_number }}
+              </a>
             </td>
-            <td><span class="fw-semibold text-primary">{{ quote.plan.name }}</span></td>
+            <td>
+              <div class="fw-bold text-dark">
+                <a href="{% url 'customer_detail' quote.customer.pk %}" class="text-decoration-none text-dark hover-primary">
+                  {{ quote.customer.full_name }}
+                </a>
+              </div>
+              <small class="text-muted">{{ quote.customer.company_name|default:quote.customer.email }}</small>
+            </td>
+            <td>
+              <span class="fw-semibold text-primary">{{ quote.plan.name }}</span>
+              <small class="text-muted d-block">Qty: {{ quote.quantity }}</small>
+            </td>
             <td><strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ quote.total_amount|intcomma }}</strong></td>
             <td>
-              {% if quote.status == 'accepted' %}
-                <span class="badge-saas badge-success">Accepted</span>
-              {% elif quote.status == 'sent' %}
-                <span class="badge-saas badge-info">Sent</span>
-              {% else %}
-                <span class="badge-saas badge-secondary">{{ quote.get_status_display }}</span>
-              {% endif %}
+              <span class="badge bg-{{ quote.status_badge_class }}-subtle text-{{ quote.status_badge_class }} border border-{{ quote.status_badge_class }}-subtle">
+                {{ quote.get_status_display }}
+              </span>
             </td>
-            <td><span class="text-muted small">{{ quote.valid_until }}</span></td>
-            <td><small class="text-muted">{{ quote.notes|default:"—" }}</small></td>
+            <td>
+              <span class="{% if quote.is_expired %}text-danger fw-bold{% else %}text-muted{% endif %} small">
+                {{ quote.valid_until|date:"M d, Y" }}
+              </span>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{% url 'quotation_pdf_download' quote.pk %}" class="btn btn-sm btn-bl-outline" title="Download PDF">
+                  <i class="bi bi-file-earmark-pdf"></i>
+                </a>
+                <a href="{% url 'quotation_detail' quote.pk %}" class="btn btn-sm btn-bl-outline" title="View & Print">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if quote.can_convert %}
+                  <form method="post" action="{% url 'quotation_convert' quote.pk %}" class="d-inline" onsubmit="return confirm('Convert this quotation to an active subscription?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-success" title="Convert to Subscription">
+                      <i class="bi bi-check-circle"></i> Convert
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-center py-4 text-muted">No quotations found.</td></tr>
+          <tr><td colspan="7" class="text-center py-4 text-muted">No quotations found matching criteria.</td></tr>
         {% endfor %}
       </tbody>
     </table>

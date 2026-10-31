@@ -48,15 +48,28 @@
           <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Dashboard
         </button>
 
-        <!-- Quick 1-Click Demo Login -->
-        <button type="submit" name="demo_admin" value="1" class="btn btn-outline-primary w-100 py-2 small">
-          <i class="bi bi-lightning-charge-fill me-1"></i> Quick 1-Click Admin Access (Demo)
-        </button>
+        <div class="row g-2 mb-3">
+          <div class="col-6">
+            <button type="submit" name="demo_admin" value="1" class="btn btn-outline-primary w-100 py-2 small" title="Sign in as Administrator">
+              <i class="bi bi-shield-check"></i> Demo Admin
+            </button>
+          </div>
+          <div class="col-6">
+            <button type="submit" name="demo_customer" value="1" class="btn btn-outline-success w-100 py-2 small" title="Sign in to Customer Portal">
+              <i class="bi bi-person-circle"></i> Demo Customer
+            </button>
+          </div>
+        </div>
+
+        <div class="text-center pt-2 border-top">
+          <span class="text-muted small">New customer?</span>
+          <a href="{% url 'customer_register' %}" class="fw-bold text-decoration-none small ms-1">Create Account</a>
+        </div>
       </form>
     </div>
 
     <div class="text-center text-muted small mt-4">
-      &copy; {% now "Y" %} {{ system_settings.company_name|default:"Brightloop Software" }}. Restricted Access.
+      &copy; {% now "Y" %} {{ system_settings.company_name|default:"Brightloop Software" }}. All rights reserved.
     </div>
   </div>
 

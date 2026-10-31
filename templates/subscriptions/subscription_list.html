@@ -5,11 +5,17 @@
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
   <div>
     <h2 class="fw-bold mb-0 text-slate-900">Subscriptions Management</h2>
-    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Active recurring billing contracts, trial monitors, and plan assignments.</p>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Active recurring billing contracts, lifecycle monitors, and plan assignments.</p>
   </div>
-  <a href="{% url 'plan_list' %}" class="btn btn-bl-outline btn-sm">
-    <i class="bi bi-tag me-1"></i> Manage Plans
-  </a>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'plan_list' %}" class="btn btn-bl-outline">
+      <i class="bi bi-tag me-1"></i> Plans
+    </a>
+    <a href="{% url 'subscription_create' %}" class="btn btn-bl-primary d-inline-flex align-items-center gap-2">
+      <i class="bi bi-plus-circle-fill"></i>
+      <span>Provision Subscription</span>
+    </a>
+  </div>
 </div>
 
 <div class="card-saas p-3 mb-4 bg-white">
@@ -22,11 +28,10 @@
     </div>
     <div class="col-md-4">
       <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
-        <option value="trialing" {% if selected_status == 'trialing' %}selected{% endif %}>Trialing</option>
-        <option value="past_due" {% if selected_status == 'past_due' %}selected{% endif %}>Past Due</option>
-        <option value="canceled" {% if selected_status == 'canceled' %}selected{% endif %}>Canceled</option>
+        <option value="">All Statuses ({{ statuses|length }} Available)</option>
+        {% for st_code, st_label in statuses %}
+          <option value="{{ st_code }}" {% if selected_status == st_code %}selected{% endif %}>{{ st_label }}</option>
+        {% endfor %}
       </select>
     </div>
     <div class="col-md-2">
@@ -41,30 +46,48 @@
       <thead>
         <tr>
           <th>Sub ID & Customer</th>
-          <th>Plan & Product</th>
+          <th>Plan & Variant</th>
           <th>Cycle</th>
           <th>Recurring Amount</th>
           <th>Status</th>
           <th>Next Billing</th>
           <th>Auto Renew</th>
+          <th class="text-end">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for sub in subscriptions %}
           <tr>
             <td>
-              <span class="code-tag">{{ sub.subscription_id }}</span>
-              <div class="fw-bold text-dark mt-1">{{ sub.customer.full_name }}</div>
+              <a href="{% url 'subscription_detail' sub.pk %}" class="text-decoration-none code-tag fw-bold">
+                {{ sub.subscription_id }}
+              </a>
+              <div class="fw-bold text-dark mt-1">
+                <a href="{% url 'customer_detail' sub.customer.pk %}" class="text-decoration-none text-dark hover-primary">
+                  {{ sub.customer.full_name }}
+                </a>
+              </div>
               <small class="text-muted">{{ sub.customer.email }}</small>
             </td>
             <td>
               <span class="fw-semibold text-primary">{{ sub.plan.name }}</span>
-              <small class="text-muted d-block">{{ sub.plan.product.name }}</small>
+              {% if sub.variant %}
+                <small class="text-muted d-block">Variant: {{ sub.variant.name }}</small>
+              {% endif %}
+              <small class="text-muted d-block">Qty: {{ sub.quantity }}</small>
             </td>
-            <td>{{ sub.billing_cycle|title }}</td>
+            <td><span class="badge bg-light text-dark border">{{ sub.billing_cycle|title }}</span></td>
             <td><strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ sub.current_amount }}</strong></td>
-            <td><span class="badge-saas badge-{{ sub.status_badge_class }}">{{ sub.get_status_display }}</span></td>
-            <td><span class="text-muted small">{{ sub.next_billing_date }}</span></td>
+            <td>
+              <span class="badge bg-{{ sub.status_badge_class }}-subtle text-{{ sub.status_badge_class }} border border-{{ sub.status_badge_class }}-subtle">
+                {{ sub.get_status_display }}
+              </span>
+            </td>
+            <td>
+              <span class="{% if sub.is_expiring_soon %}text-danger fw-bold{% else %}text-muted{% endif %} small">
+                {{ sub.next_billing_date|date:"M d, Y" }}
+              </span>
+            </td>
             <td>
               {% if sub.auto_renew %}
                 <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i> Yes</span>
@@ -72,9 +95,19 @@
                 <span class="badge bg-secondary-subtle text-secondary border">Manual</span>
               {% endif %}
             </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{% url 'subscription_detail' sub.pk %}" class="btn btn-sm btn-bl-outline" title="Lifecycle Controls">
+                  <i class="bi bi-sliders"></i> Manage
+                </a>
+                <a href="{% url 'subscription_update' sub.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit Parameters">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-center py-4 text-muted">No subscriptions found.</td></tr>
+          <tr><td colspan="8" class="text-center py-4 text-muted">No subscriptions found matching criteria.</td></tr>
         {% endfor %}
       </tbody>
     </table>

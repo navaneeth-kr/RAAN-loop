@@ -1,0 +1,224 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="card-saas bg-white p-4 mb-4 border-0 shadow-sm">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <h3 class="fw-bold mb-1 text-slate-900">Welcome back, {{ customer.full_name }}!</h3>
+      <p class="text-muted mb-0 small">
+        {{ customer.company_name|default:"Individual Account" }} • Account Status: 
+        <span class="badge {% if customer.status == 'active' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-secondary-subtle text-secondary border{% endif %}">
+          {{ customer.get_status_display }}
+        </span>
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'portal_payment_list' %}" class="btn btn-sm btn-bl-outline">
+        <i class="bi bi-clock-history me-1"></i> Payment Records
+      </a>
+      <a href="{% url 'customer_profile' %}" class="btn btn-sm btn-bl-primary">
+        <i class="bi bi-gear me-1"></i> Manage Profile
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- 4 Financial & Operational Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-primary">
+      <span class="text-muted small fw-semibold">Active Subscriptions</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">{{ active_subs_count }}</h3>
+      <small class="text-muted">Cloud tiers & licenses</small>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card-saas bg-white p-3 border-start border-4 {% if unpaid_balance > 0 %}border-danger{% else %}border-success{% endif %}">
+      <span class="text-muted small fw-semibold">Outstanding Due Balance</span>
+      <h3 class="fw-bold mb-0 {% if unpaid_balance > 0 %}text-danger{% else %}text-success{% endif %} mt-1">
+        ${{ unpaid_balance|floatformat:2 }}
+      </h3>
+      <small class="text-muted">{% if unpaid_balance > 0 %}Immediate payment requested{% else %}Account fully settled{% endif %}</small>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-info">
+      <span class="text-muted small fw-semibold">Total Lifetime Payments</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">${{ total_spent|floatformat:2 }}</h3>
+      <small class="text-muted">All completed transactions</small>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-warning">
+      <span class="text-muted small fw-semibold">Next Scheduled Renewal</span>
+      {% if upcoming_renewals %}
+        <h4 class="fw-bold mb-0 text-dark mt-1">{{ upcoming_renewals.0.next_billing_date|date:"M d, Y" }}</h4>
+        <small class="text-muted">{{ upcoming_renewals.0.plan.name }}</small>
+      {% else %}
+        <h4 class="fw-bold mb-0 text-muted mt-1">None Pending</h4>
+        <small class="text-muted">No contracts renewing soon</small>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Subscriptions Grid -->
+<div class="card-saas bg-white p-4 mb-4">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h5 class="fw-bold mb-0 text-slate-900"><i class="bi bi-repeat me-2 text-primary"></i>My Subscriptions</h5>
+    <span class="badge bg-light text-dark border">{{ subscriptions.count }} Total Contracts</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Subscription</th>
+          <th>Plan Tier</th>
+          <th>Seats</th>
+          <th>Cycle</th>
+          <th>Billing Amount</th>
+          <th>Renewal Date</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sub in subscriptions %}
+          <tr>
+            <td><strong class="code-tag">{{ sub.subscription_id }}</strong></td>
+            <td>
+              <span class="fw-bold text-dark">{{ sub.plan.name }}</span>
+              {% if sub.variant %}<small class="text-muted d-block">{{ sub.variant.name }}</small>{% endif %}
+            </td>
+            <td>{{ sub.quantity }}</td>
+            <td><span class="badge bg-light text-dark border">{{ sub.billing_cycle|title }}</span></td>
+            <td><strong class="text-dark">${{ sub.current_amount }}</strong></td>
+            <td>
+              {% if sub.next_billing_date %}
+                <span class="{% if sub.is_expiring_soon %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                  {{ sub.next_billing_date|date:"M d, Y" }}
+                </span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge bg-{{ sub.status_badge_class }}-subtle text-{{ sub.status_badge_class }} border border-{{ sub.status_badge_class }}-subtle">
+                {{ sub.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'portal_subscription_detail' sub.pk %}" class="btn btn-sm btn-bl-outline">
+                <i class="bi bi-eye me-1"></i> Details
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="text-center py-4 text-muted">You have no active subscriptions registered with Brightloop Software.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Invoices & Payments Split Row -->
+<div class="row g-4">
+  <!-- Recent Invoices -->
+  <div class="col-lg-7">
+    <div class="card-saas bg-white p-4 h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0 text-slate-900"><i class="bi bi-receipt me-2 text-primary"></i>Recent Invoices</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Due Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th class="text-end">PDF / View</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in recent_invoices %}
+              <tr>
+                <td><span class="code-tag">{{ inv.invoice_number }}</span></td>
+                <td>
+                  <span class="{% if inv.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %} small">
+                    {{ inv.due_date|date:"M d, Y" }}
+                  </span>
+                </td>
+                <td><strong class="text-dark">${{ inv.total_amount }}</strong></td>
+                <td>
+                  <span class="badge bg-{{ inv.status_badge_class }}-subtle text-{{ inv.status_badge_class }} border border-{{ inv.status_badge_class }}-subtle">
+                    {{ inv.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1">
+                    <a href="{% url 'invoice_pdf_download' inv.pk %}" class="btn btn-sm btn-bl-outline" title="Download PDF">
+                      <i class="bi bi-download"></i>
+                    </a>
+                    <a href="{% url 'portal_invoice_detail' inv.pk %}" class="btn btn-sm btn-bl-outline">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center py-4 text-muted">No invoices generated yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Payments -->
+  <div class="col-lg-5">
+    <div class="card-saas bg-white p-4 h-100">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="fw-bold mb-0 text-slate-900"><i class="bi bi-credit-card me-2 text-primary"></i>Payment History</h5>
+        <a href="{% url 'portal_payment_list' %}" class="small text-decoration-none fw-semibold">View All</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Payment ID</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th class="text-end">Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pay in recent_payments %}
+              <tr>
+                <td>
+                  <span class="code-tag">{{ pay.payment_id }}</span>
+                  <small class="text-muted d-block">{{ pay.payment_date|date:"M d, Y" }}</small>
+                </td>
+                <td><strong class="text-success">${{ pay.amount }}</strong></td>
+                <td>
+                  <span class="badge bg-{{ pay.status_badge_class }}-subtle text-{{ pay.status_badge_class }} border border-{{ pay.status_badge_class }}-subtle">
+                    {{ pay.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'payment_receipt_pdf_download' pay.pk %}" class="btn btn-sm btn-bl-outline" title="Download Official Receipt">
+                    <i class="bi bi-download"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4" class="text-center py-4 text-muted">No payment records found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

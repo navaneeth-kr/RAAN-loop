@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'customer_list' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Customers Directory
+  </a>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; font-size: 1.25rem;">
+        {{ customer.full_name|slice:":1"|upper }}
+      </div>
+      <div>
+        <h2 class="fw-bold mb-0 text-slate-900">{{ customer.full_name }}</h2>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <span class="text-muted small">{{ customer.company_name|default:"Individual Client" }}</span>
+          <span class="text-muted">•</span>
+          <span class="badge {% if customer.status == 'active' %}bg-success-subtle text-success border border-success-subtle{% else %}bg-secondary-subtle text-secondary border{% endif %}">
+            {{ customer.get_status_display }}
+          </span>
+          <span class="text-muted small">• Joined {{ customer.created_at|date:"M d, Y" }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="{% url 'subscription_create' %}?customer={{ customer.pk }}" class="btn btn-sm btn-bl-primary">
+        <i class="bi bi-repeat me-1"></i> New Subscription
+      </a>
+      <a href="{% url 'invoice_create' %}?customer={{ customer.pk }}" class="btn btn-sm btn-bl-outline">
+        <i class="bi bi-receipt me-1"></i> New Invoice
+      </a>
+      <a href="{% url 'quotation_create' %}?customer={{ customer.pk }}" class="btn btn-sm btn-bl-outline">
+        <i class="bi bi-file-earmark-text me-1"></i> New Quotation
+      </a>
+      <a href="{% url 'customer_update' customer.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit Customer">
+        <i class="bi bi-pencil"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- 3 KPI Cards for Customer -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-primary">
+      <span class="text-muted small fw-semibold">Active Subscriptions</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">{{ active_subs_count }}</h3>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-success">
+      <span class="text-muted small fw-semibold">Total Revenue Spent</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">${{ total_spent|floatformat:2 }}</h3>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="card-saas bg-white p-3 border-start border-4 {% if unpaid_balance > 0 %}border-danger{% else %}border-secondary{% endif %}">
+      <span class="text-muted small fw-semibold">Unpaid Balance Due</span>
+      <h3 class="fw-bold mb-0 {% if unpaid_balance > 0 %}text-danger{% else %}text-dark{% endif %} mt-1">
+        ${{ unpaid_balance|floatformat:2 }}
+      </h3>
+    </div>
+  </div>
+</div>
+
+<!-- Contact & Address Card -->
+<div class="card-saas bg-white p-4 mb-4">
+  <h6 class="fw-bold mb-3 text-slate-900"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Customer Profile & Billing Contact</h6>
+  <div class="row g-3 text-secondary small">
+    <div class="col-md-3">
+      <strong class="text-dark d-block">Email Address:</strong>
+      <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
+    </div>
+    <div class="col-md-3">
+      <strong class="text-dark d-block">Phone:</strong>
+      <span>{{ customer.phone|default:"—" }}</span>
+    </div>
+    <div class="col-md-3">
+      <strong class="text-dark d-block">Billing Address:</strong>
+      <span>{{ customer.address|default:"—" }}</span>
+    </div>
+    <div class="col-md-3">
+      <strong class="text-dark d-block">Location:</strong>
+      <span>{{ customer.city|default:"" }} {{ customer.postal_code|default:"" }} {{ customer.country }}</span>
+    </div>
+  </div>
+  {% if customer.notes %}
+    <div class="mt-3 pt-3 border-top text-muted small">
+      <strong class="text-dark">Account Notes:</strong> {{ customer.notes }}
+    </div>
+  {% endif %}
+</div>
+
+<!-- Tabbed History Interface -->
+<div class="card-saas bg-white overflow-hidden">
+  <div class="card-header bg-white border-bottom p-0">
+    <ul class="nav nav-tabs border-0 px-3 pt-2" id="customerTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active fw-semibold" id="subs-tab" data-bs-toggle="tab" data-bs-target="#subs" type="button" role="tab">
+          <i class="bi bi-repeat me-1"></i> Subscriptions ({{ subscriptions.count }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="invoices-tab" data-bs-toggle="tab" data-bs-target="#invoices" type="button" role="tab">
+          <i class="bi bi-receipt me-1"></i> Invoices ({{ invoices.count }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">
+          <i class="bi bi-credit-card me-1"></i> Payments ({{ payments.count }})
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link fw-semibold" id="quotes-tab" data-bs-toggle="tab" data-bs-target="#quotes" type="button" role="tab">
+          <i class="bi bi-file-earmark-text me-1"></i> Quotations ({{ quotations.count }})
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="tab-content" id="customerTabContent">
+    <!-- 1. Subscriptions Tab -->
+    <div class="tab-pane fade show active p-0" id="subs" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Subscription ID</th>
+              <th>Plan</th>
+              <th>Cycle</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Next Renewal</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sub in subscriptions %}
+              <tr>
+                <td><span class="code-tag">{{ sub.subscription_id }}</span></td>
+                <td>
+                  <strong class="text-dark">{{ sub.plan.name }}</strong>
+                  {% if sub.variant %}<small class="text-muted d-block">Variant: {{ sub.variant.name }}</small>{% endif %}
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ sub.billing_cycle|title }}</span></td>
+                <td><strong class="text-dark">${{ sub.current_amount }}</strong></td>
+                <td>
+                  <span class="badge bg-{{ sub.status_badge_class }}-subtle text-{{ sub.status_badge_class }} border border-{{ sub.status_badge_class }}-subtle">
+                    {{ sub.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if sub.next_billing_date %}
+                    <span class="{% if sub.is_expiring_soon %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                      {{ sub.next_billing_date|date:"M d, Y" }}
+                    </span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'subscription_detail' sub.pk %}" class="btn btn-sm btn-bl-outline">
+                    <i class="bi bi-arrow-right"></i> Manage
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="7" class="text-center py-4 text-muted">No subscriptions on record for this customer.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. Invoices Tab -->
+    <div class="tab-pane fade p-0" id="invoices" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Issue Date</th>
+              <th>Due Date</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inv in invoices %}
+              <tr>
+                <td><span class="code-tag">{{ inv.invoice_number }}</span></td>
+                <td>{{ inv.issued_date|date:"M d, Y" }}</td>
+                <td>
+                  <span class="{% if inv.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                    {{ inv.due_date|date:"M d, Y" }}
+                  </span>
+                </td>
+                <td><strong class="text-dark">${{ inv.total_amount }}</strong></td>
+                <td>
+                  <span class="badge bg-{{ inv.status_badge_class }}-subtle text-{{ inv.status_badge_class }} border border-{{ inv.status_badge_class }}-subtle">
+                    {{ inv.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1">
+                    <a href="{% url 'invoice_pdf_download' inv.pk %}" class="btn btn-sm btn-bl-outline" title="Download PDF">
+                      <i class="bi bi-file-earmark-pdf"></i>
+                    </a>
+                    <a href="{% url 'invoice_detail' inv.pk %}" class="btn btn-sm btn-bl-outline">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center py-4 text-muted">No invoices generated yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. Payments Tab -->
+    <div class="tab-pane fade p-0" id="payments" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Payment ID</th>
+              <th>Method</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Payment Date</th>
+              <th class="text-end">Receipt</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for payment in payments %}
+              <tr>
+                <td><span class="code-tag">{{ payment.payment_id }}</span></td>
+                <td><span class="badge bg-light text-dark border">{{ payment.get_payment_method_display }}</span></td>
+                <td><strong class="text-success">${{ payment.amount }}</strong></td>
+                <td>
+                  <span class="badge bg-{{ payment.status_badge_class }}-subtle text-{{ payment.status_badge_class }} border border-{{ payment.status_badge_class }}-subtle">
+                    {{ payment.get_status_display }}
+                  </span>
+                </td>
+                <td><span class="text-muted small">{{ payment.payment_date|date:"M d, Y H:i" }}</span></td>
+                <td class="text-end">
+                  <a href="{% url 'payment_receipt_pdf_download' payment.pk %}" class="btn btn-sm btn-bl-outline" title="Download Receipt PDF">
+                    <i class="bi bi-download"></i> Receipt
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center py-4 text-muted">No payment records found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. Quotations Tab -->
+    <div class="tab-pane fade p-0" id="quotes" role="tabpanel">
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Quote #</th>
+              <th>Plan</th>
+              <th>Amount</th>
+              <th>Valid Until</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for qt in quotations %}
+              <tr>
+                <td><span class="code-tag">{{ qt.quotation_number }}</span></td>
+                <td>{{ qt.plan.name }}</td>
+                <td><strong class="text-dark">${{ qt.total_amount }}</strong></td>
+                <td>
+                  <span class="{% if qt.is_expired %}text-danger{% else %}text-muted{% endif %}">
+                    {{ qt.valid_until|date:"M d, Y" }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-{{ qt.status_badge_class }}-subtle text-{{ qt.status_badge_class }} border border-{{ qt.status_badge_class }}-subtle">
+                    {{ qt.get_status_display }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="d-inline-flex gap-1">
+                    <a href="{% url 'quotation_detail' qt.pk %}" class="btn btn-sm btn-bl-outline">
+                      <i class="bi bi-eye"></i> View
+                    </a>
+                    {% if qt.can_convert %}
+                      <form method="post" action="{% url 'quotation_convert' qt.pk %}" class="d-inline" onsubmit="return confirm('Convert this quotation to an active subscription?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-success">
+                          <i class="bi bi-check-circle"></i> Convert
+                        </button>
+                      </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="text-center py-4 text-muted">No quotations generated yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -133,6 +133,10 @@ class SubscriptionPlan(models.Model):
         """Alias for billing_cycle display."""
         return self.get_billing_cycle_display()
 
+    @billing_frequency.setter
+    def billing_frequency(self, value):
+        self.billing_cycle = value
+
     def calculate_price_for_quantity(self, quantity=1):
         """
         Calculate total price based on unit price and quantity.

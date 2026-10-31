@@ -6,6 +6,10 @@
     <h2 class="fw-bold mb-0 text-slate-900">Staff & Role Management</h2>
     <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Internal administrators, billing managers, and support team members.</p>
   </div>
+  <a href="{% url 'staff_create' %}" class="btn btn-bl-primary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-person-plus-fill"></i>
+    <span>Add Staff Member</span>
+  </a>
 </div>
 
 <div class="card-saas bg-white overflow-hidden">
@@ -18,8 +22,9 @@
           <th>Role</th>
           <th>Department</th>
           <th>Phone</th>
-          <th>Permissions</th>
+          <th>Status</th>
           <th>Joined</th>
+          <th class="text-end">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -45,16 +50,31 @@
             <td>{{ member.staff_profile.department|default:"Operations" }}</td>
             <td>{{ member.staff_profile.phone|default:"—" }}</td>
             <td>
-              {% if member.is_superuser %}
-                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Superuser</span>
+              {% if member.is_active %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
               {% else %}
-                <span class="badge bg-success-subtle text-success border border-success-subtle">Staff</span>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
               {% endif %}
             </td>
             <td><span class="text-muted small">{{ member.date_joined|date:"M d, Y" }}</span></td>
+            <td class="text-end">
+              <div class="d-inline-flex align-items-center gap-1">
+                <a href="{% url 'staff_update' member.pk %}" class="btn btn-sm btn-bl-outline" title="Edit Profile & Role">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                {% if member != request.user %}
+                  <form method="post" action="{% url 'staff_toggle_active' member.pk %}" class="d-inline" onsubmit="return confirm('Toggle status for this staff member?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm {% if member.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}" title="{% if member.is_active %}Deactivate{% else %}Activate{% endif %}">
+                      <i class="bi {% if member.is_active %}bi-person-dash{% else %}bi-person-check{% endif %}"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </div>
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-center py-4 text-muted">No staff accounts registered.</td></tr>
+          <tr><td colspan="8" class="text-center py-4 text-muted">No staff accounts registered.</td></tr>
         {% endfor %}
       </tbody>
     </table>

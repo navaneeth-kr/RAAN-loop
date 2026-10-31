@@ -33,6 +33,14 @@
       <span>Reports</span>
     </a>
 
+    <!-- Notifications Center (Section 20) -->
+    <a href="{% url 'notification_list' %}" class="btn btn-sm btn-bl-outline position-relative p-2" title="Notification Center">
+      <i class="bi bi-bell-fill"></i>
+      <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle" style="transform: translate(-30%, 30%) !important;">
+        <span class="visually-hidden">Alerts</span>
+      </span>
+    </a>
+
     <!-- Settings Shortcut -->
     <a href="{% url 'admin_settings' %}" class="btn btn-sm btn-bl-outline p-2" title="System Settings">
       <i class="bi bi-gear-fill"></i>

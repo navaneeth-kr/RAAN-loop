@@ -1,0 +1,84 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'customer_portal' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Dashboard
+  </a>
+  <h2 class="fw-bold mb-0 text-slate-900">Account Profile Settings</h2>
+  <p class="text-muted mb-0 mt-1 small">Manage your business contact information and billing address for invoices.</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card-saas bg-white p-4">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-dark">Primary Contact Name <span class="text-danger">*</span></label>
+            <input type="text" name="full_name" class="form-control" value="{{ customer.full_name }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-dark">Organization / Company Name</label>
+            <input type="text" name="company_name" class="form-control" value="{{ customer.company_name }}">
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-dark">Email Address (Registered)</label>
+            <input type="email" class="form-control bg-light" value="{{ customer.email }}" disabled>
+            <small class="text-muted">Contact support if you need to transfer your account email.</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold small text-dark">Phone Number</label>
+            <input type="text" name="phone" class="form-control" value="{{ customer.phone }}">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold small text-dark">Billing Street Address</label>
+          <input type="text" name="address" class="form-control" value="{{ customer.address }}">
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-bold small text-dark">City</label>
+            <input type="text" name="city" class="form-control" value="{{ customer.city }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold small text-dark">Postal / Zip Code</label>
+            <input type="text" name="postal_code" class="form-control" value="{{ customer.postal_code }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold small text-dark">Country</label>
+            <input type="text" name="country" class="form-control" value="{{ customer.country }}">
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 pt-3 border-top">
+          <button type="submit" class="btn btn-bl-primary">
+            <i class="bi bi-check2-circle me-1"></i> Update Profile Information
+          </button>
+          <a href="{% url 'customer_portal' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas bg-white p-4">
+      <h6 class="fw-bold mb-3 text-slate-900"><i class="bi bi-shield-check me-2 text-primary"></i>Data Privacy & Isolation</h6>
+      <p class="text-muted small">
+        In accordance with Brightloop Software privacy policy, customer data is strictly isolated. You only have access to your own subscriptions, invoices, and payments.
+      </p>
+      <div class="alert alert-light border small text-muted mb-0">
+        <i class="bi bi-info-circle text-primary me-1"></i>
+        Updates made here will automatically reflect on all future generated invoices and official receipts.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

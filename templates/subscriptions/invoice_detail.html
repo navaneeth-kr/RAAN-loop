@@ -42,8 +42,11 @@
   </div>
 
   <div class="d-flex gap-2">
+    <a href="{% url 'invoice_pdf_download' invoice.id %}" class="btn btn-bl-primary btn-sm">
+      <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+    </a>
     <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
-      <i class="bi bi-printer me-1"></i> Print / Save PDF
+      <i class="bi bi-printer me-1"></i> Print
     </button>
     {% if invoice.status != 'paid' and invoice.status != 'refunded' %}
       <a href="{% url 'payment_create' %}?invoice_id={{ invoice.id }}" class="btn btn-success btn-sm">

@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="mb-4 d-print-none">
+  <a href="{% url 'quotation_list' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Quotations Directory
+  </a>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2 class="fw-bold mb-0 text-slate-900">{{ quotation.quotation_number }}</h2>
+        <span class="badge bg-{{ quotation.status_badge_class }}-subtle text-{{ quotation.status_badge_class }} border border-{{ quotation.status_badge_class }}-subtle fs-6">
+          {{ quotation.get_status_display }}
+        </span>
+      </div>
+      <p class="text-muted mb-0 mt-1 small">Prepared for {{ quotation.customer.full_name }} • Created {{ quotation.created_at|date:"M d, Y" }}</p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print Proposal
+      </button>
+      <a href="{% url 'quotation_pdf_download' quotation.pk %}" class="btn btn-bl-outline btn-sm">
+        <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
+      </a>
+      <a href="{% url 'quotation_update' quotation.pk %}" class="btn btn-bl-outline btn-sm">
+        <i class="bi bi-pencil me-1"></i> Edit
+      </a>
+      {% if quotation.can_convert %}
+        <form method="post" action="{% url 'quotation_convert' quotation.pk %}" class="d-inline" onsubmit="return confirm('Convert this approved quotation to an active subscription now?');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-check-circle-fill me-1"></i> Convert to Subscription
+          </button>
+        </form>
+      {% elif quotation.converted_subscription %}
+        <a href="{% url 'subscription_detail' quotation.converted_subscription.pk %}" class="btn btn-outline-success btn-sm">
+          <i class="bi bi-repeat me-1"></i> View Converted Sub ({{ quotation.converted_subscription.subscription_id }})
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Official Proposal Document -->
+<div class="card-saas bg-white p-4 p-md-5 mx-auto shadow-sm" style="max-width: 860px;">
+  <!-- Header Letterhead -->
+  <div class="row align-items-start pb-4 border-bottom mb-4">
+    <div class="col-sm-7">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <div class="brand-icon-box" style="width: 36px; height: 36px;">
+          <i class="bi bi-shield-lock-fill fs-5"></i>
+        </div>
+        <h3 class="fw-bold mb-0 text-slate-900">{{ system_settings.company_name|default:"Brightloop Software" }}</h3>
+      </div>
+      <p class="text-muted small mb-0">
+        Enterprise Cloud Architecture & Subscription Services<br>
+        {{ system_settings.billing_email|default:"billing@brightloop.io" }} • {{ system_settings.support_email|default:"support@brightloop.io" }}
+      </p>
+    </div>
+    <div class="col-sm-5 text-sm-end mt-3 mt-sm-0">
+      <span class="badge bg-light text-dark border px-3 py-2 text-uppercase mb-2">Official Commercial Proposal</span>
+      <h4 class="fw-bold text-primary mb-1">{{ quotation.quotation_number }}</h4>
+      <div class="small text-muted">Proposal Date: <b>{{ quotation.created_at|date:"M d, Y" }}</b></div>
+      <div class="small text-muted">Valid Until: <b class="{% if quotation.is_expired %}text-danger{% else %}text-dark{% endif %}">{{ quotation.valid_until|date:"M d, Y" }}</b> ({{ quotation.validity_days }} Days)</div>
+    </div>
+  </div>
+
+  <!-- Recipient Details -->
+  <div class="row mb-4 g-3">
+    <div class="col-sm-6">
+      <h6 class="text-uppercase text-muted fw-bold small mb-2">Prepared For:</h6>
+      <h5 class="fw-bold text-dark mb-1">{{ quotation.customer.full_name }}</h5>
+      <div class="text-muted small">
+        {{ quotation.customer.company_name|default:"Enterprise Client" }}<br>
+        {{ quotation.customer.email }}<br>
+        {{ quotation.customer.phone|default:"" }}<br>
+        {{ quotation.customer.address|default:"" }} {{ quotation.customer.city|default:"" }} {{ quotation.customer.country }}
+      </div>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+      <h6 class="text-uppercase text-muted fw-bold small mb-2">Proposal Overview:</h6>
+      <div class="small text-muted">
+        <div>Target Plan: <b class="text-dark">{{ quotation.plan.name }}</b></div>
+        <div>Billing Frequency: <b class="text-dark">{{ quotation.plan.billing_frequency|title }}</b></div>
+        <div>Seats / Units: <b class="text-dark">{{ quotation.quantity }}</b></div>
+        <div>Status: <span class="badge bg-{{ quotation.status_badge_class }}-subtle text-{{ quotation.status_badge_class }} border border-{{ quotation.status_badge_class }}-subtle">{{ quotation.get_status_display }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scope & Line Items -->
+  <div class="table-responsive mb-4">
+    <table class="table table-bordered mb-0 align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Plan & Solution Scope</th>
+          <th class="text-center" style="width: 100px;">Seats</th>
+          <th class="text-end" style="width: 130px;">Unit Price</th>
+          <th class="text-end" style="width: 140px;">Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong class="text-dark d-block">{{ quotation.plan.name }}</strong>
+            {% if quotation.variant %}
+              <div class="badge bg-light text-dark border small mt-1">Tier / Variant: {{ quotation.variant.name }}</div>
+            {% endif %}
+            <small class="text-muted d-block mt-1">{{ quotation.plan.description|default:"Dedicated SaaS cloud subscription license with full SLA support." }}</small>
+          </td>
+          <td class="text-center fw-bold">{{ quotation.quantity }}</td>
+          <td class="text-end">${{ quotation.unit_price|default:quotation.plan.price }}</td>
+          <td class="text-end fw-bold">${{ quotation.subtotal|default:quotation.total_amount }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Calculation Summary -->
+  <div class="row justify-content-end mb-4">
+    <div class="col-sm-6 col-md-5">
+      <div class="card bg-light border-0 p-3">
+        <div class="d-flex justify-content-between small text-muted mb-2">
+          <span>Subtotal:</span>
+          <span class="text-dark fw-bold">${{ quotation.subtotal|default:quotation.total_amount }}</span>
+        </div>
+        {% if quotation.tax_amount > 0 %}
+          <div class="d-flex justify-content-between small text-muted mb-2">
+            <span>Tax ({{ quotation.tax_rate.rate_percent|default:"0" }}%):</span>
+            <span class="text-dark">+${{ quotation.tax_amount }}</span>
+          </div>
+        {% endif %}
+        {% if quotation.discount_amount > 0 %}
+          <div class="d-flex justify-content-between small text-success mb-2">
+            <span>Discount ({{ quotation.discount.code|default:"Promotion" }}):</span>
+            <span>-${{ quotation.discount_amount }}</span>
+          </div>
+        {% endif %}
+        <div class="d-flex justify-content-between pt-2 border-top border-secondary-subtle">
+          <span class="fw-bold text-dark">Quotation Total:</span>
+          <h4 class="fw-bold text-primary mb-0">${{ quotation.total_amount|intcomma }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes & Acceptance Terms -->
+  <div class="border-top pt-3 small text-muted">
+    <strong class="text-dark d-block mb-1">Commercial Inclusions & Terms:</strong>
+    <p class="mb-0">
+      {{ quotation.notes|default:"This proposal represents an official quotation by Brightloop Software. Pricing remains guaranteed throughout the validity window. Upon acceptance, this quotation transitions directly into an active cloud subscription agreement subject to standard terms." }}
+    </p>
+  </div>
+</div>
+{% endblock %}

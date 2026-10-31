@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'quotation_list' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Quotations Directory
+  </a>
+  <h2 class="fw-bold mb-0 text-slate-900">{{ page_title }}</h2>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Draft commercial sales proposals, enterprise discounts, and pricing configurations.</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card-saas bg-white p-4">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Customer Account <span class="text-danger">*</span></label>
+            {{ form.customer }}
+            {% if form.customer.errors %}<div class="text-danger small mt-1">{{ form.customer.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Target Subscription Plan <span class="text-danger">*</span></label>
+            {{ form.plan }}
+            {% if form.plan.errors %}<div class="text-danger small mt-1">{{ form.plan.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Product Variant / Add-on</label>
+            {{ form.variant }}
+            {% if form.variant.errors %}<div class="text-danger small mt-1">{{ form.variant.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-dark small">Quantity / Seats <span class="text-danger">*</span></label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}<div class="text-danger small mt-1">{{ form.quantity.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-dark small">Validity (Days) <span class="text-danger">*</span></label>
+            {{ form.validity_days }}
+            {% if form.validity_days.errors %}<div class="text-danger small mt-1">{{ form.validity_days.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Unit Price ($)</label>
+            {{ form.unit_price }}
+            <small class="text-muted">Leave blank to use default plan catalog price</small>
+            {% if form.unit_price.errors %}<div class="text-danger small mt-1">{{ form.unit_price.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Subtotal ($)</label>
+            {{ form.subtotal }}
+            {% if form.subtotal.errors %}<div class="text-danger small mt-1">{{ form.subtotal.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Tax Rate Rule</label>
+            {{ form.tax_rate }}
+            {% if form.tax_rate.errors %}<div class="text-danger small mt-1">{{ form.tax_rate.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Discount Code / Promotion</label>
+            {{ form.discount }}
+            {% if form.discount.errors %}<div class="text-danger small mt-1">{{ form.discount.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Total Quotation Amount ($)</label>
+            {{ form.total_amount }}
+            {% if form.total_amount.errors %}<div class="text-danger small mt-1">{{ form.total_amount.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Quotation Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="text-danger small mt-1">{{ form.status.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold text-dark small">Terms & Inclusions Notes</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="text-danger small mt-1">{{ form.notes.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 pt-3 border-top">
+          <button type="submit" class="btn btn-bl-primary">
+            <i class="bi bi-check2-circle me-1"></i> Save Quotation
+          </button>
+          <a href="{% url 'quotation_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          {% if quotation %}
+            <form method="post" action="{% url 'quotation_delete' quotation.pk %}" class="ms-auto" onsubmit="return confirm('Permanently delete this quotation?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash me-1"></i> Delete Quote
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas bg-white p-4">
+      <h6 class="fw-bold mb-3 text-slate-900">Quotation Conversion</h6>
+      <p class="text-muted small">
+        Approved quotations can be converted into active subscriptions with a single click. When converted:
+      </p>
+      <ul class="list-unstyled small text-muted mb-0 d-flex flex-column gap-2">
+        <li><i class="bi bi-check2-circle text-success me-1"></i> A live Subscription record is generated.</li>
+        <li><i class="bi bi-check2-circle text-success me-1"></i> The initial Invoice is issued automatically.</li>
+        <li><i class="bi bi-check2-circle text-success me-1"></i> The quotation status marks as <code>Converted</code>.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Registration | {{ system_settings.company_name|default:"Brightloop Software" }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/brightloop.css' %}">
+</head>
+<body style="background-color: #0f172a; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+  <div style="width: 100%; max-width: 520px;">
+    <!-- Brand Box -->
+    <div class="text-center mb-4">
+      <div class="brand-icon-box mx-auto mb-2" style="width: 48px; height: 48px;">
+        <i class="bi bi-shield-lock-fill fs-4"></i>
+      </div>
+      <h3 class="fw-bold text-white mb-1">{{ system_settings.company_name|default:"Brightloop Software" }}</h3>
+      <p class="text-muted small">Subscription Management System — Customer Registration</p>
+    </div>
+
+    <!-- Registration Card -->
+    <div class="card border-0 shadow-lg p-4 bg-white rounded-3">
+      {% include 'components/messages.html' %}
+
+      <div class="alert alert-light border small text-muted mb-4">
+        <i class="bi bi-info-circle text-primary me-1"></i>
+        Password must be strictly <b>more than 8 characters</b> and include uppercase, lowercase, and a special character.
+      </div>
+
+      <form method="post" action="{% url 'customer_register' %}">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark small">Full Name <span class="text-danger">*</span></label>
+          {{ form.full_name }}
+          {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark small">Company / Organization</label>
+          {{ form.company_name }}
+          {% if form.company_name.errors %}<div class="text-danger small mt-1">{{ form.company_name.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-sm-7">
+            <label class="form-label fw-bold text-dark small">Email Address <span class="text-danger">*</span></label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-sm-5">
+            <label class="form-label fw-bold text-dark small">Phone Number</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-2 mb-4">
+          <div class="col-sm-6">
+            <label class="form-label fw-bold text-dark small">Password <span class="text-danger">*</span></label>
+            {{ form.password }}
+            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label fw-bold text-dark small">Confirm Password <span class="text-danger">*</span></label>
+            {{ form.password_confirm }}
+            {% if form.password_confirm.errors %}<div class="text-danger small mt-1">{{ form.password_confirm.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-bl-primary w-100 py-2 mb-3">
+          <i class="bi bi-person-check-fill me-1"></i> Register Customer Account
+        </button>
+
+        <div class="text-center pt-2 border-top">
+          <span class="text-muted small">Already have an account?</span>
+          <a href="{% url 'admin_login' %}" class="fw-bold text-decoration-none small ms-1">Sign In</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="text-center text-muted small mt-4">
+      &copy; {% now "Y" %} {{ system_settings.company_name|default:"Brightloop Software" }}. All rights reserved.
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

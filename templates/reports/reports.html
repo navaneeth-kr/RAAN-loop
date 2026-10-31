@@ -4,12 +4,17 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
   <div>
-    <h2 class="fw-bold mb-0 text-slate-900">Financial & Operational Reports</h2>
-    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Date-filtered telemetry, revenue realizations, and subscription growth metrics.</p>
+    <h2 class="fw-bold mb-0 text-slate-900">Financial & Subscription Reports</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Date-filtered telemetry, revenue realizations, customer activity, and churn analytics.</p>
   </div>
-  <a href="{% url 'export_center' %}" class="btn btn-bl-primary btn-sm">
-    <i class="bi bi-cloud-arrow-down me-1"></i> Export Data
-  </a>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'export_download' %}?entity=payments&format=csv" class="btn btn-bl-outline btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Payments CSV
+    </a>
+    <a href="{% url 'export_center' %}" class="btn btn-bl-primary btn-sm">
+      <i class="bi bi-cloud-arrow-down me-1"></i> Export Center
+    </a>
+  </div>
 </div>
 
 <!-- Date-based Presets & Custom Filter -->
@@ -37,38 +42,72 @@
   </form>
 </div>
 
-<!-- Report Summary Cards -->
+<!-- Report Summary Cards: 6 Key Financial Metrics -->
 <div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="stat-card stat-cyan">
-      <p class="stat-label">Realized Revenue in Period</p>
-      <div class="stat-val text-primary">{{ system_settings.currency_symbol|default:"$" }}{{ period_revenue|floatformat:2|intcomma }}</div>
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-primary">
+      <p class="text-muted small fw-semibold mb-1">Period Realized Revenue</p>
+      <h3 class="fw-bold mb-0 text-primary">{{ system_settings.currency_symbol|default:"$" }}{{ period_revenue|floatformat:2|intcomma }}</h3>
       <small class="text-muted">{{ start_date }} to {{ end_date }}</small>
     </div>
   </div>
 
-  <div class="col-md-4">
-    <div class="stat-card stat-emerald">
-      <p class="stat-label">Subscriptions Activated</p>
-      <div class="stat-val text-success">{{ new_subscriptions_count }}</div>
-      <small class="text-muted">New accounts enrolled</small>
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-success">
+      <p class="text-muted small fw-semibold mb-1">This Month's Realized Revenue</p>
+      <h3 class="fw-bold mb-0 text-success">{{ system_settings.currency_symbol|default:"$" }}{{ monthly_revenue|floatformat:2|intcomma }}</h3>
+      <small class="text-muted">Current billing calendar month</small>
     </div>
   </div>
 
-  <div class="col-md-4">
-    <div class="stat-card stat-navy">
-      <p class="stat-label">Invoices Generated</p>
-      <div class="stat-val text-dark">{{ invoices_issued }}</div>
-      <small class="text-muted">Total billing cycles billed</small>
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-info">
+      <p class="text-muted small fw-semibold mb-1">Year-To-Date (YTD) Revenue</p>
+      <h3 class="fw-bold mb-0 text-info">{{ system_settings.currency_symbol|default:"$" }}{{ yearly_revenue|floatformat:2|intcomma }}</h3>
+      <small class="text-muted">Annual cumulative cash receipts</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-emerald">
+      <p class="text-muted small fw-semibold mb-1">Active vs Closed Subscriptions</p>
+      <div class="d-flex align-items-baseline gap-2">
+        <h3 class="fw-bold mb-0 text-success">{{ active_subs }}</h3>
+        <span class="text-muted">Active</span>
+        <span class="text-muted">/</span>
+        <h4 class="fw-bold mb-0 text-secondary">{{ canceled_subs }}</h4>
+        <span class="text-muted">Closed</span>
+      </div>
+      <small class="text-muted">Current subscription health balance</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas bg-white p-3 border-start border-4 {% if overdue_count > 0 %}border-danger{% else %}border-success{% endif %}">
+      <p class="text-muted small fw-semibold mb-1">Overdue Invoices Aging</p>
+      <div class="d-flex align-items-baseline gap-2">
+        <h3 class="fw-bold mb-0 {% if overdue_count > 0 %}text-danger{% else %}text-success{% endif %}">{{ overdue_count }}</h3>
+        <span class="text-muted">Invoices</span>
+        <span class="text-muted">({{ system_settings.currency_symbol|default:"$" }}{{ overdue_total|floatformat:2|intcomma }})</span>
+      </div>
+      <small class="text-muted">Invoices past payment grace period</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas bg-white p-3 border-start border-4 border-warning">
+      <p class="text-muted small fw-semibold mb-1">Period Invoices Issued</p>
+      <h3 class="fw-bold mb-0 text-dark">{{ invoices_issued }}</h3>
+      <small class="text-muted">{{ new_subscriptions_count }} new subscriptions enrolled</small>
     </div>
   </div>
 </div>
 
-<!-- Period Payments Breakdown -->
-<div class="card-saas bg-white overflow-hidden">
+<!-- Period Payments Breakdown Table -->
+<div class="card-saas bg-white overflow-hidden mb-4">
   <div class="p-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-    <h6 class="fw-bold mb-0 text-slate-900">Period Payments Breakdown</h6>
-    <span class="badge bg-light text-muted border">{{ payments_in_period.count }} transactions</span>
+    <h6 class="fw-bold mb-0 text-slate-900">Period Transactions & Settlements</h6>
+    <span class="badge bg-light text-muted border">{{ payments_in_period|length }} transactions displayed</span>
   </div>
 
   <div class="table-responsive">
@@ -78,23 +117,33 @@
           <th>Payment ID</th>
           <th>Customer</th>
           <th>Amount</th>
-          <th>Method</th>
-          <th>Reference</th>
-          <th>Date</th>
+          <th>Payment Method</th>
+          <th>Gateway Reference</th>
+          <th>Settlement Date</th>
+          <th class="text-end">Receipt</th>
         </tr>
       </thead>
       <tbody>
         {% for pay in payments_in_period %}
           <tr>
             <td><span class="code-tag">{{ pay.payment_id }}</span></td>
-            <td><span class="fw-semibold text-dark">{{ pay.customer.full_name }}</span></td>
-            <td><strong>{{ system_settings.currency_symbol|default:"$" }}{{ pay.amount }}</strong></td>
+            <td>
+              <a href="{% url 'customer_detail' pay.customer.pk %}" class="fw-semibold text-dark text-decoration-none hover-primary">
+                {{ pay.customer.full_name }}
+              </a>
+            </td>
+            <td><strong class="text-success">{{ system_settings.currency_symbol|default:"$" }}{{ pay.amount }}</strong></td>
             <td><span class="badge bg-light text-dark border">{{ pay.get_payment_method_display }}</span></td>
-            <td><small class="text-muted font-monospace">{{ pay.transaction_reference }}</small></td>
-            <td><span class="text-muted small">{{ pay.payment_date|date:"Y-m-d H:i" }}</span></td>
+            <td><small class="text-muted font-monospace">{{ pay.transaction_reference|default:"—" }}</small></td>
+            <td><span class="text-muted small">{{ pay.payment_date|date:"M d, Y H:i" }}</span></td>
+            <td class="text-end">
+              <a href="{% url 'payment_receipt_pdf_download' pay.pk %}" class="btn btn-sm btn-bl-outline" title="Download Official Receipt PDF">
+                <i class="bi bi-download"></i> Receipt
+              </a>
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="6" class="text-center py-4 text-muted">No transactions recorded for the selected period.</td></tr>
+          <tr><td colspan="7" class="text-center py-5 text-muted">No transactions recorded for the selected period.</td></tr>
         {% endfor %}
       </tbody>
     </table>

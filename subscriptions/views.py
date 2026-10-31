@@ -10,14 +10,15 @@ from core.views import AdminRequiredMixin
 from core.models import SystemSetting, ActivityLog
 from core.utils import paginate_queryset
 from .models import Customer, Subscription, Invoice, Payment, Quotation, Discount, TaxRate
-from .forms import InvoiceForm, DiscountForm, PaymentForm, TaxRateForm
+from .forms import InvoiceForm, DiscountForm, PaymentForm, TaxRateForm, CustomerForm, SubscriptionForm, SubscriptionActionForm, QuotationForm
+from core.notifications import notify_subscription_status, notify_invoice_generated, send_notification
 
 # ==============================================================================
-# 1. CUSTOMER & SUBSCRIPTION VIEWS
+# 1. CUSTOMER MANAGEMENT VIEWS (PERSON 1 - SECTION 4)
 # ==============================================================================
 
 class CustomerListView(AdminRequiredMixin, View):
-    """List and search customers."""
+    """List and search customers with server-side filtering."""
     template_name = 'subscriptions/customer_list.html'
 
     def get(self, request):
@@ -34,7 +35,7 @@ class CustomerListView(AdminRequiredMixin, View):
         if status in ['active', 'inactive', 'suspended']:
             queryset = queryset.filter(status=status)
 
-        page_obj = paginate_queryset(request, queryset, per_page=10)
+        page_obj = paginate_queryset(request, queryset, per_page=12)
         context = {
             'page_obj': page_obj,
             'customers': page_obj.object_list,
@@ -45,12 +46,102 @@ class CustomerListView(AdminRequiredMixin, View):
         return render(request, self.template_name, context)
 
 
+class CustomerCreateView(AdminRequiredMixin, View):
+    """Add new customer profile."""
+    template_name = 'subscriptions/customer_form.html'
+
+    def get(self, request):
+        form = CustomerForm()
+        return render(request, self.template_name, {'form': form, 'page_title': 'Add New Customer', 'action': 'Create'})
+
+    def post(self, request):
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            customer = form.save()
+            ActivityLog.objects.create(
+                action=f"Created customer account: {customer.full_name} ({customer.email})",
+                category="customer",
+                user=request.user
+            )
+            messages.success(request, f"Customer {customer.full_name} created successfully.")
+            return redirect('customer_detail', pk=customer.pk)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Add New Customer', 'action': 'Create'})
+
+
+class CustomerDetailView(AdminRequiredMixin, View):
+    """360-degree Customer profile with tabbed history: Subscriptions, Invoices, Payments, Quotations."""
+    template_name = 'subscriptions/customer_detail.html'
+
+    def get(self, request, pk):
+        customer = get_object_or_404(Customer, pk=pk)
+        subscriptions = customer.subscriptions.select_related('plan', 'variant').all()
+        invoices = customer.invoices.select_related('subscription').all()
+        payments = customer.payments.select_related('invoice').all()
+        quotations = customer.quotations.select_related('plan').all()
+
+        context = {
+            'customer': customer,
+            'subscriptions': subscriptions,
+            'invoices': invoices,
+            'payments': payments,
+            'quotations': quotations,
+            'total_spent': customer.total_spent,
+            'unpaid_balance': customer.unpaid_balance,
+            'active_subs_count': customer.active_subscriptions_count,
+            'page_title': f"Customer: {customer.full_name}",
+        }
+        return render(request, self.template_name, context)
+
+
+class CustomerUpdateView(AdminRequiredMixin, View):
+    """Update customer details."""
+    template_name = 'subscriptions/customer_form.html'
+
+    def get(self, request, pk):
+        customer = get_object_or_404(Customer, pk=pk)
+        form = CustomerForm(instance=customer)
+        return render(request, self.template_name, {'form': form, 'customer': customer, 'page_title': f'Edit Customer: {customer.full_name}', 'action': 'Update'})
+
+    def post(self, request, pk):
+        customer = get_object_or_404(Customer, pk=pk)
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            customer = form.save()
+            ActivityLog.objects.create(
+                action=f"Updated customer profile: {customer.full_name}",
+                category="customer",
+                user=request.user
+            )
+            messages.success(request, f"Customer {customer.full_name} updated successfully.")
+            return redirect('customer_detail', pk=customer.pk)
+        return render(request, self.template_name, {'form': form, 'customer': customer, 'page_title': f'Edit Customer: {customer.full_name}', 'action': 'Update'})
+
+
+class CustomerDeleteView(AdminRequiredMixin, View):
+    """Delete customer account."""
+    def post(self, request, pk):
+        customer = get_object_or_404(Customer, pk=pk)
+        name = customer.full_name
+        customer.delete()
+        ActivityLog.objects.create(
+            action=f"Deleted customer account: {name}",
+            category="customer",
+            user=request.user
+        )
+        messages.success(request, f"Customer {name} has been removed.")
+        return redirect('customer_list')
+
+
+# ==============================================================================
+# 2. SUBSCRIPTION LIFECYCLE MANAGEMENT (PERSON 3 - SECTIONS 8 & 18)
+# ==============================================================================
+
 class SubscriptionListView(AdminRequiredMixin, View):
-    """List customer subscriptions with search and filtering."""
+    """List customer subscriptions with search and status filtering."""
     template_name = 'subscriptions/subscription_list.html'
 
     def get(self, request):
-        queryset = Subscription.objects.select_related('customer', 'plan').all()
+        queryset = Subscription.objects.select_related('customer', 'plan', 'variant').all()
         q = request.GET.get('q', '').strip()
         if q:
             queryset = queryset.filter(
@@ -60,40 +151,451 @@ class SubscriptionListView(AdminRequiredMixin, View):
                 Q(plan__name__icontains=q)
             )
         status = request.GET.get('status')
-        if status in ['active', 'trialing', 'past_due', 'canceled']:
+        if status:
             queryset = queryset.filter(status=status)
 
-        page_obj = paginate_queryset(request, queryset, per_page=10)
+        page_obj = paginate_queryset(request, queryset, per_page=12)
         context = {
             'page_obj': page_obj,
             'subscriptions': page_obj.object_list,
             'search_query': q,
             'selected_status': status,
+            'statuses': Subscription.STATUS_CHOICES,
             'page_title': 'Subscription Lifecycle Management',
         }
         return render(request, self.template_name, context)
 
 
+class SubscriptionCreateView(AdminRequiredMixin, View):
+    """Provision new subscription for a customer."""
+    template_name = 'subscriptions/subscription_form.html'
+
+    def get(self, request):
+        initial = {}
+        cust_id = request.GET.get('customer')
+        if cust_id:
+            cust = Customer.objects.filter(pk=cust_id).first()
+            if cust:
+                initial['customer'] = cust
+        form = SubscriptionForm(initial=initial)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Provision New Subscription', 'action': 'Create'})
+
+    def post(self, request):
+        form = SubscriptionForm(request.POST)
+        if form.is_valid():
+            sub = form.save()
+            ActivityLog.objects.create(
+                action=f"Provisioned subscription {sub.subscription_id} for {sub.customer.full_name}",
+                category="subscription",
+                user=request.user,
+                details=f"Plan: {sub.plan.name}, Amount: ${sub.current_amount}"
+            )
+            notify_subscription_status(sub, "Provisioned & Created")
+            messages.success(request, f"Subscription {sub.subscription_id} successfully created.")
+            return redirect('subscription_detail', pk=sub.pk)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Provision New Subscription', 'action': 'Create'})
+
+
+class SubscriptionDetailView(AdminRequiredMixin, View):
+    """Subscription detail view showing lifecycle controls, billing schedule, and invoices."""
+    template_name = 'subscriptions/subscription_detail.html'
+
+    def get(self, request, pk):
+        sub = get_object_or_404(Subscription.objects.select_related('customer', 'plan', 'variant'), pk=pk)
+        invoices = sub.invoices.all().order_by('-issued_date')
+        action_form = SubscriptionActionForm()
+        context = {
+            'sub': sub,
+            'invoices': invoices,
+            'action_form': action_form,
+            'page_title': f"Subscription: {sub.subscription_id}",
+        }
+        return render(request, self.template_name, context)
+
+
+class SubscriptionUpdateView(AdminRequiredMixin, View):
+    """Edit subscription details."""
+    template_name = 'subscriptions/subscription_form.html'
+
+    def get(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        form = SubscriptionForm(instance=sub)
+        return render(request, self.template_name, {'form': form, 'sub': sub, 'page_title': f'Edit Subscription: {sub.subscription_id}', 'action': 'Update'})
+
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        form = SubscriptionForm(request.POST, instance=sub)
+        if form.is_valid():
+            sub = form.save()
+            ActivityLog.objects.create(
+                action=f"Updated subscription {sub.subscription_id}",
+                category="subscription",
+                user=request.user
+            )
+            messages.success(request, f"Subscription {sub.subscription_id} updated successfully.")
+            return redirect('subscription_detail', pk=sub.pk)
+        return render(request, self.template_name, {'form': form, 'sub': sub, 'page_title': f'Edit Subscription: {sub.subscription_id}', 'action': 'Update'})
+
+
+class SubscriptionConfirmView(AdminRequiredMixin, View):
+    """Confirms draft or quote-stage subscription."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        sub.status = 'confirmed'
+        sub.save(update_fields=['status'])
+        ActivityLog.objects.create(
+            action=f"Subscription {sub.subscription_id} confirmed",
+            category="subscription",
+            user=request.user
+        )
+        notify_subscription_status(sub, "Confirmed")
+        messages.success(request, f"Subscription {sub.subscription_id} has been confirmed.")
+        return redirect('subscription_detail', pk=sub.pk)
+
+
+class SubscriptionActivateView(AdminRequiredMixin, View):
+    """Activates confirmed subscription."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        sub.status = 'active'
+        sub.save(update_fields=['status'])
+        ActivityLog.objects.create(
+            action=f"Subscription {sub.subscription_id} activated",
+            category="subscription",
+            user=request.user
+        )
+        notify_subscription_status(sub, "Activated")
+        messages.success(request, f"Subscription {sub.subscription_id} is now Active.")
+        return redirect('subscription_detail', pk=sub.pk)
+
+
+class SubscriptionPauseView(AdminRequiredMixin, View):
+    """Pauses an active subscription if plan allows pausing."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        if not sub.can_pause:
+            messages.error(request, f"Plan '{sub.plan.name}' does not permit subscription pausing.")
+            return redirect('subscription_detail', pk=sub.pk)
+
+        reason = request.POST.get('reason', '').strip()
+        sub.status = 'paused'
+        sub.paused_at = timezone.now()
+        sub.cancellation_reason = reason
+        sub.save(update_fields=['status', 'paused_at', 'cancellation_reason'])
+
+        ActivityLog.objects.create(
+            action=f"Subscription {sub.subscription_id} paused",
+            category="subscription",
+            user=request.user,
+            details=f"Reason: {reason}"
+        )
+        notify_subscription_status(sub, "Paused", reason)
+        messages.warning(request, f"Subscription {sub.subscription_id} has been paused.")
+        return redirect('subscription_detail', pk=sub.pk)
+
+
+class SubscriptionResumeView(AdminRequiredMixin, View):
+    """Resumes a paused subscription."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        sub.status = 'active'
+        sub.paused_at = None
+        sub.save(update_fields=['status', 'paused_at'])
+
+        ActivityLog.objects.create(
+            action=f"Subscription {sub.subscription_id} resumed",
+            category="subscription",
+            user=request.user
+        )
+        notify_subscription_status(sub, "Resumed")
+        messages.success(request, f"Subscription {sub.subscription_id} has been resumed to Active.")
+        return redirect('subscription_detail', pk=sub.pk)
+
+
+class SubscriptionCancelView(AdminRequiredMixin, View):
+    """Cancels or closes subscription early with mandatory reason tracking."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        reason = request.POST.get('reason', '').strip()
+        action_type = request.POST.get('action', 'cancel')
+
+        new_status = 'closed' if action_type == 'close' else 'canceled'
+        sub.status = new_status
+        sub.closed_at = timezone.now()
+        sub.cancellation_reason = reason
+        sub.save(update_fields=['status', 'closed_at', 'cancellation_reason'])
+
+        ActivityLog.objects.create(
+            action=f"Subscription {sub.subscription_id} {new_status}",
+            category="subscription",
+            user=request.user,
+            details=f"Reason: {reason}"
+        )
+        notify_subscription_status(sub, new_status.title(), reason)
+        messages.info(request, f"Subscription {sub.subscription_id} has been {new_status}.")
+        return redirect('subscription_detail', pk=sub.pk)
+
+
+class SubscriptionRenewView(AdminRequiredMixin, View):
+    """Manually renews a subscription and generates its renewal invoice."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        today = timezone.now().date()
+
+        # Advance next billing date
+        freq = sub.plan.billing_frequency.lower() if sub.plan else 'monthly'
+        if freq == 'daily':
+            next_date = today + timezone.timedelta(days=1)
+        elif freq == 'weekly':
+            next_date = today + timezone.timedelta(days=7)
+        elif freq == 'yearly':
+            next_date = today + timezone.timedelta(days=365)
+        else:
+            next_date = today + timezone.timedelta(days=30)
+
+        sub.next_billing_date = next_date
+        sub.status = 'active'
+        sub.save(update_fields=['next_billing_date', 'status'])
+
+        # Generate renewal invoice
+        prefix = "INV"
+        try:
+            setting = SystemSetting.get_settings()
+            if setting.invoice_prefix:
+                prefix = setting.invoice_prefix.rstrip('-')
+        except Exception:
+            pass
+
+        inv_num = f"{prefix}-{today.strftime('%Y%m')}-{random.randint(1000, 9999)}"
+        invoice = Invoice.objects.create(
+            invoice_number=inv_num,
+            customer=sub.customer,
+            subscription=sub,
+            amount=sub.current_amount,
+            tax_amount=Decimal('0.00'),
+            discount_amount=Decimal('0.00'),
+            total_amount=sub.current_amount,
+            status='pending',
+            issued_date=today,
+            due_date=today + timezone.timedelta(days=15),
+            notes=f"Manual renewal billing for {sub.plan.name}."
+        )
+
+        ActivityLog.objects.create(
+            action=f"Renewed subscription {sub.subscription_id} (Generated Invoice {inv_num})",
+            category="subscription",
+            user=request.user
+        )
+        notify_subscription_status(sub, "Renewed")
+        notify_invoice_generated(invoice)
+
+        messages.success(request, f"Subscription {sub.subscription_id} renewed. Renewal invoice {inv_num} generated.")
+        return redirect('subscription_detail', pk=sub.pk)
+
+
+class SubscriptionDeleteView(AdminRequiredMixin, View):
+    """Deletes draft or closed subscription."""
+    def post(self, request, pk):
+        sub = get_object_or_404(Subscription, pk=pk)
+        sub_id = sub.subscription_id
+        sub.delete()
+        ActivityLog.objects.create(
+            action=f"Deleted subscription {sub_id}",
+            category="subscription",
+            user=request.user
+        )
+        messages.success(request, f"Subscription {sub_id} removed.")
+        return redirect('subscription_list')
+
+
+# ==============================================================================
+# 3. QUOTATION MANAGEMENT VIEWS (PERSON 3 - SECTION 7)
+# ==============================================================================
+
 class QuotationListView(AdminRequiredMixin, View):
-    """List and manage quotations."""
+    """List and manage commercial quotations."""
     template_name = 'subscriptions/quotation_list.html'
 
     def get(self, request):
-        queryset = Quotation.objects.select_related('customer', 'plan').all()
+        queryset = Quotation.objects.select_related('customer', 'plan', 'variant').all()
         q = request.GET.get('q', '').strip()
         if q:
             queryset = queryset.filter(
                 Q(quotation_number__icontains=q) |
-                Q(customer__full_name__icontains=q)
+                Q(customer__full_name__icontains=q) |
+                Q(customer__company_name__icontains=q)
             )
-        page_obj = paginate_queryset(request, queryset, per_page=10)
+        status = request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+
+        page_obj = paginate_queryset(request, queryset, per_page=12)
         context = {
             'page_obj': page_obj,
             'quotations': page_obj.object_list,
             'search_query': q,
+            'selected_status': status,
+            'statuses': Quotation.STATUS_CHOICES,
             'page_title': 'Quotations Management',
         }
         return render(request, self.template_name, context)
+
+
+class QuotationCreateView(AdminRequiredMixin, View):
+    """Generate commercial quotation for client proposal."""
+    template_name = 'subscriptions/quotation_form.html'
+
+    def get(self, request):
+        initial = {}
+        cust_id = request.GET.get('customer')
+        if cust_id:
+            cust = Customer.objects.filter(pk=cust_id).first()
+            if cust:
+                initial['customer'] = cust
+        form = QuotationForm(initial=initial)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Create Quotation', 'action': 'Create'})
+
+    def post(self, request):
+        form = QuotationForm(request.POST)
+        if form.is_valid():
+            qt = form.save()
+            ActivityLog.objects.create(
+                action=f"Created quotation {qt.quotation_number} for {qt.customer.full_name}",
+                category="quotation",
+                user=request.user,
+                details=f"Amount: ${qt.total_amount}, Plan: {qt.plan.name}"
+            )
+            messages.success(request, f"Quotation {qt.quotation_number} generated successfully.")
+            return redirect('quotation_detail', pk=qt.pk)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Create Quotation', 'action': 'Create'})
+
+
+class QuotationDetailView(AdminRequiredMixin, View):
+    """Official printable proposal view for commercial quotation."""
+    template_name = 'subscriptions/quotation_detail.html'
+
+    def get(self, request, pk):
+        quotation = get_object_or_404(Quotation.objects.select_related('customer', 'plan', 'variant', 'tax_rate', 'discount', 'converted_subscription'), pk=pk)
+        context = {
+            'quotation': quotation,
+            'page_title': f"Quotation {quotation.quotation_number}",
+        }
+        return render(request, self.template_name, context)
+
+
+class QuotationUpdateView(AdminRequiredMixin, View):
+    """Update quotation parameters."""
+    template_name = 'subscriptions/quotation_form.html'
+
+    def get(self, request, pk):
+        quotation = get_object_or_404(Quotation, pk=pk)
+        form = QuotationForm(instance=quotation)
+        return render(request, self.template_name, {'form': form, 'quotation': quotation, 'page_title': f'Edit Quotation: {quotation.quotation_number}', 'action': 'Update'})
+
+    def post(self, request, pk):
+        quotation = get_object_or_404(Quotation, pk=pk)
+        form = QuotationForm(request.POST, instance=quotation)
+        if form.is_valid():
+            quotation = form.save()
+            ActivityLog.objects.create(
+                action=f"Updated quotation {quotation.quotation_number}",
+                category="quotation",
+                user=request.user
+            )
+            messages.success(request, f"Quotation {quotation.quotation_number} updated.")
+            return redirect('quotation_detail', pk=quotation.pk)
+        return render(request, self.template_name, {'form': form, 'quotation': quotation, 'page_title': f'Edit Quotation: {quotation.quotation_number}', 'action': 'Update'})
+
+
+class QuotationConvertToSubscriptionView(AdminRequiredMixin, View):
+    """1-Click Conversion: Converts approved quotation directly into an active subscription and creates invoice (Section 7)."""
+    def post(self, request, pk):
+        quotation = get_object_or_404(Quotation, pk=pk)
+        if quotation.converted_subscription:
+            messages.info(request, f"This quotation has already been converted to Subscription {quotation.converted_subscription.subscription_id}.")
+            return redirect('subscription_detail', pk=quotation.converted_subscription.pk)
+
+        today = timezone.now().date()
+        rand_code = random.randint(1000, 9999)
+        sub_id = f"SUB-{today.strftime('%Y%m')}-{rand_code}"
+        while Subscription.objects.filter(subscription_id=sub_id).exists():
+            rand_code = random.randint(1000, 9999)
+            sub_id = f"SUB-{today.strftime('%Y%m')}-{rand_code}"
+
+        # Determine billing renewal date
+        freq = quotation.plan.billing_frequency.lower() if quotation.plan else 'monthly'
+        if freq == 'daily':
+            next_bill = today + timezone.timedelta(days=1)
+        elif freq == 'weekly':
+            next_bill = today + timezone.timedelta(days=7)
+        elif freq == 'yearly':
+            next_bill = today + timezone.timedelta(days=365)
+        else:
+            next_bill = today + timezone.timedelta(days=30)
+
+        subscription = Subscription.objects.create(
+            subscription_id=sub_id,
+            customer=quotation.customer,
+            plan=quotation.plan,
+            variant=quotation.variant,
+            quantity=quotation.quantity or 1,
+            status='active',
+            billing_cycle=quotation.plan.billing_frequency,
+            current_amount=quotation.total_amount,
+            payment_terms="Net 15",
+            start_date=today,
+            next_billing_date=next_bill,
+            auto_renew=True
+        )
+
+        # Generate initial invoice
+        inv_num = f"INV-{today.strftime('%Y%m')}-{random.randint(1000, 9999)}"
+        invoice = Invoice.objects.create(
+            invoice_number=inv_num,
+            customer=quotation.customer,
+            subscription=subscription,
+            amount=quotation.subtotal or quotation.total_amount,
+            tax_rate=quotation.tax_rate,
+            tax_amount=quotation.tax_amount,
+            discount=quotation.discount,
+            discount_amount=quotation.discount_amount,
+            total_amount=quotation.total_amount,
+            status='pending',
+            issued_date=today,
+            due_date=today + timezone.timedelta(days=15),
+            notes=f"Initial invoice generated from approved Quotation {quotation.quotation_number}."
+        )
+
+        # Mark quotation converted
+        quotation.converted_subscription = subscription
+        quotation.status = 'converted'
+        quotation.save(update_fields=['converted_subscription', 'status'])
+
+        ActivityLog.objects.create(
+            action=f"Converted quotation {quotation.quotation_number} to Subscription {subscription.subscription_id}",
+            category="subscription",
+            user=request.user
+        )
+        notify_subscription_status(subscription, "Converted from Quotation & Activated")
+        notify_invoice_generated(invoice)
+
+        messages.success(request, f"Quotation successfully converted! Subscription {subscription.subscription_id} activated and Invoice {inv_num} issued.")
+        return redirect('subscription_detail', pk=subscription.pk)
+
+
+class QuotationDeleteView(AdminRequiredMixin, View):
+    """Deletes draft quotation."""
+    def post(self, request, pk):
+        quotation = get_object_or_404(Quotation, pk=pk)
+        num = quotation.quotation_number
+        quotation.delete()
+        ActivityLog.objects.create(
+            action=f"Deleted quotation {num}",
+            category="quotation",
+            user=request.user
+        )
+        messages.success(request, f"Quotation {num} deleted.")
+        return redirect('quotation_list')
 
 
 # ==============================================================================

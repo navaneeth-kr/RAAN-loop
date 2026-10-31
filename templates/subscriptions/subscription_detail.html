@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'subscription_list' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Subscriptions
+  </a>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2 class="fw-bold mb-0 text-slate-900">{{ sub.subscription_id }}</h2>
+        <span class="badge bg-{{ sub.status_badge_class }}-subtle text-{{ sub.status_badge_class }} border border-{{ sub.status_badge_class }}-subtle fs-6">
+          {{ sub.get_status_display }}
+        </span>
+      </div>
+      <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+        Customer: <a href="{% url 'customer_detail' sub.customer.pk %}" class="fw-semibold text-primary text-decoration-none">{{ sub.customer.full_name }}</a>
+        ({{ sub.customer.company_name|default:"Individual" }}) • Created {{ sub.created_at|date:"M d, Y" }}
+      </p>
+    </div>
+
+    <!-- Lifecycle Action Buttons -->
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      {% if sub.status == 'draft' or sub.status == 'quotation' %}
+        <form method="post" action="{% url 'subscription_confirm' sub.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-bl-primary btn-sm">
+            <i class="bi bi-check2-circle me-1"></i> Confirm Contract
+          </button>
+        </form>
+      {% elif sub.status == 'confirmed' %}
+        <form method="post" action="{% url 'subscription_activate' sub.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-play-circle me-1"></i> Activate Subscription
+          </button>
+        </form>
+      {% elif sub.status == 'active' %}
+        {% if sub.can_renew %}
+          <form method="post" action="{% url 'subscription_renew' sub.pk %}" class="d-inline" onsubmit="return confirm('Renew subscription now and generate renewal invoice?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-bl-primary btn-sm">
+              <i class="bi bi-arrow-clockwise me-1"></i> Renew Now
+            </button>
+          </form>
+        {% endif %}
+
+        {% if sub.can_pause %}
+          <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#pauseModal">
+            <i class="bi bi-pause-circle me-1"></i> Pause
+          </button>
+        {% endif %}
+
+        {% if sub.can_cancel %}
+          <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal">
+            <i class="bi bi-x-circle me-1"></i> Cancel / Close
+          </button>
+        {% endif %}
+      {% elif sub.status == 'paused' %}
+        <form method="post" action="{% url 'subscription_resume' sub.pk %}" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-play-fill me-1"></i> Resume Active Status
+          </button>
+        </form>
+      {% endif %}
+
+      <a href="{% url 'subscription_update' sub.pk %}" class="btn btn-bl-outline btn-sm">
+        <i class="bi bi-pencil me-1"></i> Edit Parameters
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Subscription Overview Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-primary">
+      <span class="text-muted small fw-semibold">Recurring Period Charge</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">${{ sub.current_amount }}</h3>
+      <small class="text-muted">{{ sub.billing_cycle|title }} Billing</small>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-info">
+      <span class="text-muted small fw-semibold">Next Billing Renewal</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">{{ sub.next_billing_date|date:"M d, Y"|default:"None" }}</h3>
+      <small class="{% if sub.is_expiring_soon %}text-danger fw-bold{% else %}text-muted{% endif %}">
+        {% if sub.days_until_renewal >= 0 %}{{ sub.days_until_renewal }} days remaining{% else %}Past Due{% endif %}
+      </small>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-success">
+      <span class="text-muted small fw-semibold">Total Invoiced</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">{{ invoices.count }} Invoices</h3>
+      <small class="text-muted">Generated under this sub</small>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card-saas bg-white p-3 border-start border-4 border-secondary">
+      <span class="text-muted small fw-semibold">Auto-Renewal Status</span>
+      <h3 class="fw-bold mb-0 text-dark mt-1">{% if sub.auto_renew %}Enabled{% else %}Manual{% endif %}</h3>
+      <small class="text-muted">Terms: {{ sub.payment_terms }}</small>
+    </div>
+  </div>
+</div>
+
+<!-- Plan & Configuration Specs -->
+<div class="row g-4 mb-4">
+  <div class="col-lg-6">
+    <div class="card-saas bg-white p-4 h-100">
+      <h6 class="fw-bold mb-3 text-slate-900"><i class="bi bi-box-seam me-2 text-primary"></i>Plan & Product Specifications</h6>
+      <table class="table table-sm table-borderless mb-0 small text-secondary">
+        <tbody>
+          <tr><td class="text-muted" style="width: 140px;">Plan Name:</td><td class="fw-bold text-dark">{{ sub.plan.name }}</td></tr>
+          <tr><td class="text-muted">Product Line:</td><td>{{ sub.plan.product.name }}</td></tr>
+          <tr><td class="text-muted">Variant / Add-on:</td><td>{{ sub.variant.name|default:"Base Standard" }}</td></tr>
+          <tr><td class="text-muted">Seats / Quantity:</td><td class="fw-semibold text-dark">{{ sub.quantity }}</td></tr>
+          <tr><td class="text-muted">Base Plan Price:</td><td>${{ sub.plan.price }} / {{ sub.plan.billing_frequency }}</td></tr>
+          <tr><td class="text-muted">Payment Terms:</td><td>{{ sub.payment_terms }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card-saas bg-white p-4 h-100">
+      <h6 class="fw-bold mb-3 text-slate-900"><i class="bi bi-calendar-check me-2 text-primary"></i>Lifecycle & Timeline Rules</h6>
+      <table class="table table-sm table-borderless mb-0 small text-secondary">
+        <tbody>
+          <tr><td class="text-muted" style="width: 140px;">Start Date:</td><td class="fw-semibold text-dark">{{ sub.start_date|date:"M d, Y" }}</td></tr>
+          <tr><td class="text-muted">Next Billing Date:</td><td>{{ sub.next_billing_date|date:"M d, Y"|default:"—" }}</td></tr>
+          <tr><td class="text-muted">Termination Date:</td><td>{{ sub.expiry_date|date:"M d, Y"|default:"Ongoing Contract" }}</td></tr>
+          <tr><td class="text-muted">Pause Allowed:</td><td>{% if sub.plan.allow_pausing %}<span class="text-success fw-bold">Yes</span>{% else %}<span class="text-muted">No</span>{% endif %}</td></tr>
+          <tr><td class="text-muted">Early Closure:</td><td>{% if sub.plan.allow_early_cancellation %}<span class="text-success fw-bold">Yes</span>{% else %}<span class="text-muted">No</span>{% endif %}</td></tr>
+          {% if sub.cancellation_reason %}
+            <tr><td class="text-muted">Change Reason:</td><td class="text-danger fw-semibold">{{ sub.cancellation_reason }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Linked Invoices History -->
+<div class="card-saas bg-white overflow-hidden mb-4">
+  <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
+    <h6 class="fw-bold mb-0 text-slate-900"><i class="bi bi-receipt me-2 text-primary"></i>Billing Invoices History</h6>
+    <a href="{% url 'invoice_create' %}?customer={{ sub.customer.pk }}" class="btn btn-sm btn-bl-outline">
+      <i class="bi bi-plus-circle me-1"></i> Manual Invoice
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Issue Date</th>
+          <th>Due Date</th>
+          <th>Amount</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invoices %}
+          <tr>
+            <td><span class="code-tag">{{ inv.invoice_number }}</span></td>
+            <td>{{ inv.issued_date|date:"M d, Y" }}</td>
+            <td>
+              <span class="{% if inv.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                {{ inv.due_date|date:"M d, Y" }}
+              </span>
+            </td>
+            <td><strong class="text-dark">${{ inv.total_amount }}</strong></td>
+            <td>
+              <span class="badge bg-{{ inv.status_badge_class }}-subtle text-{{ inv.status_badge_class }} border border-{{ inv.status_badge_class }}-subtle">
+                {{ inv.get_status_display }}
+              </span>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-1">
+                <a href="{% url 'invoice_pdf_download' inv.pk %}" class="btn btn-sm btn-bl-outline" title="Download PDF">
+                  <i class="bi bi-file-earmark-pdf"></i>
+                </a>
+                <a href="{% url 'invoice_detail' inv.pk %}" class="btn btn-sm btn-bl-outline">
+                  <i class="bi bi-eye"></i> View
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="text-center py-4 text-muted">No invoices generated yet for this subscription.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Pause Subscription -->
+<div class="modal fade" id="pauseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'subscription_pause' sub.pk %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-slate-900">Pause Subscription</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small">Pausing halts recurring invoice generation until the subscription is resumed.</p>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-dark">Reason for Pausing <span class="text-danger">*</span></label>
+            <textarea name="reason" class="form-control" rows="3" placeholder="e.g. Customer requested temporary seasonal freeze..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-warning">Confirm Pause</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Cancel Subscription -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'subscription_cancel' sub.pk %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold text-danger">Cancel / Close Subscription</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-dark">Action Type</label>
+            <select name="action" class="form-select">
+              <option value="cancel">Cancel Subscription</option>
+              <option value="close">Close Early (Plan Closure Settings)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-dark">Documented Reason <span class="text-danger">*</span></label>
+            <textarea name="reason" class="form-control" rows="3" placeholder="Document reason for cancellation or churn..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep Subscription</button>
+          <button type="submit" class="btn btn-danger">Confirm Termination</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

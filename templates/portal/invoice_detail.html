@@ -1,0 +1,133 @@
+{% extends 'portal/base.html' %}
+
+{% block content %}
+<div class="mb-4 d-print-none">
+  <a href="{% url 'customer_portal' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Customer Portal
+  </a>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h2 class="fw-bold mb-0 text-slate-900">{{ invoice.invoice_number }}</h2>
+        <span class="badge bg-{{ invoice.status_badge_class }}-subtle text-{{ invoice.status_badge_class }} border border-{{ invoice.status_badge_class }}-subtle fs-6">
+          {{ invoice.get_status_display }}
+        </span>
+      </div>
+      <p class="text-muted mb-0 mt-1 small">Issued on {{ invoice.issued_date|date:"M d, Y" }} • Due {{ invoice.due_date|date:"M d, Y" }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print
+      </button>
+      <a href="{% url 'invoice_pdf_download' invoice.pk %}" class="btn btn-bl-primary btn-sm">
+        <i class="bi bi-download me-1"></i> Download PDF
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice Card -->
+<div class="card-saas bg-white p-4 p-md-5 mx-auto shadow-sm" style="max-width: 840px;">
+  <div class="row align-items-start pb-4 border-bottom mb-4">
+    <div class="col-sm-7">
+      <div class="d-flex align-items-center gap-2 mb-2">
+        <div class="brand-icon-box" style="width: 36px; height: 36px;">
+          <i class="bi bi-shield-lock-fill fs-5"></i>
+        </div>
+        <h3 class="fw-bold mb-0 text-slate-900">{{ system_settings.company_name|default:"Brightloop Software" }}</h3>
+      </div>
+      <p class="text-muted small mb-0">
+        {{ system_settings.billing_email|default:"billing@brightloop.io" }}<br>
+        {{ system_settings.support_email|default:"support@brightloop.io" }}
+      </p>
+    </div>
+    <div class="col-sm-5 text-sm-end mt-3 mt-sm-0">
+      <h3 class="fw-bold text-primary mb-1">INVOICE</h3>
+      <div class="code-tag fs-6">{{ invoice.invoice_number }}</div>
+      <div class="small text-muted mt-2">Issued: <b>{{ invoice.issued_date|date:"M d, Y" }}</b></div>
+      <div class="small text-muted">Due: <b class="{% if invoice.is_overdue %}text-danger{% else %}text-dark{% endif %}">{{ invoice.due_date|date:"M d, Y" }}</b></div>
+    </div>
+  </div>
+
+  <div class="row mb-4 g-3">
+    <div class="col-sm-6">
+      <h6 class="text-uppercase text-muted fw-bold small mb-2">Billed To:</h6>
+      <h5 class="fw-bold text-dark mb-1">{{ customer.full_name }}</h5>
+      <div class="text-muted small">
+        {{ customer.company_name|default:"Individual Client" }}<br>
+        {{ customer.email }}<br>
+        {{ customer.phone|default:"" }}<br>
+        {{ customer.address|default:"" }} {{ customer.city|default:"" }} {{ customer.country }}
+      </div>
+    </div>
+    <div class="col-sm-6 text-sm-end">
+      <h6 class="text-uppercase text-muted fw-bold small mb-2">Payment Details:</h6>
+      <div class="small text-muted">
+        <div>Subscription Ref: <b>{{ invoice.subscription.subscription_id|default:"Direct Service" }}</b></div>
+        <div>Paid Amount: <b class="text-success">${{ invoice.paid_amount }}</b></div>
+        <div>Balance Due: <b class="{% if invoice.balance_due > 0 %}text-danger{% else %}text-success{% endif %}">${{ invoice.balance_due }}</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-responsive mb-4">
+    <table class="table table-bordered mb-0 align-middle">
+      <thead class="table-dark">
+        <tr>
+          <th>Description</th>
+          <th class="text-center" style="width: 80px;">Qty</th>
+          <th class="text-end" style="width: 130px;">Unit Price</th>
+          <th class="text-end" style="width: 140px;">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <strong class="text-dark d-block">{{ invoice.subscription.plan.name|default:"Cloud Subscription" }}</strong>
+            {% if invoice.subscription.variant %}
+              <small class="text-muted">Tier: {{ invoice.subscription.variant.name }}</small>
+            {% endif %}
+          </td>
+          <td class="text-center">{{ invoice.subscription.quantity|default:1 }}</td>
+          <td class="text-end">${{ invoice.amount }}</td>
+          <td class="text-end fw-bold">${{ invoice.amount }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="row justify-content-end mb-4">
+    <div class="col-sm-6 col-md-5">
+      <div class="card bg-light border-0 p-3">
+        <div class="d-flex justify-content-between small text-muted mb-2">
+          <span>Subtotal:</span>
+          <span class="text-dark fw-bold">${{ invoice.amount }}</span>
+        </div>
+        {% if invoice.tax_amount > 0 %}
+          <div class="d-flex justify-content-between small text-muted mb-2">
+            <span>Tax ({{ invoice.tax_rate.rate_percent|default:"0" }}%):</span>
+            <span class="text-dark">+${{ invoice.tax_amount }}</span>
+          </div>
+        {% endif %}
+        {% if invoice.discount_amount > 0 %}
+          <div class="d-flex justify-content-between small text-success mb-2">
+            <span>Discount:</span>
+            <span>-${{ invoice.discount_amount }}</span>
+          </div>
+        {% endif %}
+        <div class="d-flex justify-content-between pt-2 border-top border-secondary-subtle">
+          <span class="fw-bold text-dark">Total:</span>
+          <h4 class="fw-bold text-primary mb-0">${{ invoice.total_amount }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if invoice.notes %}
+    <div class="border-top pt-3 small text-muted">
+      <strong class="text-dark d-block mb-1">Invoice Notes:</strong>
+      <p class="mb-0">{{ invoice.notes }}</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

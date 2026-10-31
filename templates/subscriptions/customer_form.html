@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'customer_list' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Customers Directory
+  </a>
+  <h2 class="fw-bold mb-0 text-slate-900">{{ page_title }}</h2>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Manage customer accounts, tax jurisdictions, and business details.</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card-saas bg-white p-4">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Customer / Contact Name <span class="text-danger">*</span></label>
+            {{ form.full_name }}
+            {% if form.full_name.errors %}<div class="text-danger small mt-1">{{ form.full_name.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Company / Organization</label>
+            {{ form.company_name }}
+            {% if form.company_name.errors %}<div class="text-danger small mt-1">{{ form.company_name.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Email Address <span class="text-danger">*</span></label>
+            {{ form.email }}
+            {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Phone Number</label>
+            {{ form.phone }}
+            {% if form.phone.errors %}<div class="text-danger small mt-1">{{ form.phone.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold text-dark small">Billing Address</label>
+          {{ form.address }}
+          {% if form.address.errors %}<div class="text-danger small mt-1">{{ form.address.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-dark small">City</label>
+            {{ form.city }}
+            {% if form.city.errors %}<div class="text-danger small mt-1">{{ form.city.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-dark small">Postal / Zip Code</label>
+            {{ form.postal_code }}
+            {% if form.postal_code.errors %}<div class="text-danger small mt-1">{{ form.postal_code.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-dark small">Country</label>
+            {{ form.country }}
+            {% if form.country.errors %}<div class="text-danger small mt-1">{{ form.country.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Account Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="text-danger small mt-1">{{ form.status.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-bold text-dark small">Account Notes & Terms</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="text-danger small mt-1">{{ form.notes.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 pt-3 border-top">
+          <button type="submit" class="btn btn-bl-primary">
+            <i class="bi bi-check2-circle me-1"></i> Save Customer
+          </button>
+          <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          {% if customer %}
+            <form method="post" action="{% url 'customer_delete' customer.pk %}" class="ms-auto" onsubmit="return confirm('Permanently delete this customer account?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash me-1"></i> Delete Customer
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas bg-white p-4">
+      <h6 class="fw-bold mb-3 text-slate-900">Customer Management</h6>
+      <p class="text-muted small">
+        Creating a customer record enables provisioning subscriptions, sending tailored quotations, issuing recurring invoices, and recording gateway payments.
+      </p>
+      <div class="alert alert-light border small text-muted mb-0">
+        <i class="bi bi-shield-check text-success me-1"></i>
+        If the customer registers through self-service at <code>/register/</code>, their account will be created automatically with secure password encryption.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

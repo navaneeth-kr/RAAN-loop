@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <a href="{% url 'subscription_list' %}" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+    <i class="bi bi-arrow-left"></i> Back to Subscriptions Directory
+  </a>
+  <h2 class="fw-bold mb-0 text-slate-900">{{ page_title }}</h2>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Assign customer contracts, plan tiers, variants, billing cycles, and automated renewal rules.</p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card-saas bg-white p-4">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Customer Account <span class="text-danger">*</span></label>
+            {{ form.customer }}
+            {% if form.customer.errors %}<div class="text-danger small mt-1">{{ form.customer.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Subscription Plan <span class="text-danger">*</span></label>
+            {{ form.plan }}
+            {% if form.plan.errors %}<div class="text-danger small mt-1">{{ form.plan.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Product Variant / Add-on</label>
+            {{ form.variant }}
+            <small class="text-muted">Optional tier (e.g. Odoo brand, Enterprise seat, Multi-region)</small>
+            {% if form.variant.errors %}<div class="text-danger small mt-1">{{ form.variant.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-dark small">Quantity / Seats <span class="text-danger">*</span></label>
+            {{ form.quantity }}
+            {% if form.quantity.errors %}<div class="text-danger small mt-1">{{ form.quantity.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-bold text-dark small">Billing Cycle <span class="text-danger">*</span></label>
+            {{ form.billing_cycle }}
+            {% if form.billing_cycle.errors %}<div class="text-danger small mt-1">{{ form.billing_cycle.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Recurring Period Amount ($)</label>
+            {{ form.current_amount }}
+            <small class="text-muted">Leave blank/zero to auto-compute from Plan price & Variant</small>
+            {% if form.current_amount.errors %}<div class="text-danger small mt-1">{{ form.current_amount.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Payment Terms</label>
+            {{ form.payment_terms }}
+            {% if form.payment_terms.errors %}<div class="text-danger small mt-1">{{ form.payment_terms.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-dark small">Start Date <span class="text-danger">*</span></label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-dark small">Next Billing Date <span class="text-danger">*</span></label>
+            {{ form.next_billing_date }}
+            {% if form.next_billing_date.errors %}<div class="text-danger small mt-1">{{ form.next_billing_date.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-bold text-dark small">Fixed Expiry Date</label>
+            {{ form.expiry_date }}
+            {% if form.expiry_date.errors %}<div class="text-danger small mt-1">{{ form.expiry_date.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold text-dark small">Lifecycle Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="text-danger small mt-1">{{ form.status.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6 d-flex align-items-center pt-4">
+            <div class="form-check form-switch">
+              {{ form.auto_renew }}
+              <label class="form-check-label fw-bold small text-dark ms-2">Automate Recurring Renewals</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 pt-3 border-top">
+          <button type="submit" class="btn btn-bl-primary">
+            <i class="bi bi-check2-circle me-1"></i> Save Subscription
+          </button>
+          <a href="{% url 'subscription_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          {% if sub %}
+            <form method="post" action="{% url 'subscription_delete' sub.pk %}" class="ms-auto" onsubmit="return confirm('Permanently remove this subscription contract?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash me-1"></i> Delete Contract
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas bg-white p-4">
+      <h6 class="fw-bold mb-3 text-slate-900">Subscription Automation Rules</h6>
+      <ul class="list-unstyled small text-muted mb-0 d-flex flex-column gap-3">
+        <li>
+          <strong class="text-dark d-block"><i class="bi bi-clock-history text-primary me-1"></i> Recurring Billing Command</strong>
+          <span>The automated scheduler detects contracts whose <code>Next Billing Date</code> has arrived, creates non-duplicate invoices, and advances the cycle.</span>
+        </li>
+        <li>
+          <strong class="text-dark d-block"><i class="bi bi-pause-circle text-warning me-1"></i> Pause & Resume Controls</strong>
+          <span>Subscriptions can only be paused if permitted by the assigned plan's early pause settings.</span>
+        </li>
+        <li>
+          <strong class="text-dark d-block"><i class="bi bi-shield-check text-success me-1"></i> Customer Visibility</strong>
+          <span>Active contracts immediately populate the customer's portal dashboard with live countdowns to renewal.</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

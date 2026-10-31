@@ -6,6 +6,10 @@
     <h2 class="fw-bold mb-0 text-slate-900">Customers Directory</h2>
     <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Registered customer accounts, contact details, and organization profiles.</p>
   </div>
+  <a href="{% url 'customer_create' %}" class="btn btn-bl-primary d-inline-flex align-items-center gap-2">
+    <i class="bi bi-person-plus-fill"></i>
+    <span>Add Customer</span>
+  </a>
 </div>
 
 <div class="card-saas p-3 mb-4 bg-white">
@@ -42,12 +46,17 @@
           <th>Country</th>
           <th>Status</th>
           <th>Joined Date</th>
+          <th class="text-end">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for customer in customers %}
           <tr>
-            <td><strong class="text-dark">{{ customer.full_name }}</strong></td>
+            <td>
+              <a href="{% url 'customer_detail' customer.pk %}" class="text-decoration-none fw-bold text-dark hover-primary">
+                {{ customer.full_name }}
+              </a>
+            </td>
             <td>{{ customer.company_name|default:"—" }}</td>
             <td><a href="mailto:{{ customer.email }}" class="text-decoration-none text-primary">{{ customer.email }}</a></td>
             <td>{{ customer.phone|default:"—" }}</td>
@@ -62,9 +71,19 @@
               {% endif %}
             </td>
             <td><span class="text-muted small">{{ customer.created_at|date:"M d, Y" }}</span></td>
+            <td class="text-end">
+              <div class="d-inline-flex align-items-center gap-1">
+                <a href="{% url 'customer_detail' customer.pk %}" class="btn btn-sm btn-bl-outline" title="View 360 Profile">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{% url 'customer_update' customer.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit Customer">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-center py-4 text-muted">No customers found matching criteria.</td></tr>
+          <tr><td colspan="8" class="text-center py-4 text-muted">No customers found matching criteria.</td></tr>
         {% endfor %}
       </tbody>
     </table>

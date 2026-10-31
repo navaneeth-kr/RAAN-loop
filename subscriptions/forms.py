@@ -2,7 +2,9 @@ import random
 from decimal import Decimal
 from django import forms
 from django.utils import timezone
-from .models import Invoice, Payment, Discount, TaxRate, Customer, Subscription
+from .models import Invoice, Payment, Discount, TaxRate, Customer, Subscription, Quotation
+from products.models import ProductVariant
+from plans.models import SubscriptionPlan
 from core.models import SystemSetting
 
 class InvoiceForm(forms.ModelForm):
@@ -282,3 +284,210 @@ class TaxRateForm(forms.ModelForm):
         if commit:
             tax_rate.save()
         return tax_rate
+
+
+class CustomerForm(forms.ModelForm):
+    """Admin form for adding and modifying customer accounts."""
+    class Meta:
+        model = Customer
+        fields = [
+            'full_name',
+            'company_name',
+            'email',
+            'phone',
+            'address',
+            'city',
+            'postal_code',
+            'country',
+            'status',
+            'notes',
+        ]
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Jane Doe'}),
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. Acme Corporation'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'jane@acme.com'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+1 (555) 019-2834'}),
+            'address': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Street Address or Suite'}),
+            'city': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'City'}),
+            'postal_code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Postal Code'}),
+            'country': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Country'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Internal account notes or SLA agreements...'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in ['company_name', 'phone', 'address', 'city', 'postal_code', 'country', 'notes']:
+            if field in self.fields:
+                self.fields[field].required = False
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip().lower()
+        qs = Customer.objects.filter(email__iexact=email)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError("A customer account with this email address already exists.")
+        return email
+
+
+class SubscriptionForm(forms.ModelForm):
+    """Admin form for creating and updating customer subscriptions."""
+    class Meta:
+        model = Subscription
+        fields = [
+            'customer',
+            'plan',
+            'variant',
+            'quantity',
+            'billing_cycle',
+            'current_amount',
+            'payment_terms',
+            'start_date',
+            'next_billing_date',
+            'expiry_date',
+            'auto_renew',
+            'status',
+        ]
+        widgets = {
+            'customer': forms.Select(attrs={'class': 'form-select', 'id': 'id_sub_customer'}),
+            'plan': forms.Select(attrs={'class': 'form-select', 'id': 'id_sub_plan'}),
+            'variant': forms.Select(attrs={'class': 'form-select', 'id': 'id_sub_variant'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'id': 'id_sub_quantity'}),
+            'billing_cycle': forms.Select(attrs={'class': 'form-select', 'id': 'id_sub_cycle'}, choices=[
+                ('monthly', 'Monthly Billing'),
+                ('yearly', 'Yearly Billing'),
+                ('weekly', 'Weekly Billing'),
+                ('daily', 'Daily Billing'),
+            ]),
+            'current_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0.00', 'placeholder': '0.00'}),
+            'payment_terms': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Net 15, Net 30, Due Upon Receipt'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'next_billing_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'expiry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'auto_renew': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields['start_date'].initial = timezone.now().date()
+            self.fields['next_billing_date'].initial = timezone.now().date() + timezone.timedelta(days=30)
+            self.fields['status'].initial = 'active'
+
+    def save(self, commit=True):
+        sub = super().save(commit=False)
+        if not sub.subscription_id:
+            rand_code = random.randint(1000, 9999)
+            sub.subscription_id = f"SUB-{timezone.now().strftime('%Y%m')}-{rand_code}"
+            while Subscription.objects.filter(subscription_id=sub.subscription_id).exists():
+                rand_code = random.randint(1000, 9999)
+                sub.subscription_id = f"SUB-{timezone.now().strftime('%Y%m')}-{rand_code}"
+
+        # If current_amount is zero or not set, compute based on plan & quantity
+        if not sub.current_amount and sub.plan:
+            base_price = sub.plan.price
+            if sub.variant:
+                base_price += sub.variant.price_modifier
+            sub.current_amount = base_price * sub.quantity
+
+        if commit:
+            sub.save()
+        return sub
+
+
+class SubscriptionActionForm(forms.Form):
+    """Form for pausing, resuming, or canceling a subscription with reason tracking."""
+    action = forms.ChoiceField(choices=[
+        ('pause', 'Pause Subscription'),
+        ('resume', 'Resume Active Status'),
+        ('cancel', 'Cancel Subscription'),
+        ('close', 'Close Subscription Early'),
+    ], widget=forms.Select(attrs={'class': 'form-select'}))
+    reason = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Reason for lifecycle change (required for pause and cancel)...'})
+    )
+
+
+class QuotationForm(forms.ModelForm):
+    """Form for generating commercial customer quotations."""
+    class Meta:
+        model = Quotation
+        fields = [
+            'customer',
+            'plan',
+            'variant',
+            'quantity',
+            'unit_price',
+            'subtotal',
+            'tax_rate',
+            'discount',
+            'total_amount',
+            'validity_days',
+            'notes',
+            'status',
+        ]
+        widgets = {
+            'customer': forms.Select(attrs={'class': 'form-select', 'id': 'id_qt_customer'}),
+            'plan': forms.Select(attrs={'class': 'form-select', 'id': 'id_qt_plan'}),
+            'variant': forms.Select(attrs={'class': 'form-select', 'id': 'id_qt_variant'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'id': 'id_qt_quantity'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'id': 'id_qt_price', 'placeholder': '0.00'}),
+            'subtotal': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'id': 'id_qt_subtotal', 'placeholder': '0.00'}),
+            'tax_rate': forms.Select(attrs={'class': 'form-select', 'id': 'id_qt_tax'}),
+            'discount': forms.Select(attrs={'class': 'form-select', 'id': 'id_qt_discount'}),
+            'total_amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'id': 'id_qt_total', 'placeholder': '0.00'}),
+            'validity_days': forms.NumberInput(attrs={'class': 'form-control', 'min': 1, 'max': 365}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Terms, custom deliverables, or scope details...'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if not self.instance.pk:
+            self.fields['validity_days'].initial = 30
+            self.fields['status'].initial = 'sent'
+            default_tr = TaxRate.objects.filter(is_default=True, is_active=True).first()
+            if default_tr:
+                self.fields['tax_rate'].initial = default_tr
+
+    def save(self, commit=True):
+        qt = super().save(commit=False)
+        today = timezone.now().date()
+
+        if not qt.quotation_number:
+            rand_code = random.randint(1000, 9999)
+            qt.quotation_number = f"QT-{today.strftime('%Y%m')}-{rand_code}"
+            while Quotation.objects.filter(quotation_number=qt.quotation_number).exists():
+                rand_code = random.randint(1000, 9999)
+                qt.quotation_number = f"QT-{today.strftime('%Y%m')}-{rand_code}"
+
+        # Calculate validity date
+        val_days = qt.validity_days or 30
+        qt.valid_until = today + timezone.timedelta(days=val_days)
+
+        # Financial reconciliation
+        sub = qt.subtotal or Decimal('0.00')
+        if sub <= Decimal('0.00') and qt.plan:
+            unit = qt.unit_price or qt.plan.price
+            sub = unit * (qt.quantity or 1)
+            qt.subtotal = sub
+
+        disc_amt = Decimal('0.00')
+        if qt.discount:
+            disc_amt = qt.discount.calculate_discount(sub)
+        qt.discount_amount = disc_amt
+
+        tax_base = max(Decimal('0.00'), sub - disc_amt)
+        tax_amt = Decimal('0.00')
+        if qt.tax_rate:
+            tax_amt = round(tax_base * (qt.tax_rate.rate_percent / Decimal('100.00')), 2)
+        qt.tax_amount = tax_amt
+
+        qt.total_amount = tax_base + tax_amt
+
+        if commit:
+            qt.save()
+        return qt
