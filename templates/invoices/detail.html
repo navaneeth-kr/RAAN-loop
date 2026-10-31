@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% block title %}Invoice {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+{% set badge = {'draft':'secondary','confirmed':'info','paid':'success','cancelled':'danger'} %}
+
+<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+  <div>
+    <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-sm btn-outline-secondary me-2">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+    <span class="fs-4 fw-bold">{{ invoice.invoice_number }}</span>
+    <span class="badge bg-{{ badge.get(invoice.status,'secondary') }} ms-2 fs-6">
+      {{ invoice.status|capitalize }}
+    </span>
+    {% if invoice.is_overdue() %}
+    <span class="badge bg-warning text-dark ms-1 fs-6">Overdue</span>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2 flex-wrap justify-content-end">
+    <!-- Action buttons depending on status -->
+    {% if invoice.status == 'draft' %}
+    <form method="POST" action="{{ url_for('invoices.confirm', invoice_id=invoice.id) }}">
+      <button class="btn btn-info btn-sm text-white">
+        <i class="bi bi-check-circle me-1"></i>Confirm
+      </button>
+    </form>
+    {% endif %}
+
+    {% if invoice.status == 'confirmed' %}
+    <form method="POST" action="{{ url_for('invoices.mark_paid_view', invoice_id=invoice.id) }}">
+      <button class="btn btn-success btn-sm">
+        <i class="bi bi-check2-all me-1"></i>Mark Paid
+      </button>
+    </form>
+    {% endif %}
+
+    {% if invoice.status in ['confirmed'] %}
+    <form method="POST" action="{{ url_for('invoices.send_email', invoice_id=invoice.id) }}">
+      <button class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-envelope me-1"></i>Send Email
+      </button>
+    </form>
+    {% endif %}
+
+    {% if invoice.status != 'paid' and invoice.status != 'cancelled' %}
+    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#cancelModal">
+      <i class="bi bi-x-circle me-1"></i>Cancel
+    </button>
+    {% endif %}
+
+    <a href="{{ url_for('invoices.print_invoice', invoice_id=invoice.id) }}"
+       class="btn btn-outline-secondary btn-sm" target="_blank">
+      <i class="bi bi-printer me-1"></i>Print
+    </a>
+    <a href="{{ url_for('invoices.download_pdf', invoice_id=invoice.id) }}"
+       class="btn btn-dark btn-sm">
+      <i class="bi bi-file-pdf me-1"></i>PDF
+    </a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Left: Invoice details -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white fw-semibold">
+        <i class="bi bi-info-circle me-2"></i>Invoice Details
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-sm-6">
+            <div class="text-muted small">Invoice Number</div>
+            <div class="fw-bold">{{ invoice.invoice_number }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="text-muted small">Subscription</div>
+            <div class="fw-bold">
+              {% if invoice.subscription %}
+                <a href="{{ url_for('subscriptions.detail', sub_id=invoice.subscription_id) }}">
+                  {{ invoice.subscription.subscription_number }}
+                </a>
+              {% else %}–{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-6">
+            <div class="text-muted small">Invoice Date</div>
+            <div class="fw-bold">{{ invoice.invoice_date.strftime('%d %B %Y') }}</div>
+          </div>
+          <div class="col-sm-6">
+            <div class="text-muted small">Due Date</div>
+            <div class="fw-bold {% if invoice.is_overdue() %}text-danger{% endif %}">
+              {{ invoice.due_date.strftime('%d %B %Y') }}
+              {% if invoice.is_overdue() %}<i class="bi bi-exclamation-triangle ms-1"></i>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% if invoice.billing_period_start %}
+        <div class="row mb-3">
+          <div class="col-sm-12">
+            <div class="text-muted small">Billing Period</div>
+            <div class="fw-bold">
+              {{ invoice.billing_period_start.strftime('%d %b %Y') }} –
+              {{ invoice.billing_period_end.strftime('%d %b %Y') if invoice.billing_period_end else '' }}
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        {% if invoice.email_sent_at %}
+        <div class="alert alert-success py-2 mb-0">
+          <i class="bi bi-envelope-check me-2"></i>
+          Email sent on {{ invoice.email_sent_at.strftime('%d %b %Y %H:%M') }}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Line items table -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-dark text-white fw-semibold">
+        <i class="bi bi-list-ul me-2"></i>Line Items
+      </div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Product / Service</th>
+              <th class="text-center">Qty</th>
+              <th class="text-end">Unit Price</th>
+              <th class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ invoice.product_name }}</div>
+                {% if invoice.product_description %}
+                <small class="text-muted">{{ invoice.product_description }}</small>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ invoice.quantity }}</td>
+              <td class="text-end">${{ "%.2f"|format(invoice.unit_price|float) }}</td>
+              <td class="text-end">${{ "%.2f"|format((invoice.unit_price|float * invoice.quantity)) }}</td>
+            </tr>
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <td colspan="3" class="text-end text-muted">Subtotal</td>
+              <td class="text-end">${{ "%.2f"|format(invoice.subtotal|float) }}</td>
+            </tr>
+            {% if invoice.discount_percent|float > 0 %}
+            <tr>
+              <td colspan="3" class="text-end text-muted">
+                Discount ({{ invoice.discount_percent }}%)
+              </td>
+              <td class="text-end text-danger">-${{ "%.2f"|format(invoice.discount_amount|float) }}</td>
+            </tr>
+            {% endif %}
+            {% if invoice.tax_rate|float > 0 %}
+            <tr>
+              <td colspan="3" class="text-end text-muted">
+                {{ invoice.tax_name or 'Tax' }} ({{ invoice.tax_rate }}%)
+              </td>
+              <td class="text-end">${{ "%.2f"|format(invoice.tax_amount|float) }}</td>
+            </tr>
+            {% endif %}
+            <tr class="fw-bold fs-5">
+              <td colspan="3" class="text-end">Total Due</td>
+              <td class="text-end text-primary">${{ "%.2f"|format(invoice.total_amount|float) }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    {% if invoice.notes %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">Notes</div>
+      <div class="card-body">{{ invoice.notes }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Customer + History -->
+  <div class="col-lg-4">
+    <!-- Customer card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-secondary text-white fw-semibold">
+        <i class="bi bi-person me-2"></i>Customer
+      </div>
+      <div class="card-body">
+        <div class="fw-bold fs-5">{{ invoice.customer.name }}</div>
+        <div class="text-muted">{{ invoice.customer.email }}</div>
+        {% if invoice.customer.phone %}
+        <div class="text-muted">{{ invoice.customer.phone }}</div>
+        {% endif %}
+        {% if invoice.customer.address %}
+        <hr class="my-2"/>
+        <div class="small">{{ invoice.customer.address }}</div>
+        {% if invoice.customer.city or invoice.customer.country %}
+        <div class="small">
+          {{ invoice.customer.city }}{% if invoice.customer.city and invoice.customer.country %}, {% endif %}
+          {{ invoice.customer.country }}
+        </div>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Invoice History -->
+    <div class="card shadow-sm">
+      <div class="card-header fw-semibold">
+        <i class="bi bi-clock-history me-2"></i>History
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for h in invoice.history %}
+        <li class="list-group-item py-2">
+          <div class="d-flex justify-content-between">
+            <span class="badge bg-{% if h.action=='created' %}secondary{% elif h.action=='confirmed' %}info{% elif h.action=='paid' %}success{% elif h.action=='cancelled' %}danger{% elif h.action=='emailed' %}primary{% else %}light text-dark{% endif %}">
+              {{ h.action|capitalize }}
+            </span>
+            <small class="text-muted">{{ h.created_at.strftime('%d %b %Y %H:%M') }}</small>
+          </div>
+          {% if h.description %}
+          <div class="small text-muted mt-1">{{ h.description }}</div>
+          {% endif %}
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted small">No history yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Cancel Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">
+          <i class="bi bi-x-circle me-2"></i>Cancel Invoice
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('invoices.cancel', invoice_id=invoice.id) }}">
+        <div class="modal-body">
+          <p>Are you sure you want to cancel <strong>{{ invoice.invoice_number }}</strong>?</p>
+          <div class="mb-3">
+            <label class="form-label">Reason (optional)</label>
+            <textarea name="reason" class="form-control" rows="3"
+                      placeholder="Enter cancellation reason…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-danger">Cancel Invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

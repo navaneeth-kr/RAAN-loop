@@ -1,0 +1,67 @@
+/* ── Global ── */
+body {
+  font-size: 0.92rem;
+}
+
+/* ── Navbar ── */
+.navbar-brand {
+  letter-spacing: 0.02em;
+}
+
+/* ── Cards ── */
+.card {
+  border-radius: 10px;
+}
+.card-header {
+  border-radius: 10px 10px 0 0 !important;
+}
+
+/* ── Tables ── */
+.table thead th {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.table-hover tbody tr:hover {
+  background-color: rgba(37, 99, 235, 0.04);
+}
+
+/* ── Badges ── */
+.badge {
+  font-weight: 500;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+}
+
+/* ── Stat Cards ── */
+.card .fs-3 {
+  line-height: 1.1;
+}
+
+/* ── Invoice print ── */
+@media print {
+  .navbar, .alert, footer, .no-print {
+    display: none !important;
+  }
+}
+
+/* ── Sidebar sticky ── */
+.sticky-top {
+  top: 72px !important;
+}
+
+/* ── Pagination ── */
+.pagination .page-link {
+  color: #2563EB;
+}
+.pagination .page-item.active .page-link {
+  background-color: #2563EB;
+  border-color: #2563EB;
+}
+
+/* ── Overdue row ── */
+tr.table-warning td {
+  background-color: #FFFBEB !important;
+}

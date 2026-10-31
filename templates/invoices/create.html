@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Create Invoice{% endblock %}
+
+{% block content %}
+<div class="mt-4 mb-3">
+  <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-sm btn-outline-secondary me-2">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <span class="fs-4 fw-bold">Create New Invoice</span>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <form method="POST" id="invoiceForm">
+
+          <!-- Subscription selector -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">
+              <i class="bi bi-arrow-repeat me-1 text-primary"></i>Link to Subscription (optional)
+            </label>
+            <select class="form-select" id="subscriptionSelect" name="subscription_id">
+              <option value="">— Manual invoice (no subscription) —</option>
+              {% for sub in subscriptions %}
+              <option value="{{ sub.id }}"
+                      data-customer="{{ sub.customer_id }}"
+                      data-customer-name="{{ sub.customer.name }}"
+                      data-product="{{ sub.product.name }}"
+                      data-description="{{ sub.product.description or '' }}"
+                      data-price="{{ sub.unit_price }}"
+                      data-qty="{{ sub.quantity }}"
+                      data-discount="{{ sub.discount_percent or 0 }}">
+                {{ sub.subscription_number }} – {{ sub.customer.name }} ({{ sub.product.name }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <hr/>
+
+          <!-- Customer -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Customer <span class="text-danger">*</span></label>
+            <select class="form-select" name="customer_id" id="customerSelect" required>
+              <option value="">Select customer…</option>
+              {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.name }} ({{ c.email }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Product details -->
+          <div class="row mb-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Product / Service Name <span class="text-danger">*</span></label>
+              <input type="text" name="product_name" id="productName" class="form-control"
+                     placeholder="e.g. Pro Plan – Monthly" required/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Invoice Date</label>
+              <input type="date" name="invoice_date" class="form-control" value="{{ today }}"/>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Product Description</label>
+            <textarea name="product_description" id="productDescription" class="form-control"
+                      rows="2" placeholder="Optional description…"></textarea>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Quantity <span class="text-danger">*</span></label>
+              <input type="number" name="quantity" id="quantity" class="form-control"
+                     value="1" min="1" required oninput="calcPreview()"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Unit Price ($) <span class="text-danger">*</span></label>
+              <input type="number" name="unit_price" id="unitPrice" class="form-control"
+                     step="0.01" min="0" placeholder="0.00" required oninput="calcPreview()"/>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Discount (%)</label>
+              <input type="number" name="discount_percent" id="discountPercent" class="form-control"
+                     step="0.01" min="0" max="100" value="0" oninput="calcPreview()"/>
+            </div>
+          </div>
+
+          {% if tax_cfg %}
+          <div class="alert alert-info py-2 mb-3">
+            <i class="bi bi-percent me-2"></i>
+            <strong>Active Tax:</strong> {{ tax_cfg.name }} @ {{ tax_cfg.rate }}%
+            (automatically applied)
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Notes</label>
+            <textarea name="notes" class="form-control" rows="2"
+                      placeholder="Payment terms, notes for customer…"></textarea>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary">
+              Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-plus-circle me-1"></i>Create Invoice (Draft)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Preview -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm sticky-top" style="top:80px">
+      <div class="card-header bg-dark text-white fw-semibold">
+        <i class="bi bi-calculator me-2"></i>Live Preview
+      </div>
+      <div class="card-body">
+        <table class="table table-sm mb-0">
+          <tr><td class="text-muted">Subtotal</td><td class="text-end" id="prevSubtotal">$0.00</td></tr>
+          <tr><td class="text-muted">Discount</td><td class="text-end text-danger" id="prevDiscount">-$0.00</td></tr>
+          <tr><td class="text-muted">Tax ({{ tax_cfg.rate if tax_cfg else 0 }}%)</td>
+              <td class="text-end" id="prevTax">$0.00</td></tr>
+          <tr class="fw-bold fs-5">
+            <td>Total</td>
+            <td class="text-end text-primary" id="prevTotal">$0.00</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const TAX_RATE = {{ tax_cfg.rate if tax_cfg else 0 }};
+
+function calcPreview() {
+  const qty = parseFloat(document.getElementById('quantity').value) || 0;
+  const price = parseFloat(document.getElementById('unitPrice').value) || 0;
+  const disc = parseFloat(document.getElementById('discountPercent').value) || 0;
+
+  const subtotal = qty * price;
+  const discAmt = subtotal * disc / 100;
+  const afterDisc = subtotal - discAmt;
+  const taxAmt = afterDisc * TAX_RATE / 100;
+  const total = afterDisc + taxAmt;
+
+  document.getElementById('prevSubtotal').textContent = '$' + subtotal.toFixed(2);
+  document.getElementById('prevDiscount').textContent = '-$' + discAmt.toFixed(2);
+  document.getElementById('prevTax').textContent = '$' + taxAmt.toFixed(2);
+  document.getElementById('prevTotal').textContent = '$' + total.toFixed(2);
+}
+
+// Auto-fill from subscription
+document.getElementById('subscriptionSelect').addEventListener('change', function() {
+  const opt = this.options[this.selectedIndex];
+  if (!opt.value) return;
+
+  document.getElementById('customerSelect').value = opt.dataset.customer;
+  document.getElementById('productName').value = opt.dataset.product;
+  document.getElementById('productDescription').value = opt.dataset.description;
+  document.getElementById('unitPrice').value = opt.dataset.price;
+  document.getElementById('quantity').value = opt.dataset.qty;
+  document.getElementById('discountPercent').value = opt.dataset.discount;
+  calcPreview();
+});
+
+calcPreview();
+</script>
+{% endblock %}
