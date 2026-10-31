@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'payment_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Payments</a>
+    <h2 class="fw-bold mb-0 text-slate-900">Record Customer Payment</h2>
+  </div>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+    Reconcile direct gateway transactions, manual bank transfers, or card settlements against outstanding invoices.
+  </p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <form method="post" class="card-saas p-4 bg-white shadow-sm border">
+      {% csrf_token %}
+
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-wallet2 text-success me-2"></i> Transaction Details
+      </h5>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Customer Account <span class="text-danger">*</span></label>
+          {{ form.customer }}
+          {% if form.customer.errors %}<div class="text-danger small mt-1">{{ form.customer.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Linked Invoice (Optional)</label>
+          {{ form.invoice }}
+          <small class="text-muted">Settles invoice balance automatically when Completed</small>
+          {% if form.invoice.errors %}<div class="text-danger small mt-1">{{ form.invoice.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Amount Received ({{ system_settings.currency_symbol|default:"₹" }}) <span class="text-danger">*</span></label>
+          {{ form.amount }}
+          {% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Payment Gateway / Method <span class="text-danger">*</span></label>
+          {{ form.payment_method }}
+          {% if form.payment_method.errors %}<div class="text-danger small mt-1">{{ form.payment_method.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Gateway Transaction Reference</label>
+          {{ form.transaction_reference }}
+          <small class="text-muted">Bank ref, Stripe ch_id, PayPal order ID</small>
+          {% if form.transaction_reference.errors %}<div class="text-danger small mt-1">{{ form.transaction_reference.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Transaction Timestamp <span class="text-danger">*</span></label>
+          {{ form.payment_date }}
+          {% if form.payment_date.errors %}<div class="text-danger small mt-1">{{ form.payment_date.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Settlement Status <span class="text-danger">*</span></label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="text-danger small mt-1">{{ form.status.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-12">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Internal Reconciliation Notes</label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<div class="text-danger small mt-1">{{ form.notes.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        <a href="{% url 'payment_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-bl-primary px-4">
+          <i class="bi bi-check2-circle me-1"></i> Record & Confirm Payment
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas p-4 bg-white border shadow-sm">
+      <h6 class="fw-bold text-slate-900 mb-2"><i class="bi bi-shield-check text-success me-2"></i> Automatic Ledger Sync</h6>
+      <p class="text-muted small mb-3" style="line-height: 1.6;">
+        Recording a payment marked as <strong>Completed</strong> against an invoice will automatically update the invoice balance, mark it as <strong>Paid</strong>, and record payment auditing timestamps.
+      </p>
+      <div class="p-3 bg-light rounded small border">
+        <div class="fw-semibold text-dark mb-1">Supported Gateways:</div>
+        <div class="text-muted">Stripe, PayPal, Direct ACH / Bank Wire, Credit Card, and UPI.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

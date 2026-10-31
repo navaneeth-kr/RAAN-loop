@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <h2 class="fw-bold mb-0 text-slate-900">Data Export & Reporting Center</h2>
+    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" style="font-size: 0.75rem;">Person 2 Responsibility</span>
+  </div>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+    Export SaaS operational data, product catalogs, subscription plans, and customer activity in CSV and JSON formats.
+  </p>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-saas p-4 bg-white">
+      <h5 class="fw-bold text-slate-900 mb-3">Configure Export Parameters</h5>
+
+      <form action="{% url 'export_download' %}" method="get">
+        <!-- Step 1: Select Entity -->
+        <label class="form-label fw-bold mb-2" style="font-size: 0.85rem;">1. Choose Dataset to Export</label>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="p-3 border rounded h-100">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="entity" id="ent_products" value="products" checked>
+                <label class="form-check-label fw-bold text-dark d-flex justify-content-between" for="ent_products">
+                  <span><i class="bi bi-box-seam text-primary me-1"></i> Products Catalog</span>
+                  <span class="badge bg-light text-muted border">{{ products_count }} items</span>
+                </label>
+                <div class="text-muted small mt-1">Product SKU, Name, Category, Base Price, Status</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="p-3 border rounded h-100">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="entity" id="ent_variants" value="variants">
+                <label class="form-check-label fw-bold text-dark d-flex justify-content-between" for="ent_variants">
+                  <span><i class="bi bi-layers text-purple me-1"></i> Product Variants</span>
+                  <span class="badge bg-light text-muted border">{{ variants_count }} items</span>
+                </label>
+                <div class="text-muted small mt-1">Tier levels, Quotas (seats, storage), Cycle, Price</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="p-3 border rounded h-100">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="entity" id="ent_plans" value="plans">
+                <label class="form-check-label fw-bold text-dark d-flex justify-content-between" for="ent_plans">
+                  <span><i class="bi bi-tag text-success me-1"></i> Subscription Plans</span>
+                  <span class="badge bg-light text-muted border">{{ plans_count }} items</span>
+                </label>
+                <div class="text-muted small mt-1">Plan SKU, Recurring Price, Billing Cycle, Trial days</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="p-3 border rounded h-100">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="entity" id="ent_subscriptions" value="subscriptions">
+                <label class="form-check-label fw-bold text-dark d-flex justify-content-between" for="ent_subscriptions">
+                  <span><i class="bi bi-card-checklist text-info me-1"></i> Customer Subscriptions</span>
+                  <span class="badge bg-light text-muted border">{{ subscriptions_count }} items</span>
+                </label>
+                <div class="text-muted small mt-1">Subscription IDs, Statuses, Customer links, Renewal dates</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-12">
+            <div class="p-3 border rounded">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="entity" id="ent_customers" value="customers">
+                <label class="form-check-label fw-bold text-dark d-flex justify-content-between" for="ent_customers">
+                  <span><i class="bi bi-people text-secondary me-1"></i> Customer Accounts</span>
+                  <span class="badge bg-light text-muted border">{{ customers_count }} items</span>
+                </label>
+                <div class="text-muted small mt-1">Customer profiles, email addresses, joined dates</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Choose Output Format -->
+        <label class="form-label fw-bold mb-2" style="font-size: 0.85rem;">2. Choose File Format</label>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="p-3 border rounded">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="format" id="fmt_csv" value="csv" checked>
+                <label class="form-check-label fw-bold text-dark" for="fmt_csv">
+                  <i class="bi bi-file-earmark-spreadsheet text-success me-1 fs-5 align-middle"></i> CSV Spreadsheet (.csv)
+                </label>
+                <div class="text-muted small mt-1">Universal format for Microsoft Excel, Numbers, and Google Sheets.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="p-3 border rounded">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="format" id="fmt_json" value="json">
+                <label class="form-check-label fw-bold text-dark" for="fmt_json">
+                  <i class="bi bi-filetype-json text-primary me-1 fs-5 align-middle"></i> Structured JSON (.json)
+                </label>
+                <div class="text-muted small mt-1">Formatted object array for REST API ingestion and integrations.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Export Action -->
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+          <span class="text-muted small"><i class="bi bi-shield-check text-success me-1"></i> Secure stream generation</span>
+          <button type="submit" class="btn btn-bl-primary px-4 py-2">
+            <i class="bi bi-cloud-arrow-down-fill me-1"></i> Generate & Download File
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <!-- Database & System Backup Card -->
+    <div class="card-saas p-4 bg-white mb-4 border shadow-sm">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+        <h6 class="fw-bold mb-0 text-slate-900">
+          <i class="bi bi-database-fill-down text-primary me-2"></i> System Database Backup
+        </h6>
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.72rem;">
+          <i class="bi bi-check-circle-fill me-1"></i> Live
+        </span>
+      </div>
+
+      <p class="text-muted small mb-3" style="line-height: 1.5;">
+        Generate an instant, complete snapshot of all relational models, users, products, plans, and subscriptions.
+      </p>
+
+      <div class="bg-light p-3 rounded mb-3 border">
+        <div class="d-flex justify-content-between align-items-center mb-2 small">
+          <span class="text-muted"><i class="bi bi-server me-1"></i> Storage Engine</span>
+          <span class="fw-bold text-dark">SQLite 3</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2 small">
+          <span class="text-muted"><i class="bi bi-file-earmark-binary me-1"></i> Database Size</span>
+          <span class="fw-bold text-primary font-monospace">{{ db_size_kb }} KB</span>
+        </div>
+        {% if db_modified %}
+        <div class="d-flex justify-content-between align-items-center small">
+          <span class="text-muted"><i class="bi bi-clock-history me-1"></i> Last Write</span>
+          <span class="text-muted font-monospace">{{ db_modified|date:"M d, H:i:s" }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- 1-Click Backup Buttons -->
+      <div class="d-grid gap-2">
+        <a href="{% url 'database_backup' %}?type=sqlite" class="btn btn-outline-primary btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-database-down fs-6"></i>
+          <span>Download SQLite Snapshot (.sqlite3)</span>
+        </a>
+        <a href="{% url 'database_backup' %}?type=json" class="btn btn-outline-secondary btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-filetype-json fs-6"></i>
+          <span>Download Full JSON Fixture (.json)</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Export Telemetry & Audit Card -->
+    <div class="card-saas p-4 bg-white border shadow-sm">
+      <h6 class="fw-bold mb-2 text-slate-900"><i class="bi bi-shield-check text-success me-2"></i> Security & Audit</h6>
+      <p class="text-muted small mb-0" style="line-height: 1.6;">
+        All export and backup transactions are restricted to authorized administrators and recorded in the <strong>Activity Audit Log</strong> with actor timestamp.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

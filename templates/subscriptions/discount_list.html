@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="fw-bold mb-0 text-slate-900">Discounts & Coupons</h2>
+      <span class="badge bg-primary-subtle text-primary border px-2 py-1" style="font-size: 0.75rem;">Person 4 Module</span>
+    </div>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Promotional campaigns, percentage coupons, fixed credits, and redemption auditing.</p>
+  </div>
+  <div>
+    <a href="{% url 'discount_create' %}" class="btn btn-bl-primary">
+      <i class="bi bi-plus-circle me-1"></i> Create Discount Coupon
+    </a>
+  </div>
+</div>
+
+<!-- KPI Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Active Promo Codes</span>
+        <span class="badge bg-success-subtle text-success"><i class="bi bi-tag-fill"></i></span>
+      </div>
+      <h4 class="fw-bold text-success mb-0 font-monospace">{{ active_count }} Active</h4>
+      <small class="text-muted">Available for checkout and invoice deduction</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Total Coupon Redemptions</span>
+        <span class="badge bg-primary-subtle text-primary"><i class="bi bi-ticket-perforated-fill"></i></span>
+      </div>
+      <h4 class="fw-bold text-slate-900 mb-0 font-monospace">{{ total_redemptions }} Used</h4>
+      <small class="text-muted">Accumulated customer redemptions across invoices</small>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filtering Toolbar -->
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-9">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search discount code or campaign description...">
+      </div>
+    </div>
+    <div class="col-md-3 d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary flex-grow-1"><i class="bi bi-funnel me-1"></i> Filter</button>
+      {% if search_query %}
+        <a href="{% url 'discount_list' %}" class="btn btn-sm btn-outline-secondary" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+
+<!-- Discounts Table -->
+<div class="card-saas bg-white overflow-hidden shadow-sm">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Promo Code</th>
+          <th>Description</th>
+          <th>Discount Type</th>
+          <th>Benefit Value</th>
+          <th>Redemptions</th>
+          <th>Validity Range</th>
+          <th>Status</th>
+          <th class="text-end pe-3">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for disc in discounts %}
+          <tr>
+            <td>
+              <strong class="code-tag fs-6 text-primary">{{ disc.code }}</strong>
+            </td>
+            <td><span class="text-dark fw-semibold">{{ disc.description }}</span></td>
+            <td><span class="badge bg-light text-dark border">{{ disc.get_discount_type_display }}</span></td>
+            <td>
+              <strong class="text-success fs-6 font-monospace">
+                {% if disc.discount_type == 'percentage' %}
+                  {{ disc.value }}% OFF
+                {% else %}
+                  {{ system_settings.currency_symbol|default:"₹" }}{{ disc.value }} Credit
+                {% endif %}
+              </strong>
+            </td>
+            <td>
+              <span class="badge bg-light text-muted border font-monospace">{{ disc.times_used }} used</span>
+            </td>
+            <td>
+              <span class="text-muted small">
+                {{ disc.valid_from|date:"M d, Y" }} &rarr; {{ disc.valid_until|date:"M d, Y" }}
+              </span>
+            </td>
+            <td>
+              {% if disc.is_currently_valid %}
+                <span class="badge-saas badge-success"><i class="bi bi-check-circle-fill"></i> Active</span>
+              {% elif not disc.is_active %}
+                <span class="badge-saas badge-secondary">Deactivated</span>
+              {% else %}
+                <span class="badge-saas badge-warning">Expired</span>
+              {% endif %}
+            </td>
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <!-- 1-Click Status Toggle -->
+                <form method="post" action="{% url 'discount_toggle_status' disc.id %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-{% if disc.is_active %}warning{% else %}success{% endif %}" title="{% if disc.is_active %}Deactivate Coupon{% else %}Activate Coupon{% endif %}">
+                    <i class="bi bi-{% if disc.is_active %}pause-fill{% else %}play-fill{% endif %}"></i>
+                  </button>
+                </form>
+                <a href="{% url 'discount_update' disc.id %}" class="btn btn-outline-secondary" title="Edit Discount">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="post" action="{% url 'discount_delete' disc.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete promo code {{ disc.code }}?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger" title="Delete Discount">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center py-5">
+              <div class="text-muted mb-2"><i class="bi bi-percent display-6"></i></div>
+              <h6 class="fw-bold text-dark">No Discount Codes Created Yet</h6>
+              <p class="text-muted small mb-3">Launch promo codes to boost subscription acquisitions and reward clients.</p>
+              <a href="{% url 'discount_create' %}" class="btn btn-sm btn-bl-primary">
+                <i class="bi bi-plus-circle me-1"></i> Create First Coupon
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

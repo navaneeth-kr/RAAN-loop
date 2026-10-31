@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription Details | Subscription Hub</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/print.css">
+</head>
+<body>
+  <div id="appHeader"></div>
+
+  <div class="main-container">
+    <!-- Print Only Header -->
+    <div class="print-only-header">
+      <h1 style="font-size: 24pt; margin-bottom: 4px;">SUBSCRIPTION STATEMENT & INVOICE</h1>
+      <p style="color: #666;">Generated on 2026-10-31 | CloudFlow Enterprise Platforms</p>
+    </div>
+
+    <!-- Breadcrumb & Top Bar -->
+    <div style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+      <a href="/" style="color: var(--primary); text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.4rem;">
+        ← Back to All Subscriptions
+      </a>
+      <div id="roleIndicatorBadge"></div>
+    </div>
+
+    <!-- Page Header with Status & Primary Lifecycle Actions -->
+    <div class="page-header" style="background: white; padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border); box-shadow: var(--shadow-sm); margin-bottom: 1.5rem;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+          <h1 class="page-title" id="detSubNumber">Loading...</h1>
+          <span id="detStatusBadge"></span>
+          <span id="detPausePill" style="display:none;" class="badge badge-paused">PAUSED</span>
+        </div>
+        <p class="page-subtitle" id="detSubSubtitle">Retrieving subscription metadata...</p>
+      </div>
+
+      <!-- Contextual Action Buttons -->
+      <div class="header-actions" id="lifecycleActionsContainer">
+        <!-- Injected via JavaScript based on role & status -->
+      </div>
+    </div>
+
+    <!-- Lifecycle Pipeline Stepper -->
+    <div class="card" style="padding: 1rem 1.5rem 1.25rem 1.5rem; margin-bottom: 1.5rem;">
+      <div style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 0.5rem;">
+        Subscription Lifecycle Progress
+      </div>
+      <div class="stepper" id="lifecycleStepper">
+        <div class="step-item" id="stepDraft">
+          <div class="step-circle">1</div>
+          <div class="step-label">Draft</div>
+        </div>
+        <div class="step-item" id="stepQuotation">
+          <div class="step-circle">2</div>
+          <div class="step-label">Quotation</div>
+        </div>
+        <div class="step-item" id="stepConfirmed">
+          <div class="step-circle">3</div>
+          <div class="step-label">Confirmed</div>
+        </div>
+        <div class="step-item" id="stepActive">
+          <div class="step-circle">4</div>
+          <div class="step-label">Active</div>
+        </div>
+        <div class="step-item" id="stepClosed">
+          <div class="step-circle">5</div>
+          <div class="step-label">Closed</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid-2">
+      <!-- Left Column: Products, Plan, Pricing, and Audit Trail -->
+      <div>
+        <!-- Line Items Card -->
+        <div class="card">
+          <div class="card-title">
+            <span>Selected Plan & Line Items</span>
+            <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-secondary);" id="detBillingCycle">Monthly</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="line-items-table">
+              <thead>
+                <tr>
+                  <th>Item Description</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Unit Price</th>
+                  <th style="text-align: right;">Tax Rate</th>
+                  <th style="text-align: right;">Tax Amt</th>
+                  <th style="text-align: right;">Total Amount</th>
+                </tr>
+              </thead>
+              <tbody id="lineItemsTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Financial Calculation Breakdown -->
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end;">
+            <div style="width: 300px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Subtotal (excl. tax):</span>
+                <strong id="detSubtotal">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;">
+                <span style="color: var(--text-secondary);">Calculated Taxes:</span>
+                <strong id="detTax">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.9rem;" id="discountRow">
+                <span style="color: var(--text-secondary);">Discount:</span>
+                <strong id="detDiscount">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding-top: 0.75rem; border-top: 2px solid var(--border); font-size: 1.2rem; color: var(--primary);">
+                <span>Total Amount:</span>
+                <strong id="detTotalAmount">$0.00</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Card -->
+        <div class="card">
+          <div class="card-title">
+            <span>Customer Details</span>
+            <span class="badge badge-active" style="font-size:0.75rem;">Verified Account</span>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Customer Contact</span>
+              <span class="info-val" id="detCustName">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Company / Organization</span>
+              <span class="info-val" id="detCustCompany">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Email Address</span>
+              <span class="info-val" id="detCustEmail">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Phone Number</span>
+              <span class="info-val" id="detCustPhone">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Billing Address</span>
+              <span class="info-val" id="detCustAddress">-</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Tax ID / VAT Registration</span>
+              <span class="info-val" id="detCustTaxId">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail / Lifecycle History -->
+        <div class="card">
+          <div class="card-title">
+            <span>Audit Trail & Activity Log</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Immutable change log</span>
+          </div>
+          <div class="timeline" id="auditTimeline">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Schedule, Validity, Payment Terms, Notes -->
+      <div>
+        <!-- Validity & Schedule Card -->
+        <div class="card">
+          <div class="card-title">Validity & Schedule</div>
+
+          <div class="info-item" style="margin-bottom: 1rem;">
+            <span class="info-label">Start Date</span>
+            <span class="info-val" id="detStartDate">-</span>
+          </div>
+
+          <div class="info-item" style="margin-bottom: 1rem;">
+            <span class="info-label">Expiry Date</span>
+            <span class="info-val" id="detExpiryDate">-</span>
+          </div>
+
+          <div class="info-item" style="margin-bottom: 1.25rem;">
+            <span class="info-label">Term Status</span>
+            <div id="detExpiryCountdown"></div>
+          </div>
+
+          <div style="background-color: var(--bg-muted); padding: 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+              <span style="font-weight: 600;">Auto-Close on Expiry:</span>
+              <strong id="detAutoCloseBadge">Enabled</strong>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin: 0;">
+              When enabled, our automated background engine closes this subscription upon reaching the expiry date.
+            </p>
+          </div>
+
+          <div style="margin-top: 1rem; font-size: 0.82rem; color: var(--text-muted);" id="detRenewalCounter">
+            Renewals to date: 0
+          </div>
+        </div>
+
+        <!-- Payment & Commercial Terms -->
+        <div class="card">
+          <div class="card-title">Commercial Terms</div>
+
+          <div class="info-item" style="margin-bottom: 1rem;">
+            <span class="info-label">Payment Terms</span>
+            <span class="info-val" id="detPaymentTerms">Net 30</span>
+          </div>
+
+          <div class="info-item" style="margin-bottom: 1rem;">
+            <span class="info-label">Currency</span>
+            <span class="info-val" id="detCurrency">USD ($)</span>
+          </div>
+
+          <div class="info-item" style="margin-bottom: 1rem;">
+            <span class="info-label">Base Plan Code</span>
+            <span class="info-val" id="detPlanCode">-</span>
+          </div>
+        </div>
+
+        <!-- Reason / Status Notes -->
+        <div class="card" id="cardStatusNotes" style="display: none;">
+          <div class="card-title" id="statusNotesTitle">Status Notice</div>
+          <p id="statusNotesBody" style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5;"></p>
+        </div>
+
+        <!-- Notes Card -->
+        <div class="card">
+          <div class="card-title">Subscription Notes</div>
+          <p id="detNotes" style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; font-style: italic;">
+            No specific notes recorded.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reusable Action Modals -->
+  <!-- Pause Modal -->
+  <div class="modal-overlay" id="detailsPauseModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Pause Subscription</h3>
+        <button class="modal-close" onclick="closeModal('detailsPauseModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Pause Reason <span style="color:red">*</span></label>
+          <textarea id="detailsPauseReason" class="form-control" rows="3" placeholder="Explain why this subscription is being paused..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('detailsPauseModal')">Cancel</button>
+        <button id="btnDetailsConfirmPause" class="btn btn-warning">Confirm Pause</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Renew Modal -->
+  <div class="modal-overlay" id="detailsRenewModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Renew Subscription</h3>
+        <button class="modal-close" onclick="closeModal('detailsRenewModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Extension Duration</label>
+          <select id="detailsRenewDuration" class="form-control">
+            <option value="30">1 Month (+30 Days)</option>
+            <option value="90">1 Quarter (+90 Days)</option>
+            <option value="180">6 Months (+180 Days)</option>
+            <option value="365">1 Full Year (+365 Days)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Renewal Notes</label>
+          <input type="text" id="detailsRenewNotes" class="form-control" placeholder="PO reference or renewal terms">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('detailsRenewModal')">Cancel</button>
+        <button id="btnDetailsConfirmRenew" class="btn btn-success">Confirm Renewal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Modal -->
+  <div class="modal-overlay" id="detailsCancelModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title">Cancel Subscription</h3>
+        <button class="modal-close" onclick="closeModal('detailsCancelModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: #dc2626; margin-bottom: 1rem; font-weight: 600;">
+          This will terminate the subscription and change its status to Closed.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Cancellation Reason <span style="color:red">*</span></label>
+          <textarea id="detailsCancelReason" class="form-control" rows="3" placeholder="Enter reason for cancellation..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('detailsCancelModal')">Dismiss</button>
+        <button id="btnDetailsConfirmCancel" class="btn btn-danger">Confirm Cancellation</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/details.js"></script>
+</body>
+</html>
