@@ -106,3 +106,4 @@ def product_edit(product_id):
             db.session.rollback()
             flash(f'Error: {e}', 'danger')
     return render_template('admin/product_form.html', product=product)
+

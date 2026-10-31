@@ -62,3 +62,4 @@ def edit(customer_id):
             db.session.rollback()
             flash(f'Error: {e}', 'danger')
     return render_template('customers/edit.html', customer=customer)
+

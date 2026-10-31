@@ -147,3 +147,4 @@ All state-changing operations use `db.session.begin()` context managers to ensur
 - `cancel_invoice()` — atomic cancel + reason history
 - `send_invoice_email()` — atomic email timestamp + history
 - Auto-billing loop — each period's invoice + subscription date update is atomic
+

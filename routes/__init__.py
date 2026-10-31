@@ -4,3 +4,4 @@ from routes.subscriptions import subscriptions_bp
 from routes.admin import admin_bp
 
 __all__ = ['invoices_bp', 'customers_bp', 'subscriptions_bp', 'admin_bp']
+

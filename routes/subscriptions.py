@@ -59,3 +59,4 @@ def _next_sub_number():
     last = S.query.order_by(S.id.desc()).first()
     num = (last.id + 1) if last else 1
     return f'SUB-{num:06d}'
+
