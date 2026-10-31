@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | Brightloop Software Subscription Management{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Executive Dashboard</h1>
+        <p class="page-subtitle">Welcome back. Here is Brightloop Software's subscription metrics and performance summary.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{% url 'plans:index' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-tag me-1"></i> Plans
+        </a>
+        <a href="{% url 'subscriptions:index' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> New Subscription
+        </a>
+    </div>
+</div>
+
+<!-- Key Performance Indicators (KPI Cards) -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Monthly Recurring (MRR)</span>
+                <div class="metric-icon-wrap icon-blue">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.mrr }}</div>
+            <div class="metric-trend">
+                <span class="trend-up"><i class="bi bi-arrow-up-right me-1"></i>{{ metrics.mrr_growth }}</span>
+                <span class="text-secondary">vs last month</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Active Subscriptions</span>
+                <div class="metric-icon-wrap icon-emerald">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.active_subscriptions }}</div>
+            <div class="metric-trend">
+                <span class="trend-up"><i class="bi bi-arrow-up-right me-1"></i>{{ metrics.sub_growth }}</span>
+                <span class="text-secondary">new active customers</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Customer Churn Rate</span>
+                <div class="metric-icon-wrap icon-purple">
+                    <i class="bi bi-graph-down-arrow"></i>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.churn_rate }}</div>
+            <div class="metric-trend">
+                <span class="trend-down"><i class="bi bi-arrow-down-right me-1"></i>{{ metrics.churn_trend }}</span>
+                <span class="text-secondary">lower than industry avg</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card">
+            <div class="metric-header">
+                <span class="metric-title">Pending Invoices</span>
+                <div class="metric-icon-wrap icon-amber">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+            <div class="metric-value">{{ metrics.pending_invoices }}</div>
+            <div class="metric-trend">
+                <span class="trend-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ metrics.pending_count }} invoices</span>
+                <span class="text-secondary">awaiting payment</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Tier Breakdown & Quick Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-8">
+        <div class="saas-card">
+            <div class="saas-card-header">
+                <h5 class="saas-card-title">Recent Customer Subscriptions</h5>
+                <a href="{% url 'subscriptions:index' %}" class="btn btn-sm btn-link text-decoration-none text-primary fw-semibold">
+                    View All Subscriptions <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table saas-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Subscription ID</th>
+                            <th>Customer</th>
+                            <th>Plan</th>
+                            <th>Cycle</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in recent_subscriptions %}
+                        <tr>
+                            <td><span class="font-monospace fw-semibold text-primary">{{ sub.id }}</span></td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ sub.customer }}</div>
+                                <div class="text-secondary small">{{ sub.email }}</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ sub.plan }}</span></td>
+                            <td>{{ sub.billing_cycle }}</td>
+                            <td class="fw-bold">{{ sub.amount }}</td>
+                            <td>
+                                {% if sub.status == 'Active' %}
+                                    <span class="badge-status badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                                {% elif sub.status == 'Pending Payment' %}
+                                    <span class="badge-status badge-pending"><i class="bi bi-clock-fill"></i> Pending</span>
+                                {% else %}
+                                    <span class="badge-status badge-danger"><i class="bi bi-exclamation-circle-fill"></i> {{ sub.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No subscriptions found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="saas-card h-100">
+            <div class="saas-card-header">
+                <h5 class="saas-card-title">Popular Plan Tiers</h5>
+                <a href="{% url 'plans:index' %}" class="btn btn-sm btn-light border">Manage</a>
+            </div>
+            <div class="p-3">
+                {% for plan in plans_summary %}
+                <div class="p-3 mb-3 border rounded-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">{{ plan.name }}</span>
+                        <span class="badge bg-primary-subtle text-primary">{{ plan.status }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-secondary small">
+                        <span>{{ plan.users }} active clients</span>
+                        <span class="fw-semibold text-dark">{{ plan.price }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-primary d-flex align-items-center gap-2 mb-0 mt-3 p-3 rounded-3" role="alert">
+                    <i class="bi bi-shield-check fs-4"></i>
+                    <div class="small">
+                        <strong>Automated Billing Active</strong>
+                        <div>Next batch recurring renewal cycle runs on the 1st of next month.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
