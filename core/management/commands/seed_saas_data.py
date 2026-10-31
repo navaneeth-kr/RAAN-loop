@@ -295,10 +295,18 @@ class Command(BaseCommand):
                 "tier": "starter",
                 "billing_cycle": "monthly",
                 "price": Decimal("500.00"),
+                "min_quantity": 1,
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "auto_close": False,
+                "allow_early_cancellation": True,
+                "allow_pausing": True,
+                "allow_renewal": True,
                 "trial_days": 14,
                 "status": "active",
                 "is_featured": False,
                 "sort_order": 0,
+                "description": "Standard software package offering with monthly billing and 1-seat minimum."
             }
         )
         plan_sw_odoo, _ = SubscriptionPlan.objects.update_or_create(
@@ -310,10 +318,18 @@ class Command(BaseCommand):
                 "tier": "growth",
                 "billing_cycle": "monthly",
                 "price": Decimal("1060.00"),
+                "min_quantity": 1,
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "auto_close": False,
+                "allow_early_cancellation": True,
+                "allow_pausing": True,
+                "allow_renewal": True,
                 "trial_days": 14,
                 "status": "active",
                 "is_featured": True,
                 "sort_order": 1,
+                "description": "Odoo edition with ERP module attachments and priority SLA."
             }
         )
         plan_sw_prem, _ = SubscriptionPlan.objects.update_or_create(
@@ -321,18 +337,97 @@ class Command(BaseCommand):
             defaults={
                 "product": p_pkg,
                 "variant": v_prem,
-                "name": "Software Package (Premium Enterprise)",
+                "name": "Software Package (Premium Monthly)",
                 "tier": "enterprise",
                 "billing_cycle": "monthly",
                 "price": Decimal("1500.00"),
+                "min_quantity": 2,
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "auto_close": False,
+                "allow_early_cancellation": False,
+                "allow_pausing": True,
+                "allow_renewal": True,
                 "trial_days": 30,
                 "status": "active",
                 "is_featured": True,
                 "sort_order": 2,
+                "description": "Enterprise software tier with dedicated support and 2-seat minimum."
+            }
+        )
+        plan_sw_yr, _ = SubscriptionPlan.objects.update_or_create(
+            code="PLAN-SW-PREM-YR",
+            defaults={
+                "product": p_pkg,
+                "variant": v_prem,
+                "name": "Software Package (Annual Enterprise)",
+                "tier": "enterprise",
+                "billing_cycle": "yearly",
+                "price": Decimal("15000.00"),
+                "min_quantity": 5,
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "auto_close": False,
+                "allow_early_cancellation": False,
+                "allow_pausing": False,
+                "allow_renewal": True,
+                "trial_days": 30,
+                "status": "active",
+                "is_featured": False,
+                "sort_order": 3,
+                "description": "Yearly enterprise commitment with 5-seat minimum and volume savings."
             }
         )
 
-        plan1, _ = SubscriptionPlan.objects.get_or_create(
+        # Daily Billing Frequency Plan
+        plan_daily, _ = SubscriptionPlan.objects.update_or_create(
+            code="PLAN-DAILY-API",
+            defaults={
+                "product": p4,
+                "name": "API Gateway (Daily Pass)",
+                "tier": "starter",
+                "billing_cycle": "daily",
+                "price": Decimal("50.00"),
+                "min_quantity": 1,
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "auto_close": False,
+                "allow_early_cancellation": True,
+                "allow_pausing": False,
+                "allow_renewal": True,
+                "trial_days": 0,
+                "status": "active",
+                "is_featured": False,
+                "sort_order": 4,
+                "description": "On-demand daily compute burst pass for peak traffic events."
+            }
+        )
+
+        # Weekly Billing Frequency Plan
+        plan_weekly, _ = SubscriptionPlan.objects.update_or_create(
+            code="PLAN-WEEKLY-DP",
+            defaults={
+                "product": p2,
+                "name": "DataPulse (Weekly Sprint)",
+                "tier": "growth",
+                "billing_cycle": "weekly",
+                "price": Decimal("200.00"),
+                "min_quantity": 2,
+                "start_date": timezone.now().date(),
+                "end_date": None,
+                "auto_close": False,
+                "allow_early_cancellation": True,
+                "allow_pausing": True,
+                "allow_renewal": True,
+                "trial_days": 3,
+                "status": "active",
+                "is_featured": False,
+                "sort_order": 5,
+                "description": "Weekly telemetry sprint package for project-based engineering teams."
+            }
+        )
+
+        plan1, _ = SubscriptionPlan.objects.update_or_create(
             code="PLAN-SENTINEL-STARTER",
             defaults={
                 "product": p1,
@@ -341,13 +436,15 @@ class Command(BaseCommand):
                 "tier": "starter",
                 "billing_cycle": "monthly",
                 "price": Decimal("49.00"),
+                "min_quantity": 1,
+                "start_date": timezone.now().date(),
                 "trial_days": 14,
                 "status": "active",
                 "is_featured": False,
-                "sort_order": 1,
+                "sort_order": 6,
             }
         )
-        plan2, _ = SubscriptionPlan.objects.get_or_create(
+        plan2, _ = SubscriptionPlan.objects.update_or_create(
             code="PLAN-SENTINEL-GROWTH",
             defaults={
                 "product": p1,
@@ -356,56 +453,34 @@ class Command(BaseCommand):
                 "tier": "growth",
                 "billing_cycle": "monthly",
                 "price": Decimal("129.00"),
+                "min_quantity": 1,
+                "start_date": timezone.now().date(),
                 "trial_days": 14,
                 "status": "active",
                 "is_featured": True,
-                "sort_order": 2,
+                "sort_order": 7,
             }
         )
-        plan3, _ = SubscriptionPlan.objects.get_or_create(
+        plan3, _ = SubscriptionPlan.objects.update_or_create(
             code="PLAN-SENTINEL-ENTERPRISE",
             defaults={
                 "product": p1,
                 "variant": v1_ent,
                 "name": "Sentinel Enterprise",
                 "tier": "enterprise",
-                "billing_cycle": "annual",
+                "billing_cycle": "yearly",
                 "price": Decimal("1190.00"),
+                "min_quantity": 10,
+                "start_date": timezone.now().date(),
                 "trial_days": 30,
                 "status": "active",
                 "is_featured": False,
-                "sort_order": 3,
+                "sort_order": 8,
             }
         )
-        plan4, _ = SubscriptionPlan.objects.get_or_create(
-            code="PLAN-DATAPULSE-DEV",
-            defaults={
-                "product": p2,
-                "name": "DataPulse Developer",
-                "tier": "starter",
-                "billing_cycle": "monthly",
-                "price": Decimal("29.00"),
-                "trial_days": 7,
-                "status": "active",
-                "sort_order": 4,
-            }
-        )
-        plan5, _ = SubscriptionPlan.objects.get_or_create(
-            code="PLAN-BRIGHTAI-TEAM",
-            defaults={
-                "product": p3,
-                "variant": v3_pro,
-                "name": "BrightAI Workspace Pro",
-                "tier": "growth",
-                "billing_cycle": "monthly",
-                "price": Decimal("99.00"),
-                "trial_days": 14,
-                "status": "active",
-                "is_featured": True,
-                "sort_order": 5,
-            }
-        )
-        self.stdout.write("  [OK] Subscription Plans created")
+        plan4 = plan_daily
+        plan5 = plan_weekly
+        self.stdout.write("  [OK] Subscription Plans created (Daily, Weekly, Monthly, Yearly)")
 
         # 6. Customers
         customers_data = [
