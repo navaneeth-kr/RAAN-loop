@@ -12,8 +12,11 @@
   </nav>
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
     <div>
-      <div class="d-flex align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 flex-wrap">
         <h2 class="fw-bold mb-0 text-slate-900">{{ product.name }}</h2>
+        <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.8rem;">
+          <i class="bi bi-tag text-primary me-1"></i>{{ product.get_product_type_display }}
+        </span>
         <span class="badge-saas badge-{{ product.badge_class }}">{{ product.get_status_display }}</span>
         {% if product.is_featured %}
           <span class="badge bg-warning-subtle text-warning border px-2 py-1" style="font-size: 0.72rem;">
@@ -21,43 +24,89 @@
           </span>
         {% endif %}
       </div>
-      <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">SKU: <span class="code-tag">{{ product.sku }}</span> • Category: <strong>{{ product.category.name|default:"Unassigned" }}</strong></p>
+      <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+        SKU: <span class="code-tag">{{ product.sku }}</span> • Category: <strong>{{ product.category.name|default:"Unassigned" }}</strong> • Created: <strong>{{ product.created_at|date:"M d, Y" }}</strong>
+      </p>
     </div>
 
-    <div class="d-flex gap-2">
-      <a href="{% url 'variant_create' %}?product={{ product.pk }}" class="btn btn-bl-outline btn-sm">
+    <!-- Admin Action Buttons (View, Edit, Delete, Add Variant) -->
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'variant_create' %}?product={{ product.pk }}" class="btn btn-bl-outline btn-sm shadow-sm">
         <i class="bi bi-layers me-1"></i> Add Variant
       </a>
-      <a href="{% url 'plan_create' %}?product={{ product.pk }}" class="btn btn-bl-outline btn-sm">
+      <a href="{% url 'plan_create' %}?product={{ product.pk }}" class="btn btn-bl-outline btn-sm shadow-sm">
         <i class="bi bi-tag me-1"></i> Create Plan
       </a>
-      <a href="{% url 'product_update' pk=product.pk %}" class="btn btn-bl-primary btn-sm">
+      <a href="{% url 'product_update' pk=product.pk %}" class="btn btn-bl-primary btn-sm shadow-sm">
         <i class="bi bi-pencil me-1"></i> Edit Product
+      </a>
+      <a href="{% url 'product_delete' pk=product.pk %}" class="btn btn-sm btn-light border text-danger" title="Delete Product">
+        <i class="bi bi-trash"></i>
       </a>
     </div>
   </div>
 </div>
 
 <div class="row g-4">
-  <!-- Left Column: Product Overview & Specs -->
+  <!-- Left Column: Product Financials & Overview -->
   <div class="col-lg-4">
-    <div class="card-saas p-4 bg-white mb-4">
-      <h6 class="fw-bold mb-3 text-slate-900">Product Specifications</h6>
+    <!-- Financial Metrics Card -->
+    <div class="card-saas p-4 bg-white mb-4 shadow-sm">
+      <h6 class="fw-bold mb-3 text-slate-900 border-bottom pb-2">
+        <i class="bi bi-cash-stack text-success me-1"></i> Pricing & Financial Structure
+      </h6>
       
-      <div class="mb-3">
-        <label class="text-muted d-block" style="font-size: 0.75rem;">BASE MONTHLY PRICE</label>
-        <div class="fs-4 fw-bold text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ product.base_price }}</div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="text-muted d-block small" style="font-size: 0.72rem;">SELLING PRICE</label>
+          <div class="fs-4 fw-bold text-dark">
+            {{ system_settings.currency_symbol|default:"₹" }}{{ product.selling_price|floatformat:2 }}
+          </div>
+        </div>
+        <div class="col-6">
+          <label class="text-muted d-block small" style="font-size: 0.72rem;">COST PRICE</label>
+          <div class="fs-4 fw-bold text-secondary">
+            {{ system_settings.currency_symbol|default:"₹" }}{{ product.cost_price|floatformat:2 }}
+          </div>
+        </div>
       </div>
 
-      <div class="mb-3">
-        <label class="text-muted d-block" style="font-size: 0.75rem;">MARKETING TAGLINE</label>
-        <div class="text-dark fst-italic" style="font-size: 0.885rem;">"{{ product.tagline|default:"No tagline provided." }}"</div>
+      <div class="p-3 bg-light rounded-3 border mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="text-muted small">Gross Profit per Unit:</span>
+          <span class="fw-bold text-success">
+            +{{ system_settings.currency_symbol|default:"₹" }}{{ product.gross_profit|floatformat:2 }}
+          </span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="text-muted small">Profit Margin:</span>
+          <span class="badge bg-success-subtle text-success border border-success-subtle fs-6">
+            {{ product.profit_margin_percent }}%
+          </span>
+        </div>
       </div>
 
+      <!-- Tagline -->
+      {% if product.tagline %}
+        <div class="mb-3">
+          <label class="text-muted d-block small" style="font-size: 0.72rem;">MARKETING TAGLINE</label>
+          <div class="text-dark fst-italic" style="font-size: 0.885rem;">"{{ product.tagline }}"</div>
+        </div>
+      {% endif %}
+
+      <!-- Description -->
       <div class="mb-3">
-        <label class="text-muted d-block" style="font-size: 0.75rem;">DETAILED DESCRIPTION</label>
-        <div class="text-secondary" style="font-size: 0.85rem; line-height: 1.6;">
+        <label class="text-muted d-block small" style="font-size: 0.72rem;">PRODUCT DESCRIPTION</label>
+        <div class="text-secondary small" style="line-height: 1.6;">
           {{ product.description|linebreaks }}
+        </div>
+      </div>
+
+      <!-- Internal Administrative Notes -->
+      <div class="mb-3">
+        <label class="text-muted d-block small" style="font-size: 0.72rem;">ADMINISTRATIVE NOTES</label>
+        <div class="p-2 bg-light rounded border text-muted small" style="line-height: 1.5;">
+          {{ product.notes|default:"No operational notes specified."|linebreaks }}
         </div>
       </div>
 
@@ -70,44 +119,59 @@
 
   <!-- Right Column: Associated Variants & Plans -->
   <div class="col-lg-8">
-    <!-- 1. PRODUCT VARIANTS SECTION (MODULE 3) -->
-    <div class="card-saas mb-4 bg-white overflow-hidden">
-      <div class="p-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+    <!-- 1. PRODUCT VARIANTS SECTION WITH AUTOMATIC PRICE CALCULATION DISPLAY -->
+    <div class="card-saas mb-4 bg-white overflow-hidden shadow-sm" id="variants-section">
+      <div class="p-3 px-4 border-bottom bg-light d-flex justify-content-between align-items-center">
         <div>
-          <h6 class="fw-bold mb-0 text-slate-900">Configured Product Variants</h6>
-          <span class="text-muted" style="font-size: 0.75rem;">Editions, billing variants, or user-tier quota packages</span>
+          <h6 class="fw-bold mb-0 text-slate-900">
+            <i class="bi bi-layers text-primary me-1"></i> Product Variants & Automatic Pricing
+          </h6>
+          <span class="text-muted" style="font-size: 0.75rem;">
+            Automatic price computation: Base Price ({{ system_settings.currency_symbol|default:"₹" }}{{ product.selling_price|floatformat:2 }}) + Additional Charge = Final Price
+          </span>
         </div>
-        <a href="{% url 'variant_create' %}?product={{ product.pk }}" class="btn btn-sm btn-light border text-primary fw-semibold" style="font-size: 0.785rem;">
+        <a href="{% url 'variant_create' %}?product={{ product.pk }}" class="btn btn-sm btn-bl-primary shadow-sm" style="font-size: 0.785rem;">
           <i class="bi bi-plus-lg me-1"></i> Add Variant
         </a>
       </div>
 
       <div class="table-responsive">
-        <table class="table-saas table align-middle mb-0">
-          <thead>
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-slate-700" style="font-size: 0.8rem;">
             <tr>
-              <th>Variant Name & SKU</th>
-              <th>Tier</th>
-              <th>Billing</th>
-              <th>Price</th>
-              <th>Quotas</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
+              <th>VARIANT NAME & SKU</th>
+              <th>TIER</th>
+              <th>BASE PRICE</th>
+              <th>ADDITIONAL CHARGE</th>
+              <th>FINAL CALCULATED PRICE</th>
+              <th>QUOTAS</th>
+              <th>STATUS</th>
+              <th class="text-end">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {% for variant in variants %}
               <tr>
                 <td>
-                  <div class="fw-bold text-dark">{{ variant.name }}</div>
+                  <div class="fw-bold text-slate-900">{{ variant.name }}</div>
                   <span class="code-tag">{{ variant.sku }}</span>
                 </td>
                 <td>
                   <span class="badge bg-light text-dark border">{{ variant.get_tier_display }}</span>
                 </td>
-                <td>{{ variant.get_billing_cycle_display }}</td>
                 <td>
-                  <strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ variant.price }}</strong>
+                  <span class="text-muted">{{ system_settings.currency_symbol|default:"₹" }}{{ variant.base_price|floatformat:2 }}</span>
+                </td>
+                <td>
+                  <span class="fw-semibold text-warning">
+                    +{{ system_settings.currency_symbol|default:"₹" }}{{ variant.additional_charge|floatformat:2 }}
+                  </span>
+                </td>
+                <td>
+                  <!-- Final calculated price prominently highlighted -->
+                  <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 px-2 py-1">
+                    {{ system_settings.currency_symbol|default:"₹" }}{{ variant.final_price|floatformat:2 }}
+                  </span>
                 </td>
                 <td>
                   <small class="text-muted d-block">{{ variant.max_users }} Seats • {{ variant.storage_gb }}GB</small>
@@ -120,21 +184,23 @@
                   {% endif %}
                 </td>
                 <td class="text-end">
-                  <a href="{% url 'variant_update' pk=variant.pk %}" class="btn btn-sm btn-light border" title="Edit Variant">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                  <form action="{% url 'variant_delete' pk=variant.pk %}" method="post" class="d-inline" onsubmit="return confirm('Delete this variant?');">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete Variant">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </form>
+                  <div class="d-inline-flex gap-1">
+                    <a href="{% url 'variant_update' pk=variant.pk %}" class="btn btn-sm btn-light border" title="Edit Variant">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <form action="{% url 'variant_delete' pk=variant.pk %}" method="post" class="d-inline" onsubmit="return confirm('Delete variant {{ variant.name }}?');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-light border text-danger" title="Delete Variant">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="7" class="text-center py-4 text-muted" style="font-size: 0.85rem;">
-                  No variants configured for this product yet. Click "+ Add Variant" to create tier configurations.
+                <td colspan="8" class="text-center py-4 text-muted" style="font-size: 0.85rem;">
+                  No variants configured for this product yet. Click "+ Add Variant" to create Standard, Odoo, or Premium configurations.
                 </td>
               </tr>
             {% endfor %}
@@ -143,11 +209,13 @@
       </div>
     </div>
 
-    <!-- 2. ASSOCIATED SUBSCRIPTION PLANS SECTION (MODULE 4) -->
-    <div class="card-saas bg-white overflow-hidden">
-      <div class="p-3 px-4 border-bottom d-flex justify-content-between align-items-center">
+    <!-- 2. ASSOCIATED SUBSCRIPTION PLANS SECTION -->
+    <div class="card-saas bg-white overflow-hidden shadow-sm">
+      <div class="p-3 px-4 border-bottom bg-light d-flex justify-content-between align-items-center">
         <div>
-          <h6 class="fw-bold mb-0 text-slate-900">Subscription Plans for {{ product.name }}</h6>
+          <h6 class="fw-bold mb-0 text-slate-900">
+            <i class="bi bi-tag text-success me-1"></i> Subscription Plans for {{ product.name }}
+          </h6>
           <span class="text-muted" style="font-size: 0.75rem;">Pricing packages customers can subscribe to</span>
         </div>
         <a href="{% url 'plan_create' %}?product={{ product.pk }}" class="btn btn-sm btn-light border text-primary fw-semibold" style="font-size: 0.785rem;">
@@ -156,16 +224,16 @@
       </div>
 
       <div class="table-responsive">
-        <table class="table-saas table align-middle mb-0">
-          <thead>
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light text-slate-700" style="font-size: 0.8rem;">
             <tr>
-              <th>Plan Name & Code</th>
-              <th>Tier</th>
-              <th>Cycle</th>
-              <th>Recurring Price</th>
-              <th>Trial</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
+              <th>PLAN NAME & CODE</th>
+              <th>TIER</th>
+              <th>CYCLE</th>
+              <th>RECURRING PRICE</th>
+              <th>TRIAL</th>
+              <th>STATUS</th>
+              <th class="text-end">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
@@ -178,7 +246,7 @@
                 <td><span class="badge bg-light text-dark border">{{ plan.get_tier_display }}</span></td>
                 <td>{{ plan.get_billing_cycle_display }}</td>
                 <td>
-                  <strong class="text-dark fs-6">{{ system_settings.currency_symbol|default:"$" }}{{ plan.price }}</strong>
+                  <strong class="text-dark fs-6">{{ system_settings.currency_symbol|default:"₹" }}{{ plan.price }}</strong>
                 </td>
                 <td>{{ plan.trial_days }} days</td>
                 <td>

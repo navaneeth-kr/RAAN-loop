@@ -59,16 +59,20 @@ class Command(BaseCommand):
         settings.company_name = "Brightloop Software"
         settings.support_email = "support@brightloop.io"
         settings.billing_email = "billing@brightloop.io"
-        settings.currency_code = "USD"
-        settings.currency_symbol = "$"
+        settings.currency_code = "INR"
+        settings.currency_symbol = "₹"
         settings.tax_rate = Decimal('18.00')
         settings.default_trial_days = 14
         settings.grace_period_days = 7
         settings.invoice_prefix = "BL-INV-"
         settings.save()
-        self.stdout.write("  [OK] System Settings verified")
+        self.stdout.write("  [OK] System Settings verified (Currency: INR)")
 
         # 2. Product Categories
+        cat_erp, _ = ProductCategory.objects.get_or_create(
+            name="Enterprise Applications",
+            defaults={"icon": "bi-building-gear", "description": "Enterprise software packages, modular ERP, and business management."}
+        )
         cat_sec, _ = ProductCategory.objects.get_or_create(
             name="Cloud Security",
             defaults={"icon": "bi-shield-check", "description": "Continuous cloud perimeter protection, compliance, and threat mitigation."}
@@ -87,96 +91,177 @@ class Command(BaseCommand):
         )
 
         # 3. SaaS Products
-        p1, _ = Product.objects.get_or_create(
+        # USER SPECIFICATION FLAGSHIP: Software Package (Base price: ₹500)
+        p_pkg, _ = Product.objects.update_or_create(
+            sku="BL-SW-PKG-01",
+            defaults={
+                "name": "Software Package",
+                "product_type": "software",
+                "category": cat_erp,
+                "selling_price": Decimal("500.00"),
+                "cost_price": Decimal("250.00"),
+                "tagline": "Modular enterprise business software suite",
+                "description": "Comprehensive enterprise business software package with modular ERP, CRM, inventory, and automated billing capabilities.",
+                "notes": "Flagship offering. Base price ₹500. Variants: Standard (+₹0), Odoo (+₹560), Premium (+₹1,000).",
+                "status": "active",
+                "is_featured": True,
+            }
+        )
+
+        p1, _ = Product.objects.update_or_create(
             sku="BL-CSS-01",
             defaults={
                 "name": "Cloud Sentinel Suite",
+                "product_type": "saas",
                 "category": cat_sec,
                 "tagline": "Realtime enterprise vulnerability scanning and multi-cloud perimeter security",
                 "description": "Cloud Sentinel provides automated real-time compliance monitoring, vulnerability assessment, and threat neutralization across AWS, Azure, and Google Cloud environments.",
-                "base_price": Decimal("49.00"),
+                "selling_price": Decimal("49.00"),
+                "cost_price": Decimal("18.00"),
+                "notes": "Includes multi-cloud IAM scanning and automated SOC2 reports.",
                 "status": "active",
                 "is_featured": True,
             }
         )
 
-        p2, _ = Product.objects.get_or_create(
+        p2, _ = Product.objects.update_or_create(
             sku="BL-DTE-02",
             defaults={
                 "name": "DataPulse Telemetry Engine",
+                "product_type": "saas",
                 "category": cat_tel,
                 "tagline": "Unified log ingestion, distributed tracing, and synthetic monitoring",
                 "description": "High-performance telemetry engine capable of streaming up to 2 million events per second with instant anomaly detection and OpenTelemetry native integration.",
-                "base_price": Decimal("29.00"),
+                "selling_price": Decimal("29.00"),
+                "cost_price": Decimal("10.00"),
+                "notes": "High ingestion throughput node.",
                 "status": "active",
                 "is_featured": False,
             }
         )
 
-        p3, _ = Product.objects.get_or_create(
+        p3, _ = Product.objects.update_or_create(
             sku="BL-AIW-03",
             defaults={
                 "name": "BrightAI Workspace",
+                "product_type": "software",
                 "category": cat_ai,
                 "tagline": "Agentic AI assistants and autonomous business workflow agents",
                 "description": "Empower your product and engineering teams with collaborative autonomous agents for code review, data synthesis, and customer operations.",
-                "base_price": Decimal("79.00"),
+                "selling_price": Decimal("79.00"),
+                "cost_price": Decimal("35.00"),
+                "notes": "Includes LLM gateway and agent sandboxes.",
                 "status": "active",
                 "is_featured": True,
             }
         )
 
-        p4, _ = Product.objects.get_or_create(
+        p4, _ = Product.objects.update_or_create(
             sku="BL-AGF-04",
             defaults={
                 "name": "API Gateway Flow",
+                "product_type": "addon",
                 "category": cat_api,
                 "tagline": "Ultra-low-latency edge microservices proxy with built-in rate limiting",
                 "description": "Sub-millisecond API proxy offering declarative route policies, OAuth2 token enforcement, mTLS termination, and dynamic request transformation.",
-                "base_price": Decimal("19.00"),
+                "selling_price": Decimal("19.00"),
+                "cost_price": Decimal("6.00"),
+                "notes": "Distributed Envoy proxy module.",
                 "status": "active",
                 "is_featured": False,
             }
         )
-        self.stdout.write("  [OK] Products created")
+        self.stdout.write("  [OK] Products created (including Software Package at Rs.500)")
 
         # 4. Product Variants
-        v1_std, _ = ProductVariant.objects.get_or_create(
+        # USER SPECIFICATION: Standard (₹0 surcharge), Odoo (₹560 surcharge), Premium (₹1000 surcharge)
+        v_std, _ = ProductVariant.objects.update_or_create(
+            sku="VAR-SW-STD-01",
+            defaults={
+                "product": p_pkg,
+                "name": "Standard",
+                "tier": "standard",
+                "billing_cycle": "monthly",
+                "additional_charge": Decimal("0.00"),
+                "max_users": 5,
+                "storage_gb": 50,
+                "api_rate_limit": 10000,
+                "sla_support_level": "Standard Support (24h)",
+                "description": "Standard edition with ₹0 additional charge. Final price: ₹500.",
+                "is_active": True,
+            }
+        )
+
+        v_odoo, _ = ProductVariant.objects.update_or_create(
+            sku="VAR-SW-ODOO-02",
+            defaults={
+                "product": p_pkg,
+                "name": "Odoo",
+                "tier": "odoo",
+                "billing_cycle": "monthly",
+                "additional_charge": Decimal("560.00"),
+                "max_users": 15,
+                "storage_gb": 150,
+                "api_rate_limit": 50000,
+                "sla_support_level": "Priority Support (8h)",
+                "description": "Odoo edition with ₹560 additional charge. Final price: ₹1,060.",
+                "is_active": True,
+            }
+        )
+
+        v_prem, _ = ProductVariant.objects.update_or_create(
+            sku="VAR-SW-PREM-03",
+            defaults={
+                "product": p_pkg,
+                "name": "Premium",
+                "tier": "premium",
+                "billing_cycle": "monthly",
+                "additional_charge": Decimal("1000.00"),
+                "max_users": 50,
+                "storage_gb": 500,
+                "api_rate_limit": 200000,
+                "sla_support_level": "Dedicated Account Manager (1h SLA)",
+                "description": "Premium enterprise edition with ₹1,000 additional charge. Final price: ₹1,500.",
+                "is_active": True,
+            }
+        )
+
+        v1_std, _ = ProductVariant.objects.update_or_create(
             sku="VAR-CSS-STD-MO",
             defaults={
                 "product": p1,
                 "name": "Standard Cloud (Monthly)",
                 "tier": "standard",
                 "billing_cycle": "monthly",
-                "price": Decimal("49.00"),
+                "additional_charge": Decimal("0.00"),
                 "max_users": 5,
                 "storage_gb": 50,
                 "api_rate_limit": 25000,
                 "sla_support_level": "Standard Email (24h)",
             }
         )
-        v1_pro, _ = ProductVariant.objects.get_or_create(
+        v1_pro, _ = ProductVariant.objects.update_or_create(
             sku="VAR-CSS-PRO-MO",
             defaults={
                 "product": p1,
                 "name": "Professional Dedicated (Monthly)",
-                "tier": "pro",
+                "tier": "odoo",
                 "billing_cycle": "monthly",
-                "price": Decimal("129.00"),
+                "additional_charge": Decimal("80.00"),
                 "max_users": 20,
                 "storage_gb": 250,
                 "api_rate_limit": 100000,
                 "sla_support_level": "Priority Slack & Phone (4h)",
             }
         )
-        v1_ent, _ = ProductVariant.objects.get_or_create(
+        v1_ent, _ = ProductVariant.objects.update_or_create(
             sku="VAR-CSS-ENT-YR",
             defaults={
                 "product": p1,
                 "name": "Enterprise Cluster (Annual)",
-                "tier": "enterprise",
+                "tier": "premium",
                 "billing_cycle": "annual",
-                "price": Decimal("1190.00"),
+                "additional_charge": Decimal("1141.00"),
                 "max_users": 100,
                 "storage_gb": 1000,
                 "api_rate_limit": 500000,
@@ -184,23 +269,69 @@ class Command(BaseCommand):
             }
         )
 
-        v3_pro, _ = ProductVariant.objects.get_or_create(
+        v3_pro, _ = ProductVariant.objects.update_or_create(
             sku="VAR-AIW-PRO-MO",
             defaults={
                 "product": p3,
                 "name": "Pro Agent Pack (Monthly)",
-                "tier": "pro",
+                "tier": "odoo",
                 "billing_cycle": "monthly",
-                "price": Decimal("99.00"),
+                "additional_charge": Decimal("20.00"),
                 "max_users": 10,
                 "storage_gb": 100,
                 "api_rate_limit": 50000,
                 "sla_support_level": "Priority Email & Chat",
             }
         )
-        self.stdout.write("  [OK] Product Variants created")
+        self.stdout.write("  [OK] Product Variants created (Standard +0, Odoo +560, Premium +1000)")
 
         # 5. Subscription Plans
+        plan_sw_std, _ = SubscriptionPlan.objects.update_or_create(
+            code="PLAN-SW-STD-500",
+            defaults={
+                "product": p_pkg,
+                "variant": v_std,
+                "name": "Software Package (Standard)",
+                "tier": "starter",
+                "billing_cycle": "monthly",
+                "price": Decimal("500.00"),
+                "trial_days": 14,
+                "status": "active",
+                "is_featured": False,
+                "sort_order": 0,
+            }
+        )
+        plan_sw_odoo, _ = SubscriptionPlan.objects.update_or_create(
+            code="PLAN-SW-ODOO-1060",
+            defaults={
+                "product": p_pkg,
+                "variant": v_odoo,
+                "name": "Software Package (Odoo Edition)",
+                "tier": "growth",
+                "billing_cycle": "monthly",
+                "price": Decimal("1060.00"),
+                "trial_days": 14,
+                "status": "active",
+                "is_featured": True,
+                "sort_order": 1,
+            }
+        )
+        plan_sw_prem, _ = SubscriptionPlan.objects.update_or_create(
+            code="PLAN-SW-PREM-1500",
+            defaults={
+                "product": p_pkg,
+                "variant": v_prem,
+                "name": "Software Package (Premium Enterprise)",
+                "tier": "enterprise",
+                "billing_cycle": "monthly",
+                "price": Decimal("1500.00"),
+                "trial_days": 30,
+                "status": "active",
+                "is_featured": True,
+                "sort_order": 2,
+            }
+        )
+
         plan1, _ = SubscriptionPlan.objects.get_or_create(
             code="PLAN-SENTINEL-STARTER",
             defaults={

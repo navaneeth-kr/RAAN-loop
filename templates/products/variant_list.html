@@ -81,7 +81,9 @@
           <th>SKU Code</th>
           <th>Tier</th>
           <th>Billing Cycle</th>
-          <th>Price & Setup</th>
+          <th>Base Price</th>
+          <th>Additional Charge</th>
+          <th>Final Price</th>
           <th>Quotas & Specs</th>
           <th>Status</th>
           <th class="text-end">Actions</th>
@@ -100,10 +102,15 @@
             <td><span class="badge bg-light text-dark border">{{ variant.get_tier_display }}</span></td>
             <td>{{ variant.get_billing_cycle_display }}</td>
             <td>
-              <strong class="text-dark">{{ system_settings.currency_symbol|default:"$" }}{{ variant.price }}</strong>
-              {% if variant.setup_fee > 0 %}
-                <small class="text-muted d-block" style="font-size: 0.72rem;">+${{ variant.setup_fee }} setup</small>
-              {% endif %}
+              <span class="text-muted">{{ system_settings.currency_symbol|default:"₹" }}{{ variant.base_price|floatformat:2 }}</span>
+            </td>
+            <td>
+              <span class="fw-semibold text-warning">+{{ system_settings.currency_symbol|default:"₹" }}{{ variant.additional_charge|floatformat:2 }}</span>
+            </td>
+            <td>
+              <strong class="badge bg-success-subtle text-success border border-success-subtle fs-6">
+                {{ system_settings.currency_symbol|default:"₹" }}{{ variant.final_price|floatformat:2 }}
+              </strong>
             </td>
             <td>
               <div style="font-size: 0.785rem;">
