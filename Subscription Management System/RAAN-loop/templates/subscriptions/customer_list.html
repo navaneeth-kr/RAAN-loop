@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Customers Directory</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Registered customer accounts, contact details, and organization profiles.</p>
+  </div>
+</div>
+
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search customer by name, email, company, or country...">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+        <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+        <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspended</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Customer Name</th>
+          <th>Company / Org</th>
+          <th>Email Address</th>
+          <th>Phone</th>
+          <th>Country</th>
+          <th>Status</th>
+          <th>Joined Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+          <tr>
+            <td><strong class="text-dark">{{ customer.full_name }}</strong></td>
+            <td>{{ customer.company_name|default:"—" }}</td>
+            <td><a href="mailto:{{ customer.email }}" class="text-decoration-none text-primary">{{ customer.email }}</a></td>
+            <td>{{ customer.phone|default:"—" }}</td>
+            <td><span class="badge bg-light text-dark border">{{ customer.country }}</span></td>
+            <td>
+              {% if customer.status == 'active' %}
+                <span class="badge-saas badge-success">Active</span>
+              {% elif customer.status == 'inactive' %}
+                <span class="badge-saas badge-secondary">Inactive</span>
+              {% else %}
+                <span class="badge-saas badge-danger">{{ customer.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td><span class="text-muted small">{{ customer.created_at|date:"M d, Y" }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center py-4 text-muted">No customers found matching criteria.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

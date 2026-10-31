@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Payments & Transaction Log</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Electronic gateway logs, settlement statuses, and customer payment records.</p>
+  </div>
+</div>
+
+<div class="card-saas p-3 mb-4 bg-white">
+  <form method="get" class="row g-2 align-items-center">
+    <div class="col-md-6">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search payment ID, customer, or transaction reference...">
+      </div>
+    </div>
+    <div class="col-md-4">
+      <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Failed</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    </div>
+  </form>
+</div>
+
+<div class="card-saas bg-white overflow-hidden">
+  <div class="table-responsive">
+    <table class="table-saas table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Payment ID</th>
+          <th>Customer Account</th>
+          <th>Amount Paid</th>
+          <th>Method</th>
+          <th>Status</th>
+          <th>Gateway Reference</th>
+          <th>Transaction Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+          <tr>
+            <td><span class="code-tag">{{ pay.payment_id }}</span></td>
+            <td>
+              <div class="fw-bold text-dark">{{ pay.customer.full_name }}</div>
+              <small class="text-muted">{{ pay.customer.email }}</small>
+            </td>
+            <td><strong class="text-dark fs-6">{{ system_settings.currency_symbol|default:"$" }}{{ pay.amount }}</strong></td>
+            <td><span class="badge bg-light text-dark border">{{ pay.get_payment_method_display }}</span></td>
+            <td>
+              {% if pay.status == 'completed' %}
+                <span class="badge-saas badge-success"><i class="bi bi-check-circle-fill"></i> Completed</span>
+              {% elif pay.status == 'pending' %}
+                <span class="badge-saas badge-warning"><i class="bi bi-clock-fill"></i> Pending</span>
+              {% else %}
+                <span class="badge-saas badge-danger">{{ pay.get_status_display }}</span>
+              {% endif %}
+            </td>
+            <td><small class="text-muted font-monospace">{{ pay.transaction_reference }}</small></td>
+            <td><span class="text-muted small">{{ pay.payment_date|date:"Y-m-d H:i" }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="text-center py-4 text-muted">No payment transactions found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include 'components/pagination.html' %}
+{% endblock %}

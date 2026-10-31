@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Plans & Pricing | Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Plans & Pricing Tiers</h1>
+        <p class="page-subtitle">Configure billing frequencies, feature entitlements, quotas, and pricing strategies.</p>
+    </div>
+    <button class="btn btn-primary" type="button">
+        <i class="bi bi-plus-lg me-1"></i> Add New Plan
+    </button>
+</div>
+
+<div class="row g-4 mb-4">
+    {% for plan in plans %}
+    <div class="col-12 col-lg-4">
+        <div class="pricing-card {% if plan.popular %}popular{% endif %}">
+            {% if plan.popular %}
+                <span class="pricing-badge">Most Popular</span>
+            {% endif %}
+            <div class="text-secondary small fw-bold text-uppercase mb-1">{{ plan.product }}</div>
+            <h4 class="fw-bold text-dark">{{ plan.name }}</h4>
+            <div class="d-flex align-items-baseline my-3">
+                <span class="display-6 fw-bold text-dark">{{ plan.price }}</span>
+                <span class="text-secondary ms-1">/ {{ plan.interval }}</span>
+            </div>
+            <hr class="my-4">
+            <h6 class="fw-semibold text-dark small mb-3">Included Capabilities:</h6>
+            <ul class="list-unstyled mb-4">
+                {% for feature in plan.features %}
+                <li class="d-flex align-items-center mb-2 small text-secondary">
+                    <i class="bi bi-check2 text-primary me-2 fw-bold"></i>
+                    <span>{{ feature }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="d-grid mt-auto">
+                <button class="btn {% if plan.popular %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                    Edit Plan Settings
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Active Subscriptions | Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Subscriptions Management</h1>
+        <p class="page-subtitle">Track recurring lifecycle, renewals, upgrades, and cancellations.</p>
+    </div>
+    <button class="btn btn-primary" type="button">
+        <i class="bi bi-plus-circle me-1"></i> Create Subscription
+    </button>
+</div>
+
+<div class="saas-card">
+    <div class="saas-card-header">
+        <h5 class="saas-card-title">Customer Subscriptions</h5>
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary active">All</button>
+            <button class="btn btn-sm btn-outline-secondary">Active</button>
+            <button class="btn btn-sm btn-outline-secondary">Pending</button>
+            <button class="btn btn-sm btn-outline-secondary">Past Due</button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table saas-table align-middle">
+            <thead>
+                <tr>
+                    <th>Subscription ID</th>
+                    <th>Customer Name</th>
+                    <th>Subscribed Plan</th>
+                    <th>Start Date</th>
+                    <th>Next Renewal</th>
+                    <th>Status</th>
+                    <th class="text-end">Manage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in subscriptions %}
+                <tr>
+                    <td><span class="font-monospace text-primary fw-semibold">{{ sub.id }}</span></td>
+                    <td class="fw-bold text-dark">{{ sub.client }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ sub.plan }}</span></td>
+                    <td class="text-secondary small">{{ sub.started }}</td>
+                    <td class="text-secondary small">{{ sub.renew_date }}</td>
+                    <td>
+                        {% if sub.status == 'Active' %}
+                            <span class="badge-status badge-active"><i class="bi bi-check-circle-fill"></i> Active</span>
+                        {% elif sub.status == 'Pending' %}
+                            <span class="badge-status badge-pending"><i class="bi bi-clock-fill"></i> Pending</span>
+                        {% else %}
+                            <span class="badge-status badge-danger"><i class="bi bi-exclamation-octagon-fill"></i> {{ sub.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light border dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                <li><a class="dropdown-item" href="#">Upgrade / Downgrade</a></li>
+                                <li><a class="dropdown-item" href="#">Generate Invoice</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="#">Cancel Subscription</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

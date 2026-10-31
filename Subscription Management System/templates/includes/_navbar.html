@@ -1,0 +1,49 @@
+{% load static %}
+<header class="saas-navbar">
+    <div class="navbar-left">
+        <button class="btn-sidebar-toggle d-lg-none" type="button" aria-label="Toggle Sidebar">
+            <i class="bi bi-list"></i>
+        </button>
+        <div class="search-input-group d-none d-md-block">
+            <i class="bi bi-search"></i>
+            <input type="text" class="form-control" placeholder="Search subscriptions, customers, plans..." />
+        </div>
+    </div>
+
+    <div class="navbar-right">
+        <span class="env-badge d-none d-sm-inline-flex align-items-center gap-1">
+            <span class="spinner-grow spinner-grow-sm text-success" role="status" style="width: 8px; height: 8px;"></span>
+            Brightloop Live
+        </span>
+
+        <div class="dropdown">
+            <button class="btn btn-light position-relative rounded-circle p-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-bell text-secondary"></i>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                    <span class="visually-hidden">New alerts</span>
+                </span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" style="width: 280px;">
+                <li class="dropdown-header fw-bold">Recent SaaS Alerts</li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2 small" href="#"><strong>SUB-1085</strong> payment overdue</a></li>
+                <li><a class="dropdown-item py-2 small" href="#">New signup: <strong>BlueSky Technologies</strong></a></li>
+                <li><a class="dropdown-item py-2 small" href="#">Invoice #2026-002 settled successfully</a></li>
+            </ul>
+        </div>
+
+        <div class="dropdown">
+            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="user-avatar-small bg-primary text-white me-2">AD</div>
+                <span class="fw-semibold small d-none d-md-inline">System Admin</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                <li><h6 class="dropdown-header">Brightloop Software</h6></li>
+                <li><a class="dropdown-item" href="{% url 'dashboard:index' %}"><i class="bi bi-person me-2"></i>Profile</a></li>
+                <li><a class="dropdown-item" href="{% url 'accounts:index' %}"><i class="bi bi-gear me-2"></i>Organization Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-danger" href="/admin/"><i class="bi bi-shield-lock me-2"></i>Django Admin</a></li>
+            </ul>
+        </div>
+    </div>
+</header>

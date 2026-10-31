@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Products Catalog | Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Products Catalog</h1>
+        <p class="page-subtitle">Configure software offerings, features, modules, and SKU definitions.</p>
+    </div>
+    <button class="btn btn-primary" type="button">
+        <i class="bi bi-plus-lg me-1"></i> Create Product
+    </button>
+</div>
+
+<div class="row g-4">
+    {% for product in products %}
+    <div class="col-12 col-md-4">
+        <div class="metric-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="badge bg-primary-subtle text-primary fw-semibold">{{ product.category }}</span>
+                <span class="badge-status badge-active"><i class="bi bi-dot"></i> {{ product.status }}</span>
+            </div>
+            <h5 class="fw-bold text-dark mb-1">{{ product.name }}</h5>
+            <div class="font-monospace text-secondary small mb-3">{{ product.code }}</div>
+            <p class="text-secondary small mb-3">Modular enterprise cloud service integrated with automated metering and API quota management.</p>
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                <span class="small text-muted"><i class="bi bi-layers me-1"></i>{{ product.plans_count }} Active Tiers</span>
+                <a href="{% url 'plans:index' %}" class="btn btn-sm btn-outline-primary">View Plans</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

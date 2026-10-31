@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard | Brightloop Software Subscription Management{% endblock %}
+
+{% block content %}
+<div class="page-header-box mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="page-title fs-3 fw-bold text-dark mb-1">Executive Dashboard</h1>
+            <p class="page-subtitle text-muted mb-0">Welcome back. Here is Brightloop Software's subscription metrics and performance summary.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'plans:plan_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-tag me-1"></i> Plans
+            </a>
+            <a href="{% url 'subscriptions:subscription_list' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> New Subscription
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Key Performance Indicators (KPI Cards) -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3 border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">Monthly Recurring (MRR)</span>
+                <div class="p-2 bg-primary bg-opacity-10 text-primary rounded">
+                    <i class="bi bi-currency-dollar"></i>
+                </div>
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ metrics.mrr }}</div>
+            <div class="small mt-1">
+                <span class="text-success"><i class="bi bi-arrow-up-right me-1"></i>{{ metrics.mrr_growth }}</span>
+                <span class="text-muted">vs last month</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3 border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">Active Subscriptions</span>
+                <div class="p-2 bg-success bg-opacity-10 text-success rounded">
+                    <i class="bi bi-people"></i>
+                </div>
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ metrics.active_subscriptions }}</div>
+            <div class="small mt-1">
+                <span class="text-success"><i class="bi bi-arrow-up-right me-1"></i>{{ metrics.sub_growth }}</span>
+                <span class="text-muted">new active customers</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3 border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">Customer Churn Rate</span>
+                <div class="p-2 bg-info bg-opacity-10 text-info rounded">
+                    <i class="bi bi-graph-down-arrow"></i>
+                </div>
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ metrics.churn_rate }}</div>
+            <div class="small mt-1">
+                <span class="text-success"><i class="bi bi-arrow-down-right me-1"></i>{{ metrics.churn_trend }}</span>
+                <span class="text-muted">lower than industry avg</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card p-3 border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">Pending Invoices</span>
+                <div class="p-2 bg-warning bg-opacity-10 text-warning rounded">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+            </div>
+            <div class="fs-4 fw-bold text-dark">{{ metrics.pending_invoices }}</div>
+            <div class="small mt-1">
+                <span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ metrics.pending_count }} invoices</span>
+                <span class="text-muted">awaiting payment</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Plan Tier Breakdown & Quick Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-12 col-lg-8">
+        <div class="card border shadow-sm">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">Recent Customer Subscriptions</h6>
+                <a href="{% url 'subscriptions:subscription_list' %}" class="small text-decoration-none text-primary fw-semibold">
+                    View All Subscriptions <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Subscription ID</th>
+                            <th>Customer</th>
+                            <th>Plan</th>
+                            <th>Cycle</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sub in recent_subscriptions %}
+                        <tr>
+                            <td><span class="font-monospace fw-semibold text-primary">{{ sub.id }}</span></td>
+                            <td>
+                                <div class="fw-semibold text-dark">{{ sub.customer }}</div>
+                                <div class="text-muted small">{{ sub.email }}</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ sub.plan }}</span></td>
+                            <td>{{ sub.billing_cycle }}</td>
+                            <td class="fw-bold">{{ sub.amount }}</td>
+                            <td>
+                                {% if sub.status == 'Active' %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i> Active</span>
+                                {% elif sub.status == 'Pending Payment' %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock-fill me-1"></i> Pending</span>
+                                {% else %}
+                                    <span class="badge bg-danger"><i class="bi bi-exclamation-circle-fill me-1"></i> {{ sub.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">No subscriptions found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+        <div class="card border shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">Popular Plan Tiers</h6>
+                <a href="{% url 'plans:plan_list' %}" class="btn btn-sm btn-light border">Manage</a>
+            </div>
+            <div class="p-3">
+                {% for plan in plans_summary %}
+                <div class="p-3 mb-3 border rounded-3 bg-light">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold text-dark">{{ plan.name }}</span>
+                        <span class="badge bg-primary-subtle text-primary">{{ plan.status }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted small">
+                        <span>{{ plan.users }} active clients</span>
+                        <span class="fw-semibold text-dark">{{ plan.price }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <div class="alert alert-primary d-flex align-items-center gap-2 mb-0 mt-3 p-3 rounded-3" role="alert">
+                    <i class="bi bi-shield-check fs-4 text-primary"></i>
+                    <div class="small">
+                        <strong>Automated Billing Active</strong>
+                        <div>Next batch recurring renewal cycle runs on the 1st of next month.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

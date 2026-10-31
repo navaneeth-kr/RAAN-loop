@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Billing & Invoices | Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="page-header-box">
+    <div>
+        <h1 class="page-title">Billing & Invoices</h1>
+        <p class="page-subtitle">Automated recurring billing cycles, generated statements, and tax breakdowns.</p>
+    </div>
+    <button class="btn btn-primary" type="button">
+        <i class="bi bi-file-earmark-plus me-1"></i> Issue Invoice
+    </button>
+</div>
+
+<div class="saas-card">
+    <div class="saas-card-header">
+        <h5 class="saas-card-title">Generated Invoices</h5>
+        <span class="badge bg-primary-subtle text-primary">{{ invoices|length }} Invoices Recorded</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table saas-table align-middle">
+            <thead>
+                <tr>
+                    <th>Invoice #</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Issue Date</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th class="text-end">Download</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td><span class="font-monospace fw-semibold text-primary">{{ inv.invoice_num }}</span></td>
+                    <td class="fw-bold text-dark">{{ inv.client }}</td>
+                    <td class="fw-bold">{{ inv.amount }}</td>
+                    <td class="text-secondary small">{{ inv.issue_date }}</td>
+                    <td class="text-secondary small">{{ inv.due_date }}</td>
+                    <td>
+                        {% if inv.status == 'Paid' %}
+                            <span class="badge-status badge-active"><i class="bi bi-check-lg"></i> Paid</span>
+                        {% elif inv.status == 'Pending' %}
+                            <span class="badge-status badge-pending"><i class="bi bi-hourglass"></i> Pending</span>
+                        {% else %}
+                            <span class="badge-status badge-danger"><i class="bi bi-exclamation-triangle"></i> Overdue</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-download me-1"></i> PDF
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

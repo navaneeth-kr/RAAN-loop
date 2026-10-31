@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Invoices – SubsManager{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mt-4 mb-3">
+  <h2 class="fw-bold mb-0"><i class="bi bi-file-earmark-text me-2 text-primary"></i>Invoices</h2>
+  <div class="d-flex gap-2">
+    <!-- Auto-billing trigger -->
+    <form method="POST" action="{{ url_for('invoices.trigger_billing') }}">
+      <button class="btn btn-outline-success btn-sm" type="submit"
+              onclick="return confirm('Run auto-billing now?')">
+        <i class="bi bi-lightning-charge me-1"></i>Run Auto-Billing
+      </button>
+    </form>
+    <a href="{{ url_for('invoices.create') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>New Invoice
+    </a>
+  </div>
+</div>
+
+<!-- Stats cards -->
+<div class="row g-3 mb-4">
+  {% set stat_items = [
+    ('total',     'All',       'bi-receipt',            'primary'),
+    ('draft',     'Draft',     'bi-pencil-square',      'secondary'),
+    ('confirmed', 'Confirmed', 'bi-check-circle',       'info'),
+    ('paid',      'Paid',      'bi-check2-all',         'success'),
+    ('cancelled', 'Cancelled', 'bi-x-circle',           'danger'),
+  ] %}
+  {% for key, label, icon, color in stat_items %}
+  <div class="col-6 col-md-2">
+    <a href="{{ url_for('invoices.list_invoices', status='' if key=='total' else key) }}"
+       class="text-decoration-none">
+      <div class="card border-0 shadow-sm h-100 {% if filters.status == key or (key=='total' and not filters.status) %}border-bottom border-{{ color }} border-3{% endif %}">
+        <div class="card-body text-center py-3">
+          <i class="bi {{ icon }} fs-4 text-{{ color }}"></i>
+          <div class="fs-3 fw-bold text-{{ color }}">{{ stats[key] }}</div>
+          <div class="text-muted small">{{ label }}</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="GET" action="{{ url_for('invoices.list_invoices') }}" class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold">Search</label>
+        <input type="text" name="search" class="form-control form-control-sm"
+               placeholder="Invoice #, customer, product…" value="{{ filters.search }}"/>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">Status</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">All Statuses</option>
+          {% for s in ['draft','confirmed','paid','cancelled'] %}
+          <option value="{{ s }}" {% if filters.status == s %}selected{% endif %}>
+            {{ s|capitalize }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">Customer</label>
+        <select name="customer_id" class="form-select form-select-sm">
+          <option value="">All Customers</option>
+          {% for c in customers %}
+          <option value="{{ c.id }}" {% if filters.customer_id == c.id %}selected{% endif %}>
+            {{ c.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">From Date</label>
+        <input type="date" name="start_date" class="form-control form-control-sm"
+               value="{{ filters.start_date }}"/>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small fw-semibold">To Date</label>
+        <input type="date" name="end_date" class="form-control form-control-sm"
+               value="{{ filters.end_date }}"/>
+      </div>
+      <div class="col-md-1 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm w-100">
+          <i class="bi bi-funnel"></i>
+        </button>
+        <a href="{{ url_for('invoices.list_invoices') }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Invoice Table -->
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    {% if invoices %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-dark">
+          <tr>
+            <th>Invoice #</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th class="text-center">Qty</th>
+            <th class="text-end">Amount</th>
+            <th class="text-center">Status</th>
+            <th>Invoice Date</th>
+            <th>Due Date</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr class="{% if inv.is_overdue() %}table-warning{% endif %}">
+            <td>
+              <a href="{{ url_for('invoices.detail', invoice_id=inv.id) }}"
+                 class="fw-semibold text-decoration-none">{{ inv.invoice_number }}</a>
+              {% if inv.is_overdue() %}
+                <span class="badge bg-warning text-dark ms-1">Overdue</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="fw-semibold">{{ inv.customer.name }}</div>
+              <small class="text-muted">{{ inv.customer.email }}</small>
+            </td>
+            <td>{{ inv.product_name }}</td>
+            <td class="text-center">{{ inv.quantity }}</td>
+            <td class="text-end fw-semibold">${{ "%.2f"|format(inv.total_amount|float) }}</td>
+            <td class="text-center">
+              {% set badge = {'draft':'secondary','confirmed':'info','paid':'success','cancelled':'danger'} %}
+              <span class="badge bg-{{ badge.get(inv.status, 'secondary') }}">
+                {{ inv.status|capitalize }}
+              </span>
+            </td>
+            <td>{{ inv.invoice_date.strftime('%d %b %Y') }}</td>
+            <td>{{ inv.due_date.strftime('%d %b %Y') }}</td>
+            <td class="text-center">
+              <div class="btn-group btn-group-sm">
+                <a href="{{ url_for('invoices.detail', invoice_id=inv.id) }}"
+                   class="btn btn-outline-primary" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="{{ url_for('invoices.print_invoice', invoice_id=inv.id) }}"
+                   class="btn btn-outline-secondary" title="Print" target="_blank">
+                  <i class="bi bi-printer"></i>
+                </a>
+                <a href="{{ url_for('invoices.download_pdf', invoice_id=inv.id) }}"
+                   class="btn btn-outline-dark" title="Download PDF">
+                  <i class="bi bi-file-pdf"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination.pages > 1 %}
+    <div class="d-flex justify-content-center py-3">
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% if pagination.has_prev %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('invoices.list_invoices',
+               page=pagination.prev_num, **filters) }}">‹ Prev</a>
+          </li>
+          {% endif %}
+          {% for p in pagination.iter_pages() %}
+            {% if p %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('invoices.list_invoices',
+                 page=p, **filters) }}">{{ p }}</a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+          {% endfor %}
+          {% if pagination.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="{{ url_for('invoices.list_invoices',
+               page=pagination.next_num, **filters) }}">Next ›</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+      No invoices found.
+      <a href="{{ url_for('invoices.create') }}" class="d-block mt-2">Create your first invoice</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+

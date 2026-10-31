@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <h2 class="fw-bold mb-0 text-slate-900">Admin Settings & Configuration</h2>
+    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1" style="font-size: 0.75rem;">Person 2 Responsibility</span>
+  </div>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+    Configure global subscription billing parameters, company branding, default currency, tax rules, and operational toggles.
+  </p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <form method="post" class="card-saas p-4 bg-white">
+      {% csrf_token %}
+
+      <!-- Section 1: Company Profile & Contact -->
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-building text-primary me-2"></i> Organization & Contact Information
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-12">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Company / Brand Name</label>
+          {{ form.company_name }}
+          {% if form.company_name.errors %}<div class="text-danger small mt-1">{{ form.company_name.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Customer Support Email</label>
+          {{ form.support_email }}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Finance & Billing Email</label>
+          {{ form.billing_email }}
+        </div>
+      </div>
+
+      <!-- Section 2: Currency & Tax Configuration -->
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-currency-dollar text-success me-2"></i> Financial & Currency Settings
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Currency Code</label>
+          {{ form.currency_code }}
+          <small class="text-muted">e.g. USD, EUR, GBP, INR</small>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Currency Symbol</label>
+          {{ form.currency_symbol }}
+          <small class="text-muted">e.g. $, €, £, ₹</small>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Default Tax Rate (%)</label>
+          {{ form.tax_rate }}
+          <small class="text-muted">Applied to generated invoices</small>
+        </div>
+      </div>
+
+      <!-- Section 3: Subscription & Lifecycle Rules -->
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-clock-history text-info me-2"></i> Subscription Lifecycle Defaults
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Default Trial Period (Days)</label>
+          {{ form.default_trial_days }}
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Grace Period (Days)</label>
+          {{ form.grace_period_days }}
+          <small class="text-muted">After failed renewal</small>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Invoice Number Prefix</label>
+          {{ form.invoice_prefix }}
+        </div>
+      </div>
+
+      <!-- Section 4: Operational Toggles -->
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-toggles text-warning me-2"></i> System & Notification Toggles
+      </h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.allow_self_signup }}
+            <label class="form-check-label fw-semibold" for="{{ form.allow_self_signup.id_for_label }}">
+              Allow Public Self-Service Signup
+            </label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.maintenance_mode }}
+            <label class="form-check-label fw-semibold text-danger" for="{{ form.maintenance_mode.id_for_label }}">
+              Maintenance Mode (Admin Only)
+            </label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.notify_on_new_subscription }}
+            <label class="form-check-label fw-semibold" for="{{ form.notify_on_new_subscription.id_for_label }}">
+              Email Admin on New Subscription
+            </label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.notify_on_cancellation }}
+            <label class="form-check-label fw-semibold" for="{{ form.notify_on_cancellation.id_for_label }}">
+              Email Admin on Cancellation
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+        <button type="submit" class="btn btn-bl-primary px-4">
+          <i class="bi bi-save me-1"></i> Save Changes
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas p-4 bg-white mb-3">
+      <h6 class="fw-bold mb-2 text-slate-900"><i class="bi bi-info-circle text-primary me-1"></i> Settings Synchronization</h6>
+      <p class="text-muted small" style="line-height: 1.6;">
+        Settings saved here are stored in the database singleton and immediately propagate across:
+      </p>
+      <ul class="text-muted small ps-3 mb-0" style="line-height: 1.6;">
+        <li>All template headers, currency labels, and invoice tables.</li>
+        <li>Financial metric calculations in the Admin Dashboard.</li>
+        <li>Data export formatting headers.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

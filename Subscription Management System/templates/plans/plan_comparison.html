@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h2 class="fw-bold mb-0 text-slate-900">Subscription Plans Comparison Matrix</h2>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Side-by-side pricing evaluation, resource limits, and feature entitlements.</p>
+  </div>
+  <a href="{% url 'plan_list' %}" class="btn btn-bl-outline btn-sm">
+    <i class="bi bi-list-ul me-1"></i> Table View
+  </a>
+</div>
+
+<div class="row g-4 justify-content-center">
+  {% for plan in plans %}
+    <div class="col-md-6 col-xl-3">
+      <div class="card-saas p-4 bg-white h-100 d-flex flex-column pricing-matrix-col {% if plan.is_featured %}featured{% endif %} position-relative">
+        {% if plan.is_featured %}
+          <div class="position-absolute top-0 start-50 translate-middle">
+            <span class="badge bg-primary text-white shadow-sm px-3 py-1 rounded-pill" style="font-size: 0.75rem;">
+              <i class="bi bi-lightning-charge-fill me-1"></i> MOST POPULAR
+            </span>
+          </div>
+        {% endif %}
+
+        <div class="text-center mb-3 pt-2">
+          <span class="badge bg-light text-dark border px-3 py-1 mb-2">{{ plan.get_tier_display }}</span>
+          <h4 class="fw-bold text-slate-900 mb-1">{{ plan.name }}</h4>
+          <span class="text-muted small">{{ plan.product.name }}</span>
+        </div>
+
+        <div class="text-center my-3 pb-3 border-bottom">
+          <div class="d-flex align-items-center justify-content-center">
+            <span class="fs-4 fw-bold align-self-start text-dark">{{ system_settings.currency_symbol|default:"$" }}</span>
+            <span class="display-5 fw-extrabold text-dark tracking-tight">{{ plan.price|floatformat:0 }}</span>
+            <span class="text-muted ms-1 fs-6">/{{ plan.billing_cycle|slice:":2" }}</span>
+          </div>
+          {% if plan.trial_days > 0 %}
+            <span class="badge bg-info-subtle text-info border border-info-subtle mt-2" style="font-size: 0.72rem;">
+              {{ plan.trial_days }}-Day Free Trial
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <p class="text-muted text-center small mb-4" style="line-height: 1.5;">
+          {{ plan.description|default:"All standard core platform entitlements included." }}
+        </p>
+
+        <!-- Feature Checklist -->
+        <ul class="list-unstyled mb-4 flex-grow-1" style="font-size: 0.825rem;">
+          {% for feature in plan.features.all %}
+            <li class="d-flex align-items-start gap-2 mb-2">
+              {% if feature.is_included %}
+                <i class="bi bi-check2 text-success fw-bold fs-5"></i>
+              {% else %}
+                <i class="bi bi-x text-muted fs-5"></i>
+              {% endif %}
+              <div class="flex-grow-1">
+                <span class="fw-semibold text-dark">{{ feature.name }}</span>
+                {% if feature.quota_value and feature.quota_value != 'Included' %}
+                  <span class="text-muted">({{ feature.quota_value }})</span>
+                {% endif %}
+              </div>
+            </li>
+          {% empty %}
+            <li class="text-muted text-center small py-2">Standard feature bundle included</li>
+          {% endfor %}
+        </ul>
+
+        <div class="d-grid mt-auto">
+          <a href="{% url 'plan_detail' pk=plan.pk %}" class="btn {% if plan.is_featured %}btn-bl-primary{% else %}btn-bl-outline{% endif %} btn-sm py-2">
+            View Plan Details
+          </a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="col-12 text-center py-5">
+      <p class="text-muted">No active plans found for comparison. Please create plans first.</p>
+      <a href="{% url 'plan_create' %}" class="btn btn-bl-primary btn-sm">Create Plan</a>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}
