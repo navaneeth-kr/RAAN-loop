@@ -160,3 +160,18 @@ class PaymentListView(View):
             'page_title': 'Payments & Transaction Log',
         }
         return render(request, self.template_name, context)
+
+
+def index(request):
+    """Customer subscription lifecycle directory view."""
+    subs = [
+        {'id': 'SUB-1089', 'client': 'Apex Digital Media', 'plan': 'Pro Business', 'amount': '$99.00', 'status': 'Active', 'renewal': 'Nov 30, 2026'},
+        {'id': 'SUB-1088', 'client': 'BlueSky Technologies', 'plan': 'Enterprise Suite', 'amount': '$3,588.00', 'status': 'Active', 'renewal': 'Oct 29, 2027'},
+        {'id': 'SUB-1087', 'client': 'Omni Logistics Inc.', 'plan': 'Pro Business', 'amount': '$99.00', 'status': 'Pending', 'renewal': 'Nov 28, 2026'},
+        {'id': 'SUB-1086', 'client': 'NextWave Studio', 'plan': 'Starter Plan', 'amount': '$29.00', 'status': 'Active', 'renewal': 'Nov 27, 2026'},
+    ]
+    return render(request, 'subscriptions/index.html', {
+        'page_title': 'Subscriptions Management',
+        'active_tab': 'subscriptions',
+        'subscriptions': subs,
+    })

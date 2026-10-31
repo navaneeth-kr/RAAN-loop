@@ -21,11 +21,15 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-    # Brightloop Applications
+    # Brightloop Core Applications
     'core.apps.CoreConfig',
     'products.apps.ProductsConfig',
     'plans.apps.PlansConfig',
     'subscriptions.apps.SubscriptionsConfig',
+    'accounts.apps.AccountsConfig',
+    'billing.apps.BillingConfig',
+    'payments.apps.PaymentsConfig',
+    'dashboard.apps.DashboardConfig',
 ]
 
 MIDDLEWARE = [

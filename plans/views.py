@@ -325,3 +325,38 @@ class PlanFeatureDeleteView(AdminRequiredMixin, View):
         feature.delete()
         messages.success(request, f"Feature '{name}' removed.")
         return redirect('plan_detail', pk=plan_pk)
+
+
+def index(request):
+    """Subscription tiers and pricing plans view."""
+    plans = [
+        {
+            'name': 'Starter Plan',
+            'product': 'Brightloop Core',
+            'price': '$29',
+            'interval': 'Monthly',
+            'popular': False,
+            'features': ['Up to 5 Users', 'Basic Analytics', 'Standard Support'],
+        },
+        {
+            'name': 'Pro Business',
+            'product': 'Brightloop Core + Growth',
+            'price': '$99',
+            'interval': 'Monthly',
+            'popular': True,
+            'features': ['Up to 25 Users', 'Advanced BI & Exports', '24/7 Priority Support'],
+        },
+        {
+            'name': 'Enterprise Suite',
+            'product': 'Complete SaaS Suite',
+            'price': '$299',
+            'interval': 'Monthly',
+            'popular': False,
+            'features': ['Unlimited Users', 'Dedicated SLA', 'Custom Integrations'],
+        },
+    ]
+    return render(request, 'plans/index.html', {
+        'page_title': 'Plans & Pricing',
+        'active_tab': 'plans',
+        'plans': plans,
+    })

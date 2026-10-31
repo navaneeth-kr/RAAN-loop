@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('', views.PlanListView.as_view(), name='plan_list'),
+    path('catalog/', views.index, name='index'),
     path('new/', views.PlanCreateView.as_view(), name='plan_create'),
     path('compare/', views.PlanComparisonMatrixView.as_view(), name='plan_comparison'),
     path('<int:pk>/', views.PlanDetailView.as_view(), name='plan_detail'),
