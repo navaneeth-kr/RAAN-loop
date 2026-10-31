@@ -126,10 +126,56 @@
   </div>
 
   <div class="col-lg-4">
-    <div class="card-saas p-4 bg-white mb-3">
-      <h6 class="fw-bold mb-2 text-slate-900"><i class="bi bi-info-circle text-primary me-1"></i> Export Telemetry</h6>
-      <p class="text-muted small" style="line-height: 1.6;">
-        All data generated through the Export Center is pulled directly from the current live SQLite database. Every export event is recorded into the <strong>Activity Audit Log</strong> for accountability.
+    <!-- Database & System Backup Card -->
+    <div class="card-saas p-4 bg-white mb-4 border shadow-sm">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+        <h6 class="fw-bold mb-0 text-slate-900">
+          <i class="bi bi-database-fill-down text-primary me-2"></i> System Database Backup
+        </h6>
+        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size: 0.72rem;">
+          <i class="bi bi-check-circle-fill me-1"></i> Live
+        </span>
+      </div>
+
+      <p class="text-muted small mb-3" style="line-height: 1.5;">
+        Generate an instant, complete snapshot of all relational models, users, products, plans, and subscriptions.
+      </p>
+
+      <div class="bg-light p-3 rounded mb-3 border">
+        <div class="d-flex justify-content-between align-items-center mb-2 small">
+          <span class="text-muted"><i class="bi bi-server me-1"></i> Storage Engine</span>
+          <span class="fw-bold text-dark">SQLite 3</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2 small">
+          <span class="text-muted"><i class="bi bi-file-earmark-binary me-1"></i> Database Size</span>
+          <span class="fw-bold text-primary font-monospace">{{ db_size_kb }} KB</span>
+        </div>
+        {% if db_modified %}
+        <div class="d-flex justify-content-between align-items-center small">
+          <span class="text-muted"><i class="bi bi-clock-history me-1"></i> Last Write</span>
+          <span class="text-muted font-monospace">{{ db_modified|date:"M d, H:i:s" }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- 1-Click Backup Buttons -->
+      <div class="d-grid gap-2">
+        <a href="{% url 'database_backup' %}?type=sqlite" class="btn btn-outline-primary btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-database-down fs-6"></i>
+          <span>Download SQLite Snapshot (.sqlite3)</span>
+        </a>
+        <a href="{% url 'database_backup' %}?type=json" class="btn btn-outline-secondary btn-sm py-2 fw-semibold d-flex align-items-center justify-content-center gap-2">
+          <i class="bi bi-filetype-json fs-6"></i>
+          <span>Download Full JSON Fixture (.json)</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Export Telemetry & Audit Card -->
+    <div class="card-saas p-4 bg-white border shadow-sm">
+      <h6 class="fw-bold mb-2 text-slate-900"><i class="bi bi-shield-check text-success me-2"></i> Security & Audit</h6>
+      <p class="text-muted small mb-0" style="line-height: 1.6;">
+        All export and backup transactions are restricted to authorized administrators and recorded in the <strong>Activity Audit Log</strong> with actor timestamp.
       </p>
     </div>
   </div>

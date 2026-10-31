@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="fw-bold mb-0 text-slate-900">Tax Configuration & Rules</h2>
+      <span class="badge bg-primary-subtle text-primary border px-2 py-1" style="font-size: 0.75rem;">Person 4 Module</span>
+    </div>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+      Configure regional and national tax policies (GST, VAT, Sales Tax), jurisdictional defaults, and invoice tax accounting.
+    </p>
+  </div>
+</div>
+
+<!-- Financial Tax Telemetry Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Default Global Tax Rate</span>
+        <span class="badge bg-primary-subtle text-primary"><i class="bi bi-percent"></i></span>
+      </div>
+      <h3 class="fw-bold text-slate-900 mb-0 font-monospace">{{ system_default_rate|default:"18.00" }}%</h3>
+      <small class="text-muted">Applied automatically to new invoices</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Total Tax Collected</span>
+        <span class="badge bg-success-subtle text-success"><i class="bi bi-cash-stack"></i></span>
+      </div>
+      <h3 class="fw-bold text-success mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ total_tax_collected|floatformat:2 }}</h3>
+      <small class="text-muted">Accumulated on cleared invoices</small>
+    </div>
+  </div>
+
+  <div class="col-sm-12 col-lg-4">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Configured Tax Rules</span>
+        <span class="badge bg-info-subtle text-info"><i class="bi bi-geo-alt-fill"></i></span>
+      </div>
+      <h3 class="fw-bold text-slate-900 mb-0 font-monospace">{{ tax_rates.count }} Rules</h3>
+      <small class="text-muted">Active tax jurisdictions</small>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Tax Rates Table Column -->
+  <div class="col-lg-8">
+    <div class="card-saas bg-white overflow-hidden shadow-sm border mb-4">
+      <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+        <h6 class="fw-bold text-slate-900 mb-0"><i class="bi bi-calculator-fill text-primary me-2"></i> Configured Tax Jurisdictions</h6>
+        <span class="badge bg-secondary-subtle text-secondary border">{{ tax_rates.count }} configured</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table-saas table align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Tax Name</th>
+              <th>Rate (%)</th>
+              <th>Jurisdiction / Notes</th>
+              <th>Default</th>
+              <th>Status</th>
+              <th class="text-end pe-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for tr in tax_rates %}
+              <tr {% if tr.is_default %}class="table-primary-subtle"{% endif %}>
+                <td>
+                  <strong class="text-dark">{{ tr.name }}</strong>
+                  {% if tr.is_default %}
+                    <span class="badge bg-primary ms-1" style="font-size: 0.65rem;">GLOBAL DEFAULT</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong class="font-monospace text-primary fs-6">{{ tr.rate_percent }}%</strong>
+                </td>
+                <td><span class="text-muted small">{{ tr.description|default:"Standard tax rate" }}</span></td>
+                <td>
+                  {% if tr.is_default %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill me-1"></i> Default</span>
+                  {% else %}
+                    <form method="post" action="{% url 'tax_set_default' tr.id %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-xs btn-outline-secondary" style="font-size: 0.75rem;" title="Make this the default tax rate">
+                        Make Default
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if tr.is_active %}
+                    <span class="badge-saas badge-success">Active</span>
+                  {% else %}
+                    <span class="badge-saas badge-secondary">Disabled</span>
+                  {% endif %}
+                </td>
+                <td class="text-end pe-3">
+                  {% if not tr.is_default %}
+                    <form method="post" action="{% url 'tax_delete' tr.id %}" class="d-inline" onsubmit="return confirm('Delete tax rate rule {{ tr.name }}?');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Tax Rate">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  {% else %}
+                    <span class="text-muted small" title="Cannot delete global default">Locked</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">No tax rates configured yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add New Tax Rate Form Column -->
+  <div class="col-lg-4">
+    <div class="card-saas p-4 bg-white border shadow-sm">
+      <h6 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-plus-circle text-primary me-2"></i> Add New Tax Rule
+      </h6>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Tax Name <span class="text-danger">*</span></label>
+          {{ form.name }}
+          <small class="text-muted">e.g. UK VAT Standard, Canada HST, California Tax</small>
+          {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Tax Rate Percentage (%) <span class="text-danger">*</span></label>
+          {{ form.rate_percent }}
+          <small class="text-muted">e.g. 18.00 for 18% or 0.00 for zero-rated</small>
+          {% if form.rate_percent.errors %}<div class="text-danger small mt-1">{{ form.rate_percent.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Jurisdiction / Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="mb-3">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.is_default }}
+            <label class="form-check-label fw-semibold" for="{{ form.is_default.id_for_label }}">
+              Set as Global Default Rate
+            </label>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.is_active }}
+            <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+              Tax Rule Active
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-bl-primary w-100 py-2">
+          <i class="bi bi-plus-lg me-1"></i> Save Tax Rule
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Discounts</a>
+    <h2 class="fw-bold mb-0 text-slate-900">{% if is_edit %}Edit Discount Coupon '{{ discount.code }}'{% else %}Create Promotional Discount Coupon{% endif %}</h2>
+  </div>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+    Define promotional promo codes, percentage or fixed discount values, and validity schedules.
+  </p>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <form method="post" class="card-saas p-4 bg-white shadow-sm border">
+      {% csrf_token %}
+
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-tag-fill text-primary me-2"></i> Coupon Parameters
+      </h5>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Promo Code <span class="text-danger">*</span></label>
+          {{ form.code }}
+          <small class="text-muted">Uppercase alphanumeric (e.g. FLASH20, ENTERPRISE500)</small>
+          {% if form.code.errors %}<div class="text-danger small mt-1">{{ form.code.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Campaign Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Discount Type <span class="text-danger">*</span></label>
+          {{ form.discount_type }}
+          {% if form.discount_type.errors %}<div class="text-danger small mt-1">{{ form.discount_type.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Discount Value <span class="text-danger">*</span></label>
+          {{ form.value }}
+          <small class="text-muted">Percentage (e.g. 20 for 20%) or Fixed Currency Amount</small>
+          {% if form.value.errors %}<div class="text-danger small mt-1">{{ form.value.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+        <i class="bi bi-calendar-range text-info me-2"></i> Validity Period & Availability
+      </h5>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Valid From Date <span class="text-danger">*</span></label>
+          {{ form.valid_from }}
+          {% if form.valid_from.errors %}<div class="text-danger small mt-1">{{ form.valid_from.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-bold" style="font-size: 0.85rem;">Valid Until Date <span class="text-danger">*</span></label>
+          {{ form.valid_until }}
+          {% if form.valid_until.errors %}<div class="text-danger small mt-1">{{ form.valid_until.errors|striptags }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-12">
+          <div class="form-check form-switch p-3 bg-light rounded border">
+            {{ form.is_active }}
+            <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+              Active for Redemption
+            </label>
+            <div class="text-muted small">Enable or disable coupon redemption globally.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+        <a href="{% url 'discount_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-bl-primary px-4">
+          <i class="bi bi-check2-circle me-1"></i> {% if is_edit %}Save Changes{% else %}Create Coupon{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-saas p-4 bg-white border shadow-sm">
+      <h6 class="fw-bold text-slate-900 mb-2"><i class="bi bi-lightbulb text-warning me-2"></i> Discount Policies</h6>
+      <ul class="text-muted small ps-3 mb-0" style="line-height: 1.8;">
+        <li>Percentage discounts deduct a proportional fraction from invoice subtotals (up to 100%).</li>
+        <li>Fixed discounts deduct a lump-sum amount up to the invoice balance.</li>
+        <li>Expired or disabled coupons are automatically rejected during invoice generation.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

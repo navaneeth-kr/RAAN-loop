@@ -4,34 +4,96 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
   <div>
-    <h2 class="fw-bold mb-0 text-slate-900">Invoices & Billing</h2>
-    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Generated customer invoices, payment statuses, and overdue balances.</p>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="fw-bold mb-0 text-slate-900">Invoices & Billing</h2>
+      <span class="badge bg-primary-subtle text-primary border px-2 py-1" style="font-size: 0.75rem;">Person 4 Module</span>
+    </div>
+    <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Generated customer invoices, payment statuses, automated tax calculations, and overdue balances.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{% url 'invoice_create' %}" class="btn btn-bl-primary">
+      <i class="bi bi-plus-circle me-1"></i> Generate New Invoice
+    </a>
   </div>
 </div>
 
+<!-- KPI Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Total Invoiced</span>
+        <span class="badge bg-primary-subtle text-primary"><i class="bi bi-receipt"></i></span>
+      </div>
+      <h4 class="fw-bold text-slate-900 mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ total_invoiced|floatformat:2 }}</h4>
+      <small class="text-muted">Lifetime gross billing</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Settled & Paid</span>
+        <span class="badge bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i></span>
+      </div>
+      <h4 class="fw-bold text-success mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ paid_invoices_sum|floatformat:2 }}</h4>
+      <small class="text-muted">Collected and cleared</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Overdue Balances</span>
+        <span class="badge bg-danger-subtle text-danger"><i class="bi bi-exclamation-octagon-fill"></i></span>
+      </div>
+      <h4 class="fw-bold text-danger mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ overdue_invoices_sum|floatformat:2 }}</h4>
+      <small class="text-muted">Past net payment terms</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Pending Invoices</span>
+        <span class="badge bg-warning-subtle text-warning"><i class="bi bi-clock-history"></i></span>
+      </div>
+      <h4 class="fw-bold text-warning-emphasis mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ pending_invoices_sum|floatformat:2 }}</h4>
+      <small class="text-muted">Awaiting customer payment</small>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filtering Toolbar -->
 <div class="card-saas p-3 mb-4 bg-white">
   <form method="get" class="row g-2 align-items-center">
     <div class="col-md-6">
       <div class="input-group input-group-sm">
         <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
-        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search invoice number or customer...">
+        <input type="text" name="q" value="{{ search_query }}" class="form-control border-start-0" placeholder="Search by invoice number, customer name, or email...">
       </div>
     </div>
     <div class="col-md-4">
       <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid</option>
-        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="">All Invoice Statuses</option>
+        <option value="paid" {% if selected_status == 'paid' %}selected{% endif %}>Paid / Settled</option>
+        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending Settlement</option>
         <option value="overdue" {% if selected_status == 'overdue' %}selected{% endif %}>Overdue</option>
+        <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Payment Failed</option>
+        <option value="refunded" {% if selected_status == 'refunded' %}selected{% endif %}>Refunded</option>
       </select>
     </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary flex-grow-1"><i class="bi bi-funnel me-1"></i> Filter</button>
+      {% if search_query or selected_status %}
+        <a href="{% url 'invoice_list' %}" class="btn btn-sm btn-outline-secondary" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
     </div>
   </form>
 </div>
 
-<div class="card-saas bg-white overflow-hidden">
+<!-- Invoices Table -->
+<div class="card-saas bg-white overflow-hidden shadow-sm">
   <div class="table-responsive">
     <table class="table-saas table align-middle mb-0">
       <thead>
@@ -39,26 +101,47 @@
           <th>Invoice #</th>
           <th>Customer Account</th>
           <th>Subtotal</th>
-          <th>Tax (18%)</th>
-          <th>Total Amount</th>
+          <th>Tax Rate</th>
+          <th>Discount</th>
+          <th>Total Due</th>
           <th>Status</th>
-          <th>Issued Date</th>
           <th>Due Date</th>
+          <th class="text-end pe-3">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for inv in invoices %}
           <tr {% if inv.status == 'overdue' %}class="table-danger-subtle"{% endif %}>
-            <td><span class="code-tag">{{ inv.invoice_number }}</span></td>
+            <td>
+              <a href="{% url 'invoice_detail' inv.id %}" class="code-tag text-decoration-none fw-bold text-primary">
+                {{ inv.invoice_number }}
+              </a>
+              {% if inv.subscription %}
+                <div class="small text-muted" style="font-size: 0.72rem;">Sub: {{ inv.subscription.subscription_id }}</div>
+              {% endif %}
+            </td>
             <td>
               <div class="fw-bold text-dark">{{ inv.customer.full_name }}</div>
               <small class="text-muted">{{ inv.customer.email }}</small>
             </td>
-            <td>{{ system_settings.currency_symbol|default:"$" }}{{ inv.amount }}</td>
-            <td><span class="text-muted">{{ system_settings.currency_symbol|default:"$" }}{{ inv.tax_amount }}</span></td>
+            <td><span class="font-monospace text-muted">{{ system_settings.currency_symbol|default:"₹" }}{{ inv.amount }}</span></td>
             <td>
-              <strong class="{% if inv.status == 'overdue' %}text-danger{% else %}text-dark{% endif %} fs-6">
-                {{ system_settings.currency_symbol|default:"$" }}{{ inv.total_amount }}
+              <span class="badge bg-light text-secondary border" style="font-size: 0.75rem;">
+                {{ inv.tax_rate.name|default:"Tax" }} ({{ system_settings.currency_symbol|default:"₹" }}{{ inv.tax_amount }})
+              </span>
+            </td>
+            <td>
+              {% if inv.discount_amount > 0 %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.75rem;">
+                  -{{ system_settings.currency_symbol|default:"₹" }}{{ inv.discount_amount }}
+                </span>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <strong class="{% if inv.status == 'overdue' %}text-danger{% elif inv.status == 'paid' %}text-success{% else %}text-dark{% endif %} font-monospace fs-6">
+                {{ system_settings.currency_symbol|default:"₹" }}{{ inv.total_amount }}
               </strong>
             </td>
             <td>
@@ -66,19 +149,58 @@
                 <span class="badge-saas badge-success"><i class="bi bi-check-circle-fill"></i> Paid</span>
               {% elif inv.status == 'overdue' %}
                 <span class="badge-saas badge-danger"><i class="bi bi-exclamation-octagon-fill"></i> Overdue</span>
-              {% else %}
+              {% elif inv.status == 'pending' %}
                 <span class="badge-saas badge-warning"><i class="bi bi-clock-fill"></i> Pending</span>
+              {% elif inv.status == 'refunded' %}
+                <span class="badge-saas badge-secondary"><i class="bi bi-arrow-counterclockwise"></i> Refunded</span>
+              {% else %}
+                <span class="badge-saas badge-secondary">{{ inv.get_status_display }}</span>
               {% endif %}
             </td>
-            <td><span class="text-muted small">{{ inv.issued_date }}</span></td>
             <td>
-              <span class="{% if inv.status == 'overdue' %}text-danger fw-bold{% else %}text-muted{% endif %} small">
-                {{ inv.due_date }}
+              <span class="{% if inv.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %} small">
+                {{ inv.due_date|date:"M d, Y" }}
               </span>
+            </td>
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <a href="{% url 'invoice_detail' inv.id %}" class="btn btn-outline-primary" title="View & Print Invoice">
+                  <i class="bi bi-eye"></i>
+                </a>
+                {% if inv.status != 'paid' and inv.status != 'refunded' %}
+                  <a href="{% url 'payment_create' %}?invoice_id={{ inv.id }}" class="btn btn-outline-success" title="Record Payment">
+                    <i class="bi bi-credit-card"></i>
+                  </a>
+                  <form method="post" action="{% url 'invoice_mark_paid' inv.id %}" class="d-inline" onsubmit="return confirm('Mark Invoice {{ inv.invoice_number }} as Paid?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-info" title="1-Click Mark as Paid">
+                      <i class="bi bi-check2-circle"></i>
+                    </button>
+                  </form>
+                {% endif %}
+                <a href="{% url 'invoice_update' inv.id %}" class="btn btn-outline-secondary" title="Edit Invoice">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="post" action="{% url 'invoice_delete' inv.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete invoice {{ inv.invoice_number }}?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger" title="Delete Invoice">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="8" class="text-center py-4 text-muted">No invoices found.</td></tr>
+          <tr>
+            <td colspan="9" class="text-center py-5">
+              <div class="text-muted mb-2"><i class="bi bi-receipt display-6"></i></div>
+              <h6 class="fw-bold text-dark">No Invoices Found</h6>
+              <p class="text-muted small mb-3">No billing records match your search criteria.</p>
+              <a href="{% url 'invoice_create' %}" class="btn btn-sm btn-bl-primary">
+                <i class="bi bi-plus-circle me-1"></i> Create First Invoice
+              </a>
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>

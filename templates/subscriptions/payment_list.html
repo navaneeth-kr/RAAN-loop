@@ -4,11 +4,45 @@
 {% block content %}
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
   <div>
-    <h2 class="fw-bold mb-0 text-slate-900">Payments & Transaction Log</h2>
+    <div class="d-flex align-items-center gap-2">
+      <h2 class="fw-bold mb-0 text-slate-900">Payments & Transaction Log</h2>
+      <span class="badge bg-primary-subtle text-primary border px-2 py-1" style="font-size: 0.75rem;">Person 4 Module</span>
+    </div>
     <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">Electronic gateway logs, settlement statuses, and customer payment records.</p>
+  </div>
+  <div>
+    <a href="{% url 'payment_create' %}" class="btn btn-bl-primary">
+      <i class="bi bi-plus-circle me-1"></i> Record Customer Payment
+    </a>
   </div>
 </div>
 
+<!-- KPI Metric Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Total Revenue Collected</span>
+        <span class="badge bg-success-subtle text-success"><i class="bi bi-wallet2"></i></span>
+      </div>
+      <h4 class="fw-bold text-success mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ total_collected|floatformat:2 }}</h4>
+      <small class="text-muted">Cleared transaction settlements across all gateways</small>
+    </div>
+  </div>
+
+  <div class="col-sm-6">
+    <div class="card-saas p-3 bg-white h-100">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <span class="text-muted small fw-semibold">Pending Authorization</span>
+        <span class="badge bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></span>
+      </div>
+      <h4 class="fw-bold text-warning-emphasis mb-0 font-monospace">{{ system_settings.currency_symbol|default:"₹" }}{{ pending_payments|floatformat:2 }}</h4>
+      <small class="text-muted">In-transit settlements or gateway verification holds</small>
+    </div>
+  </div>
+</div>
+
+<!-- Search & Filtering Toolbar -->
 <div class="card-saas p-3 mb-4 bg-white">
   <form method="get" class="row g-2 align-items-center">
     <div class="col-md-6">
@@ -19,56 +53,113 @@
     </div>
     <div class="col-md-4">
       <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-        <option value="">All Statuses</option>
-        <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
-        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending</option>
-        <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Failed</option>
+        <option value="">All Settlement Statuses</option>
+        <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed & Settled</option>
+        <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pending Authorization</option>
+        <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Payment Failed</option>
+        <option value="refunded" {% if selected_status == 'refunded' %}selected{% endif %}>Refunded</option>
       </select>
     </div>
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-sm btn-bl-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+    <div class="col-md-2 d-flex gap-2">
+      <button type="submit" class="btn btn-sm btn-bl-primary flex-grow-1"><i class="bi bi-funnel me-1"></i> Filter</button>
+      {% if search_query or selected_status %}
+        <a href="{% url 'payment_list' %}" class="btn btn-sm btn-outline-secondary" title="Clear Filters"><i class="bi bi-x-lg"></i></a>
+      {% endif %}
     </div>
   </form>
 </div>
 
-<div class="card-saas bg-white overflow-hidden">
+<!-- Payments Table -->
+<div class="card-saas bg-white overflow-hidden shadow-sm">
   <div class="table-responsive">
     <table class="table-saas table align-middle mb-0">
       <thead>
         <tr>
           <th>Payment ID</th>
           <th>Customer Account</th>
+          <th>Linked Invoice</th>
           <th>Amount Paid</th>
           <th>Method</th>
           <th>Status</th>
           <th>Gateway Reference</th>
           <th>Transaction Date</th>
+          <th class="text-end pe-3">Receipt</th>
         </tr>
       </thead>
       <tbody>
         {% for pay in payments %}
           <tr>
-            <td><span class="code-tag">{{ pay.payment_id }}</span></td>
+            <td>
+              <a href="{% url 'payment_detail' pay.id %}" class="code-tag text-decoration-none fw-bold text-primary">
+                {{ pay.payment_id }}
+              </a>
+            </td>
             <td>
               <div class="fw-bold text-dark">{{ pay.customer.full_name }}</div>
               <small class="text-muted">{{ pay.customer.email }}</small>
             </td>
-            <td><strong class="text-dark fs-6">{{ system_settings.currency_symbol|default:"$" }}{{ pay.amount }}</strong></td>
-            <td><span class="badge bg-light text-dark border">{{ pay.get_payment_method_display }}</span></td>
+            <td>
+              {% if pay.invoice %}
+                <a href="{% url 'invoice_detail' pay.invoice.id %}" class="text-decoration-none font-monospace small">
+                  {{ pay.invoice.invoice_number }}
+                </a>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <strong class="text-dark fs-6 font-monospace">
+                {{ system_settings.currency_symbol|default:"₹" }}{{ pay.amount }}
+              </strong>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark border">
+                {% if pay.payment_method == 'stripe' %}
+                  <i class="bi bi-stripe text-primary me-1"></i>
+                {% elif pay.payment_method == 'paypal' %}
+                  <i class="bi bi-paypal text-primary me-1"></i>
+                {% elif pay.payment_method == 'credit_card' %}
+                  <i class="bi bi-credit-card-fill text-secondary me-1"></i>
+                {% elif pay.payment_method == 'bank_transfer' %}
+                  <i class="bi bi-bank text-dark me-1"></i>
+                {% else %}
+                  <i class="bi bi-wallet2 text-success me-1"></i>
+                {% endif %}
+                {{ pay.get_payment_method_display }}
+              </span>
+            </td>
             <td>
               {% if pay.status == 'completed' %}
                 <span class="badge-saas badge-success"><i class="bi bi-check-circle-fill"></i> Completed</span>
               {% elif pay.status == 'pending' %}
                 <span class="badge-saas badge-warning"><i class="bi bi-clock-fill"></i> Pending</span>
+              {% elif pay.status == 'refunded' %}
+                <span class="badge-saas badge-secondary"><i class="bi bi-arrow-counterclockwise"></i> Refunded</span>
               {% else %}
                 <span class="badge-saas badge-danger">{{ pay.get_status_display }}</span>
               {% endif %}
             </td>
-            <td><small class="text-muted font-monospace">{{ pay.transaction_reference }}</small></td>
+            <td>
+              <code class="text-muted small font-monospace">{{ pay.transaction_reference|default:"manual_direct" }}</code>
+            </td>
             <td><span class="text-muted small">{{ pay.payment_date|date:"Y-m-d H:i" }}</span></td>
+            <td class="text-end pe-3">
+              <a href="{% url 'payment_detail' pay.id %}" class="btn btn-sm btn-outline-primary" title="View & Print Official Receipt">
+                <i class="bi bi-file-earmark-check me-1"></i> Receipt
+              </a>
+            </td>
           </tr>
         {% empty %}
-          <tr><td colspan="7" class="text-center py-4 text-muted">No payment transactions found.</td></tr>
+          <tr>
+            <td colspan="9" class="text-center py-5">
+              <div class="text-muted mb-2"><i class="bi bi-credit-card display-6"></i></div>
+              <h6 class="fw-bold text-dark">No Payment Transactions Found</h6>
+              <p class="text-muted small mb-3">Customer settlements and manual payment reconciliations will appear here.</p>
+              <a href="{% url 'payment_create' %}" class="btn btn-sm btn-bl-primary">
+                <i class="bi bi-plus-circle me-1"></i> Record First Payment
+              </a>
+            </td>
+          </tr>
         {% endfor %}
       </tbody>
     </table>

@@ -67,6 +67,22 @@ class Subscription(models.Model):
         return mapping.get(self.status, 'primary')
 
 
+class TaxRate(models.Model):
+    """Tax configuration rules (e.g. GST 18%, VAT 20%, Sales Tax 8.25%)."""
+    name = models.CharField(max_length=100, verbose_name="Tax Name")
+    rate_percent = models.DecimalField(max_digits=5, decimal_places=2, default=18.00, verbose_name="Tax Rate (%)")
+    description = models.CharField(max_length=255, blank=True)
+    is_default = models.BooleanField(default=False, verbose_name="Default Tax Rate")
+    is_active = models.BooleanField(default=True, verbose_name="Is Active")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.rate_percent}%)"
+
+
 class Invoice(models.Model):
     """Billing invoices with due date tracking."""
     STATUS_CHOICES = [
@@ -80,13 +96,17 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='invoices')
     subscription = models.ForeignKey(Subscription, on_delete=models.SET_NULL, null=True, blank=True, related_name='invoices')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, help_text="Subtotal before tax & discounts")
+    tax_rate = models.ForeignKey(TaxRate, on_delete=models.SET_NULL, null=True, blank=True, related_name='invoices')
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount = models.ForeignKey('Discount', on_delete=models.SET_NULL, null=True, blank=True, related_name='invoices')
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     issued_date = models.DateField(default=timezone.now)
     due_date = models.DateField(default=timezone.now)
     paid_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, help_text="Public or internal invoice remarks")
 
     class Meta:
         ordering = ['-issued_date']
@@ -97,6 +117,27 @@ class Invoice(models.Model):
     @property
     def is_overdue(self):
         return self.status == 'overdue' or (self.status == 'pending' and self.due_date < timezone.now().date())
+
+    @property
+    def status_badge_class(self):
+        mapping = {
+            'paid': 'success',
+            'pending': 'warning',
+            'overdue': 'danger',
+            'failed': 'danger',
+            'refunded': 'secondary',
+        }
+        return mapping.get(self.status, 'primary')
+
+    @property
+    def paid_amount(self):
+        from decimal import Decimal
+        return self.payments.filter(status='completed').aggregate(models.Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+    @property
+    def balance_due(self):
+        from decimal import Decimal
+        return max(Decimal('0.00'), self.total_amount - self.paid_amount)
 
 
 class Payment(models.Model):
@@ -113,6 +154,7 @@ class Payment(models.Model):
         ('stripe', 'Stripe'),
         ('paypal', 'PayPal'),
         ('bank_transfer', 'Bank Transfer'),
+        ('upi', 'UPI / NetBanking'),
     ]
 
     payment_id = models.CharField(max_length=50, unique=True)
@@ -123,12 +165,24 @@ class Payment(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
     transaction_reference = models.CharField(max_length=100, blank=True)
     payment_date = models.DateTimeField(default=timezone.now)
+    notes = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-payment_date']
 
     def __str__(self):
         return f"{self.payment_id} - ${self.amount} ({self.get_status_display()})"
+
+    @property
+    def status_badge_class(self):
+        mapping = {
+            'completed': 'success',
+            'pending': 'warning',
+            'failed': 'danger',
+            'refunded': 'secondary',
+        }
+        return mapping.get(self.status, 'primary')
+
 
 
 class Quotation(models.Model):
@@ -179,3 +233,22 @@ class Discount(models.Model):
 
     def __str__(self):
         return f"{self.code} ({self.value}{'%' if self.discount_type == 'percentage' else '$'})"
+
+    def calculate_discount(self, subtotal):
+        """Calculates discount amount applied to a given subtotal."""
+        from decimal import Decimal
+        sub = Decimal(str(subtotal or '0.00'))
+        if self.discount_type == 'percentage':
+            return round((sub * (self.value / Decimal('100.00'))), 2)
+        else:
+            return min(sub, self.value)
+
+    @property
+    def is_currently_valid(self):
+        today = timezone.now().date()
+        return self.is_active and (self.valid_from <= today <= self.valid_until)
+
+    @property
+    def status_badge_class(self):
+        return 'success' if self.is_currently_valid else 'secondary'
+

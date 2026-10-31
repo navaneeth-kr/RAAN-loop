@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-4">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Invoices</a>
+    <h2 class="fw-bold mb-0 text-slate-900">{% if is_edit %}Edit Invoice #{{ invoice.invoice_number }}{% else %}Generate New Customer Invoice{% endif %}</h2>
+  </div>
+  <p class="text-muted mb-0 mt-1" style="font-size: 0.885rem;">
+    Configure billing subtotal, jurisdictional tax rates, promotional discounts, and payment terms.
+  </p>
+</div>
+
+<form method="post" id="invoiceForm">
+  {% csrf_token %}
+  <div class="row g-4">
+    <!-- Form Fields Column -->
+    <div class="col-lg-8">
+      <div class="card-saas p-4 bg-white mb-4 shadow-sm">
+        <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-person-lines-fill text-primary me-2"></i> 1. Customer & Account Information
+        </h5>
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Customer Account <span class="text-danger">*</span></label>
+            {{ form.customer }}
+            {% if form.customer.errors %}<div class="text-danger small mt-1">{{ form.customer.errors|striptags }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Linked Subscription (Optional)</label>
+            {{ form.subscription }}
+            {% if form.subscription.errors %}<div class="text-danger small mt-1">{{ form.subscription.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-calculator text-success me-2"></i> 2. Financials, Tax & Discounts
+        </h5>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Subtotal Amount ({{ system_settings.currency_symbol|default:"₹" }}) <span class="text-danger">*</span></label>
+            {{ form.amount }}
+            {% if form.amount.errors %}<div class="text-danger small mt-1">{{ form.amount.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Applicable Tax Rule</label>
+            {{ form.tax_rate }}
+            <small class="text-muted">GST, VAT, Sales Tax rate</small>
+            {% if form.tax_rate.errors %}<div class="text-danger small mt-1">{{ form.tax_rate.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Promotional Discount Code</label>
+            {{ form.discount }}
+            <small class="text-muted">Optional promo reduction</small>
+            {% if form.discount.errors %}<div class="text-danger small mt-1">{{ form.discount.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <h5 class="fw-bold text-slate-900 border-bottom pb-2 mb-3">
+          <i class="bi bi-calendar-check text-info me-2"></i> 3. Terms & Lifecycle Status
+        </h5>
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Invoice Date <span class="text-danger">*</span></label>
+            {{ form.issued_date }}
+            {% if form.issued_date.errors %}<div class="text-danger small mt-1">{{ form.issued_date.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Payment Due Date <span class="text-danger">*</span></label>
+            {{ form.due_date }}
+            {% if form.due_date.errors %}<div class="text-danger small mt-1">{{ form.due_date.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Invoice Status</label>
+            {{ form.status }}
+            {% if form.status.errors %}<div class="text-danger small mt-1">{{ form.status.errors|striptags }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label fw-bold" style="font-size: 0.85rem;">Notes & Payment Instructions</label>
+            {{ form.notes }}
+            {% if form.notes.errors %}<div class="text-danger small mt-1">{{ form.notes.errors|striptags }}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+          <a href="{% url 'invoice_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-bl-primary px-4">
+            <i class="bi bi-check2-circle me-1"></i> {% if is_edit %}Save Changes{% else %}Generate Invoice{% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Financial Summary Card Column -->
+    <div class="col-lg-4">
+      <div class="card-saas p-4 bg-white shadow-sm sticky-top" style="top: 2rem;">
+        <h6 class="fw-bold text-slate-900 mb-3 pb-2 border-bottom">
+          <i class="bi bi-receipt text-primary me-2"></i> Live Invoice Preview
+        </h6>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between text-muted mb-2 small">
+            <span>Subtotal Amount:</span>
+            <span class="font-monospace fw-semibold text-dark" id="previewSubtotal">₹0.00</span>
+          </div>
+          <div class="d-flex justify-content-between text-muted mb-2 small">
+            <span>Discount Applied:</span>
+            <span class="font-monospace fw-semibold text-success" id="previewDiscount">-₹0.00</span>
+          </div>
+          <div class="d-flex justify-content-between text-muted mb-2 small">
+            <span>Taxable Amount:</span>
+            <span class="font-monospace fw-semibold text-dark" id="previewTaxable">₹0.00</span>
+          </div>
+          <div class="d-flex justify-content-between text-muted mb-2 small">
+            <span id="previewTaxLabel">Tax Rate (18%):</span>
+            <span class="font-monospace fw-semibold text-primary" id="previewTax">+₹0.00</span>
+          </div>
+          <hr>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-dark fs-6">Total Due:</span>
+            <span class="font-monospace fw-bold text-primary fs-4" id="previewTotal">₹0.00</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-light rounded border text-muted small mt-4">
+          <i class="bi bi-shield-check text-success me-1"></i>
+          Invoices auto-generate audit sequences, record accounting timestamps, and synchronize customer balances.
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const amountInput = document.getElementById('id_invoice_amount');
+  const taxRateSelect = document.getElementById('id_invoice_tax_rate');
+  const discountSelect = document.getElementById('id_invoice_discount');
+  const currencySymbol = "{{ system_settings.currency_symbol|default:'₹' }}";
+
+  function updatePreview() {
+    const amountVal = parseFloat(amountInput.value) || 0;
+    const taxRateId = taxRateSelect ? taxRateSelect.value : '';
+    const discountId = discountSelect ? discountSelect.value : '';
+
+    const url = `{% url 'invoice_calculate_preview' %}?amount=${amountVal}&tax_rate_id=${taxRateId}&discount_id=${discountId}`;
+    
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('previewSubtotal').textContent = `${currencySymbol}${data.subtotal.toFixed(2)}`;
+        document.getElementById('previewDiscount').textContent = `-${currencySymbol}${data.discount_amount.toFixed(2)}`;
+        document.getElementById('previewTaxable').textContent = `${currencySymbol}${data.taxable_amount.toFixed(2)}`;
+        document.getElementById('previewTaxLabel').textContent = `Tax Rate (${data.tax_percent}%):`;
+        document.getElementById('previewTax').textContent = `+${currencySymbol}${data.tax_amount.toFixed(2)}`;
+        document.getElementById('previewTotal').textContent = `${currencySymbol}${data.total_amount.toFixed(2)}`;
+      })
+      .catch(() => {
+        // Fallback calculation
+        const disc = 0;
+        const tax = amountVal * 0.18;
+        const tot = amountVal + tax;
+        document.getElementById('previewSubtotal').textContent = `${currencySymbol}${amountVal.toFixed(2)}`;
+        document.getElementById('previewTotal').textContent = `${currencySymbol}${tot.toFixed(2)}`;
+      });
+  }
+
+  if (amountInput) amountInput.addEventListener('input', updatePreview);
+  if (taxRateSelect) taxRateSelect.addEventListener('change', updatePreview);
+  if (discountSelect) discountSelect.addEventListener('change', updatePreview);
+
+  updatePreview();
+});
+</script>
+{% endblock %}

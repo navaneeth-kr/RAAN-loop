@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from core.models import SystemSetting, ActivityLog, StaffProfile
 from products.models import ProductCategory, Product, ProductVariant
 from plans.models import SubscriptionPlan, PlanFeature
-from subscriptions.models import Customer, Subscription, Invoice, Payment, Quotation, Discount
+from subscriptions.models import Customer, Subscription, Invoice, Payment, Quotation, Discount, TaxRate
 
 class Command(BaseCommand):
     help = "Seeds initial realistic SaaS records for Brightloop Software"
@@ -541,7 +541,30 @@ class Command(BaseCommand):
             created_subs.append(sub)
         self.stdout.write("  [OK] Subscriptions verified")
 
+        # 7b. Tax Rates
+        tax_rates_spec = [
+            ("Standard GST", Decimal("18.00"), "Standard 18% Goods & Services Tax", True),
+            ("European Union VAT", Decimal("20.00"), "Standard EU cross-border value added tax", False),
+            ("US State Sales Tax", Decimal("8.25"), "Standard US state & local nexus sales tax", False),
+            ("Zero-Rated Export", Decimal("0.00"), "Tax-exempt international B2B digital export", False),
+        ]
+        created_taxes = {}
+        for tname, trate, tdesc, tdef in tax_rates_spec:
+            tr, _ = TaxRate.objects.get_or_create(
+                name=tname,
+                defaults={
+                    "rate_percent": trate,
+                    "description": tdesc,
+                    "is_default": tdef,
+                    "is_active": True,
+                }
+            )
+            created_taxes[tname] = tr
+        self.stdout.write("  [OK] Tax Rates configured")
+
         # 8. Invoices (Paid, Pending, and OVERDUE)
+        default_tax = created_taxes.get("Standard GST")
+
         invoices_spec = [
             ("BL-INV-2026-001", created_customers[0], created_subs[0], Decimal("129.00"), "paid", today - timedelta(days=90), today - timedelta(days=60)),
             ("BL-INV-2026-002", created_customers[0], created_subs[0], Decimal("129.00"), "paid", today - timedelta(days=60), today - timedelta(days=30)),
@@ -568,6 +591,7 @@ class Command(BaseCommand):
                     "customer": cust,
                     "subscription": sub,
                     "amount": amt,
+                    "tax_rate": default_tax,
                     "tax_amount": tax,
                     "total_amount": total,
                     "status": inv_status,

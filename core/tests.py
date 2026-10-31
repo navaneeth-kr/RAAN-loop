@@ -158,3 +158,19 @@ class CoreDashboardTests(TestCase):
         self.assertEqual(resp_json['Content-Type'], 'application/json')
         self.assertIn('Enterprise Annual', resp_json.content.decode())
 
+    def test_database_backup_sqlite_and_json(self):
+        self.client.force_login(self.admin_user)
+
+        # Test SQLite backup download
+        resp_sqlite = self.client.get(reverse('database_backup') + '?type=sqlite')
+        self.assertEqual(resp_sqlite.status_code, 200)
+        self.assertEqual(resp_sqlite['Content-Type'], 'application/x-sqlite3')
+        self.assertIn('brightloop_database_backup_', resp_sqlite['Content-Disposition'])
+
+        # Test JSON fixture backup download
+        resp_json = self.client.get(reverse('database_backup') + '?type=json')
+        self.assertEqual(resp_json.status_code, 200)
+        self.assertEqual(resp_json['Content-Type'], 'application/json')
+        self.assertIn('brightloop_backup_', resp_json['Content-Disposition'])
+
+

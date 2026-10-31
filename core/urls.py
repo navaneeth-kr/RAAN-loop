@@ -10,4 +10,6 @@ urlpatterns = [
     path('settings/', views.AdminSettingsView.as_view(), name='admin_settings'),
     path('exports/', views.ExportCenterView.as_view(), name='export_center'),
     path('exports/download/', views.ExportDownloadView.as_view(), name='export_download'),
+    path('exports/backup/', views.DatabaseBackupView.as_view(), name='database_backup'),
 ]
+

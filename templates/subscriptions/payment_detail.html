@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<style>
+@media print {
+  body {
+    background: #fff !important;
+  }
+  .sidebar, .navbar, .btn-toolbar-actions, footer {
+    display: none !important;
+  }
+  .main-content {
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+  .card-receipt {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 btn-toolbar-actions">
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'payment_list' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> All Payments</a>
+    <h2 class="fw-bold mb-0 text-slate-900">Payment Receipt #{{ payment.payment_id }}</h2>
+    {% if payment.status == 'completed' %}
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle-fill me-1"></i> Completed</span>
+    {% elif payment.status == 'refunded' %}
+      <span class="badge bg-secondary-subtle text-secondary border px-2 py-1"><i class="bi bi-arrow-counterclockwise me-1"></i> Refunded</span>
+    {% else %}
+      <span class="badge bg-warning-subtle text-warning border px-2 py-1">{{ payment.get_status_display }}</span>
+    {% endif %}
+  </div>
+
+  <div class="d-flex gap-2">
+    <button onclick="window.print()" class="btn btn-outline-dark btn-sm">
+      <i class="bi bi-printer me-1"></i> Print Receipt
+    </button>
+    {% if payment.status == 'completed' %}
+      <form method="post" action="{% url 'payment_refund' payment.id %}" class="d-inline" onsubmit="return confirm('Are you sure you want to process a full refund for {{ system_settings.currency_symbol|default:'₹' }}{{ payment.amount }}?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> Refund Payment
+        </button>
+      </form>
+    {% endif %}
+    {% if payment.invoice %}
+      <a href="{% url 'invoice_detail' payment.invoice.id %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-receipt me-1"></i> View Linked Invoice
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Printable Receipt Voucher Card -->
+<div class="card card-saas card-receipt p-5 bg-white shadow-sm border mb-4 mx-auto" style="max-width: 800px;">
+  <div class="text-center pb-4 border-bottom mb-4">
+    <div class="brand-icon-box bg-dark text-white p-2 rounded d-inline-block mb-2">
+      <i class="bi bi-shield-lock-fill fs-3"></i>
+    </div>
+    <h3 class="fw-bold text-slate-900 mb-0">{{ setting.company_name|default:"Brightloop Software" }}</h3>
+    <span class="text-muted small">Subscription Management System — Official Payment Voucher</span>
+    <div class="badge bg-light text-dark border mt-2 px-3 py-1 font-monospace fs-6">
+      RECEIPT REF: {{ payment.payment_id }}
+    </div>
+  </div>
+
+  <!-- Big Amount Block -->
+  <div class="p-4 bg-light rounded text-center mb-4 border">
+    <span class="text-muted small text-uppercase fw-semibold">Amount Received</span>
+    <h1 class="fw-bold text-success font-monospace mb-0 mt-1">
+      {{ system_settings.currency_symbol|default:"₹" }}{{ payment.amount }}
+    </h1>
+    <span class="badge {% if payment.status == 'completed' %}bg-success{% elif payment.status == 'refunded' %}bg-secondary{% else %}bg-warning{% endif %} mt-2 text-white">
+      {{ payment.get_status_display|upper }}
+    </span>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-sm-6">
+      <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Received From:</h6>
+      <div class="fw-bold text-dark fs-6">{{ payment.customer.full_name }}</div>
+      {% if payment.customer.company_name %}
+        <div class="text-muted">{{ payment.customer.company_name }}</div>
+      {% endif %}
+      <div class="text-muted small">{{ payment.customer.email }}</div>
+    </div>
+
+    <div class="col-sm-6 text-sm-end">
+      <h6 class="text-muted text-uppercase fw-bold mb-2" style="font-size: 0.75rem;">Payment Info:</h6>
+      <div><strong>Date:</strong> {{ payment.payment_date|date:"F d, Y H:i:s" }}</div>
+      <div><strong>Method:</strong> {{ payment.get_payment_method_display }}</div>
+      <div><strong>Gateway Ref:</strong> <code class="text-muted">{{ payment.transaction_reference }}</code></div>
+      {% if payment.invoice %}
+        <div><strong>Applied to:</strong> Invoice #{{ payment.invoice.invoice_number }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if payment.notes %}
+  <div class="border-top pt-3 text-muted small">
+    <strong>Reconciliation Remarks:</strong>
+    <p class="mb-0">{{ payment.notes }}</p>
+  </div>
+  {% endif %}
+
+  <div class="border-top pt-4 text-center text-muted small mt-4">
+    Thank you for your business. For billing inquiries, contact <strong>{{ setting.billing_email|default:"billing@brightloop.io" }}</strong>.
+  </div>
+</div>
+{% endblock %}
