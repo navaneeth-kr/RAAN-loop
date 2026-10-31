@@ -27,7 +27,6 @@ class SystemSetting(models.Model):
 
     @classmethod
     def get_settings(cls):
-        """Singleton getter pattern."""
         settings, created = cls.objects.get_or_create(id=1)
         return settings
 
@@ -57,3 +56,22 @@ class ActivityLog(models.Model):
 
     def __str__(self):
         return f"[{self.get_category_display()}] {self.action} ({self.timestamp:%Y-%m-%d %H:%M})"
+
+
+class StaffProfile(models.Model):
+    """Staff member profile and role assignment."""
+    ROLE_CHOICES = [
+        ('admin', 'Super Administrator'),
+        ('billing_manager', 'Billing Manager'),
+        ('sales_lead', 'Sales Representative'),
+        ('support_lead', 'Customer Support'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='staff_profile')
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='admin')
+    department = models.CharField(max_length=100, default='Executive Management')
+    phone = models.CharField(max_length=30, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"

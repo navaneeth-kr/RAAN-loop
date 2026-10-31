@@ -1,74 +1,111 @@
 <aside class="sidebar">
-  <!-- Brand Logo -->
+  <!-- Brand Logo & Header -->
   <div class="sidebar-brand">
     <div class="brand-icon-box">
-      <i class="bi bi-infinity"></i>
+      <i class="bi bi-shield-lock-fill"></i>
     </div>
     <div>
       <h1 class="brand-title">{{ system_settings.company_name|default:"Brightloop" }}</h1>
-      <span class="brand-subtitle">Subscription SaaS</span>
+      <span class="brand-subtitle">Executive Admin</span>
     </div>
   </div>
 
-  <!-- Navigation Menu -->
+  <!-- Navigation Menu (All 13 Required Sidebar Links) -->
   <nav class="sidebar-nav">
-    <div class="nav-section-title">Core Overview</div>
+    <div class="nav-section-title">Core Operations</div>
+    <!-- 1. Dashboard -->
     <a href="{% url 'dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-      <i class="bi bi-grid-1x2-fill"></i>
-      <span>Admin Dashboard</span>
+      <i class="bi bi-speedometer2"></i>
+      <span>Dashboard</span>
     </a>
 
-    <div class="nav-section-title">Catalog & Offerings (Person 2)</div>
-    <a href="{% url 'product_list' %}" class="sidebar-link {% if 'products' in request.path and 'variants' not in request.path %}active{% endif %}">
-      <i class="bi bi-box-seam"></i>
+    <!-- 2. Customers -->
+    <a href="{% url 'customer_list' %}" class="sidebar-link {% if 'customers' in request.path %}active{% endif %}">
+      <i class="bi bi-people-fill"></i>
+      <span>Customers</span>
+    </a>
+
+    <!-- 3. Staff -->
+    <a href="{% url 'staff_list' %}" class="sidebar-link {% if 'staff' in request.path %}active{% endif %}">
+      <i class="bi bi-person-badge-fill"></i>
+      <span>Staff</span>
+    </a>
+
+    <div class="nav-section-title">Catalog & Subscriptions</div>
+    <!-- 4. Products -->
+    <a href="{% url 'product_list' %}" class="sidebar-link {% if 'products' in request.path %}active{% endif %}">
+      <i class="bi bi-box-seam-fill"></i>
       <span>Products</span>
     </a>
-    <a href="{% url 'variant_list' %}" class="sidebar-link {% if 'variants' in request.path %}active{% endif %}">
-      <i class="bi bi-layers-fill"></i>
-      <span>Product Variants</span>
-    </a>
-    <a href="{% url 'plan_list' %}" class="sidebar-link {% if 'plans' in request.path and 'compare' not in request.path %}active{% endif %}">
+
+    <!-- 5. Plans -->
+    <a href="{% url 'plan_list' %}" class="sidebar-link {% if 'plans' in request.path %}active{% endif %}">
       <i class="bi bi-tag-fill"></i>
-      <span>Subscription Plans</span>
-    </a>
-    <a href="{% url 'plan_comparison' %}" class="sidebar-link {% if 'compare' in request.path %}active{% endif %}">
-      <i class="bi bi-columns-gap"></i>
-      <span>Plan Matrix</span>
+      <span>Plans</span>
     </a>
 
-    <div class="nav-section-title">Management & Tools (Person 2)</div>
-    <a href="{% url 'export_center' %}" class="sidebar-link {% if 'exports' in request.path %}active{% endif %}">
-      <i class="bi bi-cloud-arrow-down-fill"></i>
-      <span>Data Export Center</span>
+    <!-- 6. Subscriptions -->
+    <a href="{% url 'subscription_list' %}" class="sidebar-link {% if 'subscriptions' in request.path %}active{% endif %}">
+      <i class="bi bi-repeat"></i>
+      <span>Subscriptions</span>
     </a>
+
+    <!-- 7. Quotations -->
+    <a href="{% url 'quotation_list' %}" class="sidebar-link {% if 'quotations' in request.path %}active{% endif %}">
+      <i class="bi bi-file-earmark-text-fill"></i>
+      <span>Quotations</span>
+    </a>
+
+    <div class="nav-section-title">Finance & Analytics</div>
+    <!-- 8. Invoices -->
+    <a href="{% url 'invoice_list' %}" class="sidebar-link {% if 'invoices' in request.path %}active{% endif %}">
+      <i class="bi bi-receipt-cutoff"></i>
+      <span>Invoices</span>
+    </a>
+
+    <!-- 9. Discounts -->
+    <a href="{% url 'discount_list' %}" class="sidebar-link {% if 'discounts' in request.path %}active{% endif %}">
+      <i class="bi bi-percent"></i>
+      <span>Discounts</span>
+    </a>
+
+    <!-- 10. Payments -->
+    <a href="{% url 'payment_list' %}" class="sidebar-link {% if 'payments' in request.path %}active{% endif %}">
+      <i class="bi bi-credit-card-2-front-fill"></i>
+      <span>Payments</span>
+    </a>
+
+    <!-- 11. Reports -->
+    <a href="{% url 'reports' %}" class="sidebar-link {% if 'reports' in request.path %}active{% endif %}">
+      <i class="bi bi-bar-chart-line-fill"></i>
+      <span>Reports</span>
+    </a>
+
+    <div class="nav-section-title">System</div>
+    <!-- 12. Settings -->
     <a href="{% url 'admin_settings' %}" class="sidebar-link {% if 'settings' in request.path %}active{% endif %}">
-      <i class="bi bi-gear-wide-connected"></i>
-      <span>Admin Settings</span>
+      <i class="bi bi-sliders"></i>
+      <span>Settings</span>
     </a>
 
-    <div class="nav-section-title">Team Coordination</div>
-    <div class="px-2 py-1">
-      <div class="p-2 rounded bg-light border" style="font-size: 0.78rem;">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="badge bg-primary text-white">Person 2</span>
-          <span class="text-success fw-bold"><i class="bi bi-check-circle"></i> Active</span>
-        </div>
-        <div class="text-muted" style="font-size: 0.72rem;">
-          Dashboard • Products • Plans • Settings • Exports
-        </div>
-      </div>
-    </div>
+    <!-- 13. Logout -->
+    <a href="{% url 'admin_logout' %}" class="sidebar-link text-danger-emphasis">
+      <i class="bi bi-box-arrow-right text-danger"></i>
+      <span>Logout</span>
+    </a>
   </nav>
 
-  <!-- Sidebar Footer -->
+  <!-- Sidebar Footer Profile -->
   <div class="sidebar-footer">
     <div class="d-flex align-items-center gap-2">
       <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px; font-size: 0.85rem;">
-        AD
+        {% if user.is_authenticated %}{{ user.first_name|default:user.username|slice:":1"|upper }}{% else %}A{% endif %}
       </div>
       <div class="overflow-hidden">
-        <div class="fw-bold text-truncate" style="font-size: 0.85rem;">System Administrator</div>
-        <div class="text-muted text-truncate" style="font-size: 0.75rem;">admin@brightloop.io</div>
+        <div class="fw-bold text-white text-truncate" style="font-size: 0.825rem;">
+          {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}Administrator{% endif %}
+        </div>
+        <div class="text-muted text-truncate" style="font-size: 0.72rem;">Admin Console</div>
       </div>
     </div>
   </div>

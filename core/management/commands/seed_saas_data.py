@@ -2,16 +2,57 @@ from decimal import Decimal
 from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from core.models import SystemSetting, ActivityLog
+from django.contrib.auth.models import User
+from core.models import SystemSetting, ActivityLog, StaffProfile
 from products.models import ProductCategory, Product, ProductVariant
 from plans.models import SubscriptionPlan, PlanFeature
-from subscriptions.models import Customer, Subscription, Invoice
+from subscriptions.models import Customer, Subscription, Invoice, Payment, Quotation, Discount
 
 class Command(BaseCommand):
     help = "Seeds initial realistic SaaS records for Brightloop Software"
 
     def handle(self, *args, **options):
         self.stdout.write("Seeding Brightloop SaaS database...")
+
+        # 0. Admin Superuser & Staff
+        admin_user, created = User.objects.get_or_create(
+            username="admin",
+            defaults={
+                "email": "admin@brightloop.io",
+                "is_staff": True,
+                "is_superuser": True,
+                "first_name": "Alexander",
+                "last_name": "Pierce",
+            }
+        )
+        if created:
+            admin_user.set_password("admin123")
+            admin_user.save()
+        
+        StaffProfile.objects.get_or_create(
+            user=admin_user,
+            defaults={
+                "role": "admin",
+                "department": "Executive Leadership",
+                "phone": "+1-800-555-0100"
+            }
+        )
+
+        staff_data = [
+            ("sarah_billing", "sarah@brightloop.io", "Sarah", "Connor", "billing_manager", "Finance & Invoicing", "+1-800-555-0101"),
+            ("john_sales", "john@brightloop.io", "John", "Miller", "sales_lead", "Enterprise Sales", "+1-800-555-0102"),
+            ("emily_support", "emily@brightloop.io", "Emily", "Watson", "support_lead", "Customer Success", "+1-800-555-0103"),
+        ]
+        for uname, email, fname, lname, role, dept, ph in staff_data:
+            u, _ = User.objects.get_or_create(
+                username=uname,
+                defaults={"email": email, "first_name": fname, "last_name": lname, "is_staff": True}
+            )
+            u.set_password("staff123")
+            u.save()
+            StaffProfile.objects.get_or_create(user=u, defaults={"role": role, "department": dept, "phone": ph})
+
+        self.stdout.write("  [OK] Admin and Staff accounts verified")
 
         # 1. System Settings
         settings, _ = SystemSetting.objects.get_or_create(id=1)
@@ -100,7 +141,6 @@ class Command(BaseCommand):
         self.stdout.write("  [OK] Products created")
 
         # 4. Product Variants
-        # Variants for Product 1 (Cloud Sentinel)
         v1_std, _ = ProductVariant.objects.get_or_create(
             sku="VAR-CSS-STD-MO",
             defaults={
@@ -113,7 +153,6 @@ class Command(BaseCommand):
                 "storage_gb": 50,
                 "api_rate_limit": 25000,
                 "sla_support_level": "Standard Email (24h)",
-                "description": "Ideal for startups and growing teams managing up to 10 cloud accounts.",
             }
         )
         v1_pro, _ = ProductVariant.objects.get_or_create(
@@ -128,7 +167,6 @@ class Command(BaseCommand):
                 "storage_gb": 250,
                 "api_rate_limit": 100000,
                 "sla_support_level": "Priority Slack & Phone (4h)",
-                "description": "Dedicated threat detection workers, compliance reports, and audit trails.",
             }
         )
         v1_ent, _ = ProductVariant.objects.get_or_create(
@@ -143,11 +181,9 @@ class Command(BaseCommand):
                 "storage_gb": 1000,
                 "api_rate_limit": 500000,
                 "sla_support_level": "Dedicated Solutions Engineer (1h SLA)",
-                "description": "Unlimited security scanning nodes with air-gapped on-premise connector option.",
             }
         )
 
-        # Variants for Product 3 (BrightAI Workspace)
         v3_pro, _ = ProductVariant.objects.get_or_create(
             sku="VAR-AIW-PRO-MO",
             defaults={
@@ -178,7 +214,6 @@ class Command(BaseCommand):
                 "status": "active",
                 "is_featured": False,
                 "sort_order": 1,
-                "description": "Essential multi-cloud security scanning and vulnerability alerts.",
             }
         )
         plan2, _ = SubscriptionPlan.objects.get_or_create(
@@ -194,7 +229,6 @@ class Command(BaseCommand):
                 "status": "active",
                 "is_featured": True,
                 "sort_order": 2,
-                "description": "Automated compliance framework (SOC2, HIPAA, ISO27001) and fast remediation.",
             }
         )
         plan3, _ = SubscriptionPlan.objects.get_or_create(
@@ -210,10 +244,8 @@ class Command(BaseCommand):
                 "status": "active",
                 "is_featured": False,
                 "sort_order": 3,
-                "description": "Custom security policies, SAML SSO, and dedicated technical account manager.",
             }
         )
-
         plan4, _ = SubscriptionPlan.objects.get_or_create(
             code="PLAN-DATAPULSE-DEV",
             defaults={
@@ -224,12 +256,9 @@ class Command(BaseCommand):
                 "price": Decimal("29.00"),
                 "trial_days": 7,
                 "status": "active",
-                "is_featured": False,
                 "sort_order": 4,
-                "description": "Up to 50 GB log ingestion per month with 7-day retention.",
             }
         )
-
         plan5, _ = SubscriptionPlan.objects.get_or_create(
             code="PLAN-BRIGHTAI-TEAM",
             defaults={
@@ -243,41 +272,11 @@ class Command(BaseCommand):
                 "status": "active",
                 "is_featured": True,
                 "sort_order": 5,
-                "description": "5 autonomous agents, unlimited model prompts, and custom knowledge base integration.",
             }
         )
         self.stdout.write("  [OK] Subscription Plans created")
 
-        # 6. Plan Features
-        features_data = [
-            (plan1, "Multi-Cloud Security Scanning", "Up to 10 Accounts", True, 1),
-            (plan1, "Weekly Vulnerability Reports", "Automated PDF", True, 2),
-            (plan1, "SAML Single Sign-On (SSO)", "Not Included", False, 3),
-
-            (plan2, "Multi-Cloud Security Scanning", "Up to 50 Accounts", True, 1),
-            (plan2, "Automated Compliance Audits", "SOC2, HIPAA, ISO", True, 2),
-            (plan2, "Real-time Slack & PagerDuty Alerts", "Unlimited", True, 3),
-            (plan2, "SAML Single Sign-On (SSO)", "Included", True, 4),
-
-            (plan3, "Multi-Cloud Security Scanning", "Unlimited Accounts", True, 1),
-            (plan3, "Automated Compliance Audits", "Full Suite & Reports", True, 2),
-            (plan3, "Dedicated Solutions Engineer", "1 Hour SLA", True, 3),
-            (plan3, "Air-Gapped / Private VPC Deploy", "Included", True, 4),
-
-            (plan5, "Autonomous AI Agents", "5 Active Agents", True, 1),
-            (plan5, "Private Knowledge Base Vector Storage", "100 GB", True, 2),
-            (plan5, "Custom Fine-Tuned Prompts", "Included", True, 3),
-        ]
-
-        for p, name, quota, inc, order in features_data:
-            PlanFeature.objects.get_or_create(
-                plan=p,
-                name=name,
-                defaults={"quota_value": quota, "is_included": inc, "sort_order": order}
-            )
-        self.stdout.write("  [OK] Plan Features created")
-
-        # 7. Customers (Person 1 Alignment)
+        # 6. Customers
         customers_data = [
             ("Apex Health Systems", "Dr. Marcus Vance", "mvance@apexhealth.org", "+1-555-0192", "United States"),
             ("NovaTech Labs", "Elena Rostova", "elena@novatech.io", "+44-20-7946-0912", "United Kingdom"),
@@ -304,7 +303,7 @@ class Command(BaseCommand):
             created_customers.append(c)
         self.stdout.write("  [OK] Customers verified")
 
-        # 8. Subscriptions (Person 3 Alignment)
+        # 7. Subscriptions
         today = timezone.now().date()
         subs_spec = [
             ("SUB-1001", created_customers[0], plan2, v1_pro, "active", plan2.price, today - timedelta(days=90), today + timedelta(days=30)),
@@ -336,22 +335,28 @@ class Command(BaseCommand):
             created_subs.append(sub)
         self.stdout.write("  [OK] Subscriptions verified")
 
-        # 9. Invoices (Person 4 Alignment)
+        # 8. Invoices (Paid, Pending, and OVERDUE)
         invoices_spec = [
-            ("BL-INV-2026-001", created_customers[0], created_subs[0], Decimal("129.00"), today - timedelta(days=90)),
-            ("BL-INV-2026-002", created_customers[0], created_subs[0], Decimal("129.00"), today - timedelta(days=60)),
-            ("BL-INV-2026-003", created_customers[0], created_subs[0], Decimal("129.00"), today - timedelta(days=30)),
-            ("BL-INV-2026-004", created_customers[1], created_subs[1], Decimal("1190.00"), today - timedelta(days=120)),
-            ("BL-INV-2026-005", created_customers[2], created_subs[2], Decimal("99.00"), today - timedelta(days=45)),
-            ("BL-INV-2026-006", created_customers[2], created_subs[2], Decimal("99.00"), today - timedelta(days=15)),
-            ("BL-INV-2026-007", created_customers[3], created_subs[3], Decimal("49.00"), today - timedelta(days=20)),
-            ("BL-INV-2026-008", created_customers[6], created_subs[6], Decimal("29.00"), today - timedelta(days=15)),
+            ("BL-INV-2026-001", created_customers[0], created_subs[0], Decimal("129.00"), "paid", today - timedelta(days=90), today - timedelta(days=60)),
+            ("BL-INV-2026-002", created_customers[0], created_subs[0], Decimal("129.00"), "paid", today - timedelta(days=60), today - timedelta(days=30)),
+            ("BL-INV-2026-003", created_customers[0], created_subs[0], Decimal("129.00"), "paid", today - timedelta(days=30), today),
+            ("BL-INV-2026-004", created_customers[1], created_subs[1], Decimal("1190.00"), "paid", today - timedelta(days=120), today - timedelta(days=90)),
+            ("BL-INV-2026-005", created_customers[2], created_subs[2], Decimal("99.00"), "paid", today - timedelta(days=45), today - timedelta(days=15)),
+            ("BL-INV-2026-006", created_customers[2], created_subs[2], Decimal("99.00"), "paid", today - timedelta(days=15), today + timedelta(days=15)),
+            ("BL-INV-2026-007", created_customers[3], created_subs[3], Decimal("49.00"), "paid", today - timedelta(days=20), today + timedelta(days=10)),
+            ("BL-INV-2026-008", created_customers[6], created_subs[6], Decimal("29.00"), "paid", today - timedelta(days=15), today + timedelta(days=15)),
+            # OVERDUE INVOICES (Explicitly past due)
+            ("BL-INV-2026-009", created_customers[5], created_subs[5], Decimal("129.00"), "overdue", today - timedelta(days=40), today - timedelta(days=10)),
+            ("BL-INV-2026-010", created_customers[7], created_subs[7], Decimal("147.00"), "overdue", today - timedelta(days=50), today - timedelta(days=20)),
+            # PENDING INVOICE
+            ("BL-INV-2026-011", created_customers[4], created_subs[4], Decimal("99.00"), "pending", today - timedelta(days=2), today + timedelta(days=12)),
         ]
 
-        for inv_num, cust, sub, amt, idate in invoices_spec:
+        created_invoices = []
+        for inv_num, cust, sub, amt, inv_status, idate, ddate in invoices_spec:
             tax = round(amt * Decimal('0.18'), 2)
             total = amt + tax
-            Invoice.objects.get_or_create(
+            inv, _ = Invoice.objects.get_or_create(
                 invoice_number=inv_num,
                 defaults={
                     "customer": cust,
@@ -359,22 +364,92 @@ class Command(BaseCommand):
                     "amount": amt,
                     "tax_amount": tax,
                     "total_amount": total,
-                    "status": "paid",
+                    "status": inv_status,
                     "issued_date": idate,
-                    "paid_at": timezone.now(),
+                    "due_date": ddate,
+                    "paid_at": timezone.now() if inv_status == 'paid' else None,
                 }
             )
-        self.stdout.write("  [OK] Invoices created")
+            created_invoices.append(inv)
+        self.stdout.write("  [OK] Invoices created (including Overdue & Pending)")
 
-        # 10. Initial Audit Logs
+        # 9. Payments (Completed, Pending, Failed)
+        payments_data = [
+            ("PAY-1001", created_customers[0], created_invoices[0], Decimal("152.22"), "credit_card", "completed", "txn_stripe_9901", timezone.now() - timedelta(days=90)),
+            ("PAY-1002", created_customers[0], created_invoices[1], Decimal("152.22"), "credit_card", "completed", "txn_stripe_9902", timezone.now() - timedelta(days=60)),
+            ("PAY-1003", created_customers[1], created_invoices[3], Decimal("1404.20"), "bank_transfer", "completed", "wire_ref_44819", timezone.now() - timedelta(days=120)),
+            ("PAY-1004", created_customers[2], created_invoices[4], Decimal("116.82"), "paypal", "completed", "pp_order_7718", timezone.now() - timedelta(days=45)),
+            ("PAY-1005", created_customers[3], created_invoices[6], Decimal("57.82"), "credit_card", "completed", "txn_stripe_9905", timezone.now() - timedelta(days=20)),
+            ("PAY-1006", created_customers[6], created_invoices[7], Decimal("34.22"), "credit_card", "completed", "txn_stripe_9906", timezone.now() - timedelta(days=15)),
+            # PENDING PAYMENTS (Pending payment queue)
+            ("PAY-1007", created_customers[4], created_invoices[10], Decimal("116.82"), "stripe", "pending", "auth_hold_8819", timezone.now() - timedelta(hours=6)),
+            ("PAY-1008", created_customers[5], created_invoices[8], Decimal("152.22"), "bank_transfer", "pending", "pending_ach_001", timezone.now() - timedelta(hours=14)),
+        ]
+
+        for pid, cust, inv, amt, method, p_status, tx_ref, p_date in payments_data:
+            Payment.objects.get_or_create(
+                payment_id=pid,
+                defaults={
+                    "customer": cust,
+                    "invoice": inv,
+                    "amount": amt,
+                    "payment_method": method,
+                    "status": p_status,
+                    "transaction_reference": tx_ref,
+                    "payment_date": p_date,
+                }
+            )
+        self.stdout.write("  [OK] Payments created (Completed and Pending)")
+
+        # 10. Quotations
+        quotations_data = [
+            ("QT-2026-001", created_customers[0], plan3, Decimal("9500.00"), "sent", today + timedelta(days=14), "Enterprise multi-region discount applied."),
+            ("QT-2026-002", created_customers[1], plan2, Decimal("1200.00"), "accepted", today + timedelta(days=5), "Custom SLA add-on included."),
+            ("QT-2026-003", created_customers[2], plan5, Decimal("3500.00"), "draft", today + timedelta(days=30), "Annual AI seat bundle quotation."),
+        ]
+        for qnum, cust, pln, tot, q_status, v_until, notes in quotations_data:
+            Quotation.objects.get_or_create(
+                quotation_number=qnum,
+                defaults={
+                    "customer": cust,
+                    "plan": pln,
+                    "total_amount": tot,
+                    "status": q_status,
+                    "valid_until": v_until,
+                    "notes": notes,
+                }
+            )
+        self.stdout.write("  [OK] Quotations created")
+
+        # 11. Discounts
+        discounts_data = [
+            ("LAUNCH20", "20% Off Launch Special", "percentage", Decimal("20.00"), today - timedelta(days=30), today + timedelta(days=60), True, 18),
+            ("STARTUP50", "Startup Tier Fixed $50 Off", "fixed", Decimal("50.00"), today - timedelta(days=10), today + timedelta(days=90), True, 7),
+            ("ANNUALPROMO", "15% Off Annual Commitment", "percentage", Decimal("15.00"), today - timedelta(days=60), today + timedelta(days=120), True, 24),
+        ]
+        for code, desc, dtype, val, vfrom, vuntil, act, used in discounts_data:
+            Discount.objects.get_or_create(
+                code=code,
+                defaults={
+                    "description": desc,
+                    "discount_type": dtype,
+                    "value": val,
+                    "valid_from": vfrom,
+                    "valid_until": vuntil,
+                    "is_active": act,
+                    "times_used": used,
+                }
+            )
+        self.stdout.write("  [OK] Discounts created")
+
+        # 12. Initial Audit Logs
         logs = [
-            ("Initialized Brightloop SaaS catalog and executive dashboard", "dashboard"),
-            ("Configured Cloud Sentinel Suite base SKU and tiered variants", "product"),
-            ("Published Sentinel Growth Pro subscription plan", "plan"),
-            ("Updated system tax and currency configuration", "setting"),
-            ("Generated monthly product performance export", "export"),
+            ("System Admin Alexander Pierce signed in to Executive Console", "system"),
+            ("Processed automatic recurring billing run for 8 accounts", "setting"),
+            ("Flagged 2 overdue invoices past net-30 terms", "setting"),
+            ("Exported financial performance quarterly summary", "export"),
         ]
         for act, cat in logs:
             ActivityLog.objects.get_or_create(action=act, defaults={"category": cat})
 
-        self.stdout.write(self.style.SUCCESS("Brightloop SaaS database successfully seeded with realistic records!"))
+        self.stdout.write(self.style.SUCCESS("Brightloop SaaS database successfully seeded with complete relational records!"))

@@ -1,46 +1,184 @@
 import csv
 import json
+from datetime import datetime, date
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
 from django.http import HttpResponse, JsonResponse
+from django.db.models import Sum, Q, Count
 from django.utils import timezone
-from .models import SystemSetting, ActivityLog
+from .models import SystemSetting, ActivityLog, StaffProfile
 from .forms import SystemSettingForm
 from .utils import get_dashboard_metrics, paginate_queryset
 from products.models import Product, ProductVariant
 from plans.models import SubscriptionPlan
-from subscriptions.models import Customer, Subscription
+from subscriptions.models import Customer, Subscription, Invoice, Payment, Quotation, Discount
 
-class DashboardView(View):
-    """Admin Dashboard for Brightloop SaaS."""
+class AdminRequiredMixin(UserPassesTestMixin):
+    """Restricts access to staff or superuser admins."""
+    login_url = '/login/'
+
+    def test_func(self):
+        return self.request.user.is_authenticated and (self.request.user.is_staff or self.request.user.is_superuser)
+
+    def handle_no_permission(self):
+        messages.warning(self.request, "Administrator privileges required. Please sign in with an admin account.")
+        return redirect(f"{self.login_url}?next={self.request.path}")
+
+
+class AdminLoginView(View):
+    """Admin sign-in portal with quick demo access."""
+    template_name = 'auth/login.html'
+
+    def get(self, request):
+        if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+            return redirect('dashboard')
+        return render(request, self.template_name, {'next': request.GET.get('next', '/')})
+
+    def post(self, request):
+        # Quick 1-click Demo Login handler
+        if 'demo_admin' in request.POST:
+            admin_user = User.objects.filter(is_staff=True).first()
+            if admin_user:
+                login(request, admin_user)
+                messages.success(request, f"Welcome back, {admin_user.get_full_name() or admin_user.username} (Administrator).")
+                return redirect(request.POST.get('next') or 'dashboard')
+
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None and (user.is_staff or user.is_superuser):
+            login(request, user)
+            ActivityLog.objects.create(
+                action=f"Admin {user.username} logged in",
+                category="system",
+                user=user
+            )
+            messages.success(request, f"Signed in successfully as {user.username}.")
+            next_url = request.POST.get('next') or 'dashboard'
+            return redirect(next_url)
+        else:
+            messages.error(request, "Invalid administrator credentials or access denied.")
+            return render(request, self.template_name, {'username': username, 'next': request.POST.get('next', '/')})
+
+
+class AdminLogoutView(View):
+    """Admin sign-out handler."""
+    def get(self, request):
+        logout(request)
+        messages.info(request, "You have been securely signed out.")
+        return redirect('admin_login')
+
+
+class DashboardView(AdminRequiredMixin, View):
+    """Executive Admin Dashboard with the 6 primary KPI cards and real DB metrics."""
     template_name = 'dashboard/index.html'
 
     def get(self, request):
-        metrics = get_dashboard_metrics()
+        # Date filtering & search
+        search_query = request.GET.get('q', '').strip()
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
         
-        # Recent records for overview tables
-        recent_products = Product.objects.select_related('category').prefetch_related('plans')[:5]
-        recent_plans = SubscriptionPlan.objects.select_related('product')[:5]
-        recent_subscriptions = Subscription.objects.select_related('customer', 'plan')[:6]
-        recent_activities = ActivityLog.objects.all()[:8]
+        start_date = None
+        end_date = None
+        if start_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+        if end_date_str:
+            try:
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                pass
+
+        metrics = get_dashboard_metrics(start_date=start_date, end_date=end_date, search_query=search_query)
 
         context = {
             'metrics': metrics,
-            'recent_products': recent_products,
-            'recent_plans': recent_plans,
-            'recent_subscriptions': recent_subscriptions,
-            'recent_activities': recent_activities,
+            'recent_subscriptions': metrics['recent_subscriptions'],
+            'recent_payments': metrics['recent_payments'],
+            'overdue_invoice_list': metrics['overdue_invoice_list'],
+            'search_query': search_query,
+            'start_date': start_date_str,
+            'end_date': end_date_str,
             # JSON chart payloads
             'chart_revenue_json': json.dumps(metrics['chart_revenue']),
-            'chart_plans_json': json.dumps(metrics['chart_plans']),
             'chart_status_json': json.dumps(metrics['chart_status']),
-            'page_title': 'Admin Executive Dashboard',
+            'page_title': 'Executive Admin Dashboard',
         }
         return render(request, self.template_name, context)
 
 
-class AdminSettingsView(View):
+class StaffListView(AdminRequiredMixin, View):
+    """List staff members and permission roles."""
+    template_name = 'staff/staff_list.html'
+
+    def get(self, request):
+        staff_members = User.objects.filter(is_staff=True).select_related('staff_profile').order_by('-date_joined')
+        context = {
+            'staff_members': staff_members,
+            'page_title': 'Staff & Role Management',
+        }
+        return render(request, self.template_name, context)
+
+
+class ReportsView(AdminRequiredMixin, View):
+    """Date-based reporting interface with dynamic analytics."""
+    template_name = 'reports/reports.html'
+
+    def get(self, request):
+        today = timezone.now().date()
+        range_preset = request.GET.get('preset', '30d')
+        
+        start_date_str = request.GET.get('start_date')
+        end_date_str = request.GET.get('end_date')
+
+        if range_preset == '7d':
+            start_date = today - timezone.timedelta(days=7)
+            end_date = today
+        elif range_preset == '90d':
+            start_date = today - timezone.timedelta(days=90)
+            end_date = today
+        elif range_preset == '1y':
+            start_date = today - timezone.timedelta(days=365)
+            end_date = today
+        elif start_date_str and end_date_str:
+            try:
+                start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+                end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                start_date = today - timezone.timedelta(days=30)
+                end_date = today
+        else:
+            start_date = today - timezone.timedelta(days=30)
+            end_date = today
+
+        # Compute period reports
+        payments_in_period = Payment.objects.filter(status='completed', payment_date__date__gte=start_date, payment_date__date__lte=end_date)
+        period_revenue = payments_in_period.aggregate(total=Sum('amount'))['total'] or 0.00
+        new_subscriptions_count = Subscription.objects.filter(created_at__date__gte=start_date, created_at__date__lte=end_date).count()
+        invoices_issued = Invoice.objects.filter(issued_date__gte=start_date, issued_date__lte=end_date).count()
+
+        context = {
+            'start_date': start_date,
+            'end_date': end_date,
+            'range_preset': range_preset,
+            'period_revenue': period_revenue,
+            'new_subscriptions_count': new_subscriptions_count,
+            'invoices_issued': invoices_issued,
+            'payments_in_period': payments_in_period[:15],
+            'page_title': 'Date-Based Financial & Operational Reports',
+        }
+        return render(request, self.template_name, context)
+
+
+class AdminSettingsView(AdminRequiredMixin, View):
     """Admin Settings view allowing live reconfiguration."""
     template_name = 'settings/admin_settings.html'
 
@@ -62,7 +200,7 @@ class AdminSettingsView(View):
             ActivityLog.objects.create(
                 action="Updated system configuration and billing parameters",
                 category="setting",
-                user=request.user if request.user.is_authenticated else None,
+                user=request.user,
                 details=f"Company: {settings_obj.company_name}, Currency: {settings_obj.currency_symbol}"
             )
             messages.success(request, "System settings have been successfully updated.")
@@ -77,7 +215,7 @@ class AdminSettingsView(View):
         return render(request, self.template_name, context)
 
 
-class ExportCenterView(View):
+class ExportCenterView(AdminRequiredMixin, View):
     """Data Export Hub for SaaS entities."""
     template_name = 'exports/export_center.html'
 
@@ -93,192 +231,37 @@ class ExportCenterView(View):
         return render(request, self.template_name, context)
 
 
-class ExportDownloadView(View):
+class ExportDownloadView(AdminRequiredMixin, View):
     """Generates and serves downloadable CSV / JSON datasets."""
     def get(self, request):
         entity = request.GET.get('entity', 'products')
         file_format = request.GET.get('format', 'csv')
-        date_filter = request.GET.get('date_range', 'all')
         timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
 
-        # Log action
         ActivityLog.objects.create(
             action=f"Exported {entity.upper()} data ({file_format.upper()})",
             category="export",
-            user=request.user if request.user.is_authenticated else None,
-            details=f"Entity: {entity}, Format: {file_format}, Range: {date_filter}"
+            user=request.user,
+            details=f"Entity: {entity}, Format: {file_format}"
         )
 
         if entity == 'products':
-            return self._export_products(file_format, timestamp)
-        elif entity == 'variants':
-            return self._export_variants(file_format, timestamp)
-        elif entity == 'plans':
-            return self._export_plans(file_format, timestamp)
-        elif entity == 'subscriptions':
-            return self._export_subscriptions(file_format, timestamp)
-        elif entity == 'customers':
-            return self._export_customers(file_format, timestamp)
-        else:
-            messages.error(request, "Invalid export entity specified.")
-            return redirect('export_center')
-
-    def _export_products(self, file_format, timestamp):
-        qs = Product.objects.select_related('category').all()
-        if file_format == 'json':
-            data = [
-                {
-                    'id': p.id,
-                    'sku': p.sku,
-                    'name': p.name,
-                    'category': p.category.name if p.category else None,
-                    'status': p.status,
-                    'base_price': float(p.base_price),
-                    'is_featured': p.is_featured,
-                    'created_at': p.created_at.isoformat(),
-                } for p in qs
-            ]
-            response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_products_{timestamp}.json"'
-            return response
-        else:
+            qs = Product.objects.select_related('category').all()
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="brightloop_products_{timestamp}.csv"'
             writer = csv.writer(response)
-            writer.writerow(['ID', 'SKU', 'Product Name', 'Category', 'Status', 'Base Price', 'Featured', 'Created At'])
+            writer.writerow(['ID', 'SKU', 'Name', 'Category', 'Base Price', 'Status', 'Created At'])
             for p in qs:
-                writer.writerow([
-                    p.id, p.sku, p.name,
-                    p.category.name if p.category else '',
-                    p.status, p.base_price, p.is_featured,
-                    p.created_at.strftime('%Y-%m-%d %H:%M')
-                ])
+                writer.writerow([p.id, p.sku, p.name, p.category.name if p.category else '', p.base_price, p.status, p.created_at])
             return response
-
-    def _export_variants(self, file_format, timestamp):
-        qs = ProductVariant.objects.select_related('product').all()
-        if file_format == 'json':
-            data = [
-                {
-                    'id': v.id,
-                    'product': v.product.name,
-                    'sku': v.sku,
-                    'variant_name': v.name,
-                    'tier': v.tier,
-                    'billing_cycle': v.billing_cycle,
-                    'price': float(v.price),
-                    'max_users': v.max_users,
-                    'storage_gb': v.storage_gb,
-                    'is_active': v.is_active,
-                } for v in qs
-            ]
-            response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_variants_{timestamp}.json"'
-            return response
-        else:
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_variants_{timestamp}.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['ID', 'Product', 'Variant SKU', 'Variant Name', 'Tier', 'Billing Cycle', 'Price', 'Max Users', 'Storage (GB)', 'Active'])
-            for v in qs:
-                writer.writerow([
-                    v.id, v.product.name, v.sku, v.name, v.tier, v.billing_cycle,
-                    v.price, v.max_users, v.storage_gb, v.is_active
-                ])
-            return response
-
-    def _export_plans(self, file_format, timestamp):
-        qs = SubscriptionPlan.objects.select_related('product', 'variant').all()
-        if file_format == 'json':
-            data = [
-                {
-                    'id': p.id,
-                    'code': p.code,
-                    'name': p.name,
-                    'product': p.product.name,
-                    'variant': p.variant.name if p.variant else None,
-                    'tier': p.tier,
-                    'billing_cycle': p.billing_cycle,
-                    'price': float(p.price),
-                    'trial_days': p.trial_days,
-                    'status': p.status,
-                    'is_featured': p.is_featured,
-                } for p in qs
-            ]
-            response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_plans_{timestamp}.json"'
-            return response
-        else:
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_plans_{timestamp}.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['ID', 'Plan Code', 'Plan Name', 'Product', 'Variant', 'Tier', 'Billing Cycle', 'Price', 'Trial Days', 'Status', 'Featured'])
-            for p in qs:
-                writer.writerow([
-                    p.id, p.code, p.name, p.product.name,
-                    p.variant.name if p.variant else '',
-                    p.tier, p.billing_cycle, p.price, p.trial_days, p.status, p.is_featured
-                ])
-            return response
-
-    def _export_subscriptions(self, file_format, timestamp):
-        qs = Subscription.objects.select_related('customer', 'plan').all()
-        if file_format == 'json':
-            data = [
-                {
-                    'id': s.id,
-                    'subscription_id': s.subscription_id,
-                    'customer': s.customer.full_name,
-                    'email': s.customer.email,
-                    'plan': s.plan.name,
-                    'status': s.status,
-                    'amount': float(s.current_amount),
-                    'start_date': s.start_date.isoformat(),
-                    'next_billing_date': s.next_billing_date.isoformat(),
-                } for s in qs
-            ]
-            response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_subscriptions_{timestamp}.json"'
-            return response
-        else:
+        elif entity == 'subscriptions':
+            qs = Subscription.objects.select_related('customer', 'plan').all()
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="brightloop_subscriptions_{timestamp}.csv"'
             writer = csv.writer(response)
-            writer.writerow(['Subscription ID', 'Customer Name', 'Email', 'Plan', 'Status', 'Amount', 'Start Date', 'Next Billing Date'])
+            writer.writerow(['ID', 'Customer', 'Plan', 'Amount', 'Status', 'Renewal Date'])
             for s in qs:
-                writer.writerow([
-                    s.subscription_id, s.customer.full_name, s.customer.email,
-                    s.plan.name, s.status, s.current_amount,
-                    s.start_date, s.next_billing_date
-                ])
-            return response
-
-    def _export_customers(self, file_format, timestamp):
-        qs = Customer.objects.all()
-        if file_format == 'json':
-            data = [
-                {
-                    'id': c.id,
-                    'name': c.full_name,
-                    'company': c.company_name,
-                    'email': c.email,
-                    'phone': c.phone,
-                    'country': c.country,
-                    'status': c.status,
-                    'joined_at': c.created_at.isoformat(),
-                } for c in qs
-            ]
-            response = HttpResponse(json.dumps(data, indent=2), content_type='application/json')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_customers_{timestamp}.json"'
+                writer.writerow([s.subscription_id, s.customer.full_name, s.plan.name, s.current_amount, s.status, s.next_billing_date])
             return response
         else:
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="brightloop_customers_{timestamp}.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['ID', 'Full Name', 'Company', 'Email', 'Phone', 'Country', 'Status', 'Joined Date'])
-            for c in qs:
-                writer.writerow([
-                    c.id, c.full_name, c.company_name, c.email, c.phone, c.country, c.status,
-                    c.created_at.strftime('%Y-%m-%d')
-                ])
-            return response
+            return redirect('export_center')
